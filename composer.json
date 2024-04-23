@@ -8,9 +8,14 @@
         "php": "^8.2",
         "filament/filament": "^3.2",
         "laravel/framework": "^11.0",
-        "laravel/tinker": "^2.9"
+        "laravel/tinker": "^2.9",
+        "njxqlus/filament-progressbar": "^1.0",
+        "owenvoke/blade-fontawesome": "^2.6",
+        "tapp/filament-authentication-log": "^3.1",
+        "z3d0x/filament-logger": "^0.7.1"
     },
     "require-dev": {
+        "barryvdh/laravel-debugbar": "^3.13",
         "fakerphp/faker": "^1.23",
         "laravel/pint": "^1.13",
         "laravel/sail": "^1.26",
