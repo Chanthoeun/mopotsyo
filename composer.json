@@ -6,12 +6,16 @@
     "license": "MIT",
     "require": {
         "php": "^8.2",
+        "bezhansalleh/filament-shield": "^3.2",
         "filament/filament": "^3.2",
         "laravel/framework": "^11.0",
         "laravel/tinker": "^2.9",
+        "mchev/banhammer": "^2.2",
         "njxqlus/filament-progressbar": "^1.0",
         "owenvoke/blade-fontawesome": "^2.6",
+        "rawilk/filament-password-input": "^2.0",
         "tapp/filament-authentication-log": "^3.1",
+        "torann/geoip": "^3.0",
         "z3d0x/filament-logger": "^0.7.1"
     },
     "require-dev": {

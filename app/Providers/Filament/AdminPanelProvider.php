@@ -18,6 +18,8 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\AuthenticateSession;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use Mchev\Banhammer\Middleware\AuthBanned;
+use Mchev\Banhammer\Middleware\LogoutBanned;
 use Njxqlus\FilamentProgressbar\FilamentProgressbarPlugin;
 use Tapp\FilamentAuthenticationLog\FilamentAuthenticationLogPlugin;
 
@@ -57,7 +59,9 @@ class AdminPanelProvider extends PanelProvider
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
             ])
-            ->authMiddleware([
+            ->authMiddleware([ 
+                LogoutBanned::class, 
+                AuthBanned::class,
                 Authenticate::class,
             ])
             ->maxContentWidth(MaxWidth::Full)
@@ -66,6 +70,7 @@ class AdminPanelProvider extends PanelProvider
             ->plugin(FilamentProgressbarPlugin::make()->color('#29b'))
             ->plugins([
                 FilamentAuthenticationLogPlugin::make(),
+                \BezhanSalleh\FilamentShield\FilamentShieldPlugin::make()
             ]);
     }
 }
