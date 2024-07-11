@@ -18,6 +18,7 @@ return [
 
     // Model
     'user'      => [
+        'username'          => 'Username',
         'email_verified'    => 'Email Verified',
         'password'          => 'Password'
     ]

@@ -8,6 +8,8 @@
         "php": "^8.2",
         "bezhansalleh/filament-shield": "^3.2",
         "filament/filament": "^3.2",
+        "filament/spatie-laravel-translatable-plugin": "^3.2",
+        "kenepa/translation-manager": "^4.0",
         "laravel/framework": "^11.0",
         "laravel/tinker": "^2.9",
         "mchev/banhammer": "^2.2",

@@ -13,11 +13,14 @@ use Illuminate\Notifications\Notifiable;
 use Mchev\Banhammer\Traits\Bannable;
 use Rappasoft\LaravelAuthenticationLog\Traits\AuthenticationLoggable;
 use Spatie\Permission\Traits\HasRoles;
+use Spatie\Translatable\HasTranslations;
 
 class User extends Authenticatable implements FilamentUser  
 {
-    use Bannable, HasRoles, HasFactory, Notifiable, AuthenticationLoggable, SoftDeletes;
+    use Bannable, HasRoles, HasFactory, Notifiable, AuthenticationLoggable, SoftDeletes, HasTranslations;
 
+    public $translatable = ['name'];
+    
     /**
      * The attributes that are mass assignable.
      *
@@ -25,6 +28,7 @@ class User extends Authenticatable implements FilamentUser
      */
     protected $fillable = [
         'name',
+        'username',
         'email',
         'password',
     ];
