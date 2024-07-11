@@ -7,6 +7,7 @@ use App\Filament\Admin\Resources\UserResource\RelationManagers;
 use App\Models\User;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Resources\Concerns\Translatable;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -20,8 +21,9 @@ use Spatie\Permission\Contracts\Role;
 
 class UserResource extends Resource
 {
+    use Translatable; 
+    
     protected static ?string $model = User::class;
-
 
     protected static ?string $navigationIcon = 'heroicon-o-users';
 
@@ -40,25 +42,25 @@ class UserResource extends Resource
         return __('nav.admin');
     }
 
-    public static function getNavigationBadge(): ?string
-    {
-        return static::getModel()::count();
-    }
-
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
                 Forms\Components\Section::make()
+                    ->columns(2)
                     ->schema([
                         Forms\Components\TextInput::make('name')
                             ->label(__('field.name'))
+                            ->required()
+                            ->maxLength(50)
+                            ->columnSpanFull(),
+                        Forms\Components\TextInput::make('username')
+                            ->label(__('field.user.username'))
                             ->required()
                             ->maxLength(50),
                         Forms\Components\TextInput::make('email')
                             ->label(__('field.email'))
                             ->email()
-                            ->required()
                             ->unique(ignoreRecord: true)
                             ->maxLength(50),
                         Password::make('password')
@@ -73,7 +75,8 @@ class UserResource extends Resource
                             ->copyMessage(__('field.copied', ['name' => __('field.user.password')]))
                             ->copyMessageDuration(3000)
                             ->dehydrateStateUsing(fn ($state) => Hash::make($state))
-                            ->dehydrated(fn ($state) => filled($state)),
+                            ->dehydrated(fn ($state) => filled($state))
+                            ->columnSpanFull(),
                         Forms\Components\Select::make('roles')
                             ->multiple()
                             ->relationship('roles', 'name')
@@ -84,7 +87,8 @@ class UserResource extends Resource
                                     ->label(__('field.name'))
                                     ->required()
                                     ->dehydrateStateUsing(fn ($state) => Str::of($state)->lower()->replace(' ', '_'))
-                            ]),
+                            ])
+                            ->columnSpanFull(),
                     ])
             ]);
     }
@@ -95,6 +99,9 @@ class UserResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('name')
                     ->label(__('field.name'))
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('username')
+                    ->label(__('field.user.username'))
                     ->searchable(),
                 Tables\Columns\TextColumn::make('email')
                     ->label(__('field.email'))
@@ -141,7 +148,7 @@ class UserResource extends Resource
                     ->icon(fn(User $record) => $record->isNotBanned() ? 'fas-user-lock' : 'fas-user-check')
                     ->color(fn(User $record) => $record->isNotBanned() ? 'danger' : 'success')                        
                     ->requiresConfirmation()                                                
-                    ->modalHeading(fn(User $record) => $record->isNotBanned() ? __('btn.title.ban', ['name' => $record->name]) : __('btn.title.unban', ['name' => $record->name]))
+                    ->modalHeading(fn(User $record) => $record->isNotBanned() ? __('btn.label.ban', ['label' => $record->name]) : __('btn.label.unban', ['label' => $record->name]))
                     ->modalDescription(fn(User $record) => $record->isNotBanned() ? __('btn.msg.ban', ['name' => $record->name]) : __('btn.msg.unban', ['name' => $record->name]))
                     ->modalIcon(fn(User $record) => $record->isNotBanned() ? 'fas-user-lock' : 'fas-user-check')
                     ->modalIconColor(fn(User $record) => $record->isNotBanned() ? 'danger' : 'info')
