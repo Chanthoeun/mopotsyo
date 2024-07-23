@@ -80,6 +80,9 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->navigationGroups([
                 NavigationGroup::make()
+                     ->label(fn() => __('nav.hr'))
+                     ->icon('fas-users'),
+                NavigationGroup::make()
                      ->label(fn() => __('nav.rdf'))
                      ->icon('heroicon-o-shopping-cart'),
                 NavigationGroup::make()

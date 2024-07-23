@@ -18,6 +18,7 @@ return [
     'code'          => 'Code',
     'note'          => 'Note',
     'reference'     => 'Reference',
+    'date'          => 'Date',
 
     'name'      => 'Name',
     'email'     => 'Email',

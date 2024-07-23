@@ -15,5 +15,7 @@ return [
     'partner_types'     => 'Partner Types',
     'partner'           => 'Partner',
     'partners'          => 'Partners',
+    'public_holiday'    => 'Public Holiday',
+    'public_holidays'   => 'Public Holidays',
     
 ];
