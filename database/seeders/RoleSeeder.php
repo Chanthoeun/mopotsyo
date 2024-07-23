@@ -33,5 +33,9 @@ class RoleSeeder extends Seeder
             'name' => 'partner',
             'guard_name' => 'web',
         ]);
+        Role::create([
+            'name' => 'peer',
+            'guard_name' => 'web',
+        ]);
     }
 }

@@ -6,7 +6,10 @@ namespace App\Models;
 
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -60,5 +63,28 @@ class User extends Authenticatable implements FilamentUser
     {
         return true;
         // return str_ends_with($this->email, '@yourdomain.com') && $this->hasVerifiedEmail();
+    }
+
+    public function supervisors(): HasMany
+    {
+        return $this->hasMany(Supervisor::class);
+    }
+
+    
+    protected function supervisor(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->supervisors->where('is_active', true)->first()->supervisor ?? null,
+        );
+    }
+    
+    /**
+     * Get the user's supervisor name.
+     */
+    protected function supervisorName(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->supervisors->where('is_active', true)->first()->supervisor->name ?? null,
+        );
     }
 }

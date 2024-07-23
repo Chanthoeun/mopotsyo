@@ -2,6 +2,7 @@
 
 return [
     // General
+    'all'           => 'All',
     'created_by'    => 'Created By',
     'updated_by'    => 'Updated By',
     'modified_by'   => 'Modified By',
@@ -12,6 +13,11 @@ return [
     'deleted_at'    => 'Deleted At',
     'copied'        => ':name Copied!',
     'status'        => 'Status',
+    'is_active'     => 'Active',
+    'parent'        => 'Parent',
+    'code'          => 'Code',
+    'note'          => 'Note',
+    'reference'     => 'Reference',
 
     'name'      => 'Name',
     'email'     => 'Email',
