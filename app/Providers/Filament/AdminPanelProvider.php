@@ -6,6 +6,7 @@ use App\Filament\Auth\CustomLogin;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
+use Filament\Navigation\NavigationGroup;
 use Filament\Pages;
 use Filament\Panel;
 use Filament\PanelProvider;
@@ -76,6 +77,18 @@ class AdminPanelProvider extends PanelProvider
                 \BezhanSalleh\FilamentShield\FilamentShieldPlugin::make(),
                 SpatieLaravelTranslatablePlugin::make()->defaultLocales(['en', 'km']),
                 TranslationManagerPlugin::make(),
+            ])
+            ->navigationGroups([
+                NavigationGroup::make()
+                     ->label(fn() => __('nav.rdf'))
+                     ->icon('heroicon-o-shopping-cart'),
+                NavigationGroup::make()
+                    ->label(fn() => __('nav.admin'))
+                    ->icon('fas-gears'),
+                NavigationGroup::make()
+                    ->label(fn (): string => __('nav.log'))
+                    ->icon('fas-file-lines')
+                    ->collapsed(),
             ]);
     }
 }

@@ -11,5 +11,9 @@ return [
     'location_types'    => 'Location Types',
     'location'          => 'Location',
     'locations'         => 'Locations',
+    'partner_type'      => 'Partner Type',
+    'partner_types'     => 'Partner Types',
+    'partner'           => 'Partner',
+    'partners'          => 'Partners',
     
 ];

@@ -21,6 +21,15 @@ return [
 
     'name'      => 'Name',
     'email'     => 'Email',
+    'abbr'      => 'Abbr',
+    'address'   => 'Address',
+    'village'   => 'Village',
+    'commune'   => 'Commune',
+    'district'  => 'District',
+    'province'  => 'Province',
+    'map'       => 'Map',
+    'is_sale' => 'Sale',
+    
 
     // Model
     'user'      => [
