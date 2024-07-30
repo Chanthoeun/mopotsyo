@@ -19,6 +19,8 @@ return [
     'note'          => 'Note',
     'reference'     => 'Reference',
     'date'          => 'Date',
+    'color'         => 'Color',
+    'days'          => 'Day|Days',
 
     'name'      => 'Name',
     'email'     => 'Email',
@@ -32,6 +34,20 @@ return [
     'is_sale'   => 'Sale',
     'value'     => 'Value',
     'options'   => 'Options',
+    'male'      => 'Male',
+    'female'    => 'Female',
+    'balance'   => 'Balance',
+    'minimum_request_days' => 'Minimum Request Days',
+    'balance_increment_period' => 'Balance Increment Period',
+    'balance_increment_amount' => 'Balance Increment Amount',
+    'carry_forward' => 'Carry Forward',
+    'allow_carry_forward' => 'Allow Carry Forward',
+    'carry_forward_duration' => 'Carry Forward Duration',
+    'advance'       => 'Advance',
+    'allow_advance' => 'Allow Advance',
+    'advance_limit' => 'Advance Limit',
+    'accrual'       => 'Accrual',
+    'allow_accrual' => 'Allow Accrual',
     
 
     // Model

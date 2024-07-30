@@ -19,5 +19,7 @@ return [
     'public_holidays'   => 'Public Holidays',
     'contract_type'     => 'Contract Type',
     'contract_types'    => 'Contract Types',
+    'leave_type'        => 'Leave Type',
+    'leave_types'       => 'Leave Types',
     
 ];
