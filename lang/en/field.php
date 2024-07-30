@@ -29,7 +29,9 @@ return [
     'district'  => 'District',
     'province'  => 'Province',
     'map'       => 'Map',
-    'is_sale' => 'Sale',
+    'is_sale'   => 'Sale',
+    'value'     => 'Value',
+    'options'   => 'Options',
     
 
     // Model

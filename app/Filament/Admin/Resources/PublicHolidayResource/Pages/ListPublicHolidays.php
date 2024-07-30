@@ -25,7 +25,8 @@ class ListPublicHolidays extends ListRecords
                 ->icon('heroicon-o-plus'),
             ExcelImportAction::make()
                 ->color("primary")
-                ->icon('heroicon-o-arrow-up-tray'), 
+                ->icon('heroicon-o-arrow-up-tray')
+                ->use(\App\Imports\PublicHolidayImport::class),
             ExportAction::make()
                 ->icon('heroicon-o-arrow-down-tray')
                 ->exports([

@@ -78,6 +78,7 @@ class AdminPanelProvider extends PanelProvider
                 SpatieLaravelTranslatablePlugin::make()->defaultLocales(['en', 'km']),
                 TranslationManagerPlugin::make(),
             ])
+            ->unsavedChangesAlerts()
             ->navigationGroups([
                 NavigationGroup::make()
                      ->label(fn() => __('nav.hr'))
