@@ -21,5 +21,9 @@ return [
     'contract_types'    => 'Contract Types',
     'leave_type'        => 'Leave Type',
     'leave_types'       => 'Leave Types',
+    'shift'             => 'Shift',
+    'shifts'            => 'Shifts',
+    'shift_work_day'    => 'Shift Work Day',
+    'shift_work_days'   => 'Shift Work Days',
     
 ];

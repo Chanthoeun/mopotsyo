@@ -21,6 +21,9 @@ return [
     'date'          => 'Date',
     'color'         => 'Color',
     'days'          => 'Day|Days',
+    'day'           => 'Day',
+    'hours'         => 'Hour|Hours',
+    'hour'          => 'Hour',
 
     'name'      => 'Name',
     'email'     => 'Email',
@@ -48,7 +51,16 @@ return [
     'advance_limit' => 'Advance Limit',
     'accrual'       => 'Accrual',
     'allow_accrual' => 'Allow Accrual',
-    
+    'start_time'    => 'Start Time',
+    'end_time'      => 'End Time',
+    'break_time'    => 'Break Time',
+    'break_from'    => 'Break From',
+    'break_to'      => 'Break To',
+    'from_time'     => 'From Time',
+    'to_time'       => 'To Time',
+    'from'          => 'From',
+    'to'            => 'To',
+
 
     // Model
     'user'      => [
