@@ -25,5 +25,9 @@ return [
     'shifts'            => 'Shifts',
     'shift_work_day'    => 'Shift Work Day',
     'shift_work_days'   => 'Shift Work Days',
+    'employee'          => 'Employee',
+    'employees'         => 'Employees',
+    'contract'          => 'Contract',
+    'contracts'         => 'Contracts',
     
 ];

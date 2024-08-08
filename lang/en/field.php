@@ -25,7 +25,13 @@ return [
     'hours'         => 'Hour|Hours',
     'hour'          => 'Hour',
 
+    'photo'    => 'Photo',
     'name'      => 'Name',
+    'first_name' => 'First Name',
+    'last_name' => 'Last Name',
+    'native_name' => 'Native Name',
+    'gender'    => 'Gender',
+    'date_of_birth' => 'Date Of Birth',
     'email'     => 'Email',
     'abbr'      => 'Abbr',
     'address'   => 'Address',
@@ -60,6 +66,19 @@ return [
     'to_time'       => 'To Time',
     'from'          => 'From',
     'to'            => 'To',
+    'personal_info' => 'Personal Info',
+    'account_info'  => 'Account Info',
+    'work_info'     => 'Work Info',
+    'joint_date'    => 'Joint Date',
+    'resign_date'   => 'Resign Date',
+    'position'      => 'Position',
+    'employee_id'   => 'Employee ID',
+    'supervisor'    => 'Supervisor',
+    'telephone'     => 'Telephone',
+    'file'          => 'File',
+    'files'         => 'Files',
+    'start_date'    => 'Start Date',
+    'end_date'      => 'End Date',
 
 
     // Model

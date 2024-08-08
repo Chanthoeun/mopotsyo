@@ -3,6 +3,7 @@
 namespace App\Providers\Filament;
 
 use App\Filament\Auth\CustomLogin;
+use Filament\FontProviders\GoogleFontProvider;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
@@ -93,6 +94,10 @@ class AdminPanelProvider extends PanelProvider
                     ->label(fn (): string => __('nav.log'))
                     ->icon('fas-file-lines')
                     ->collapsed(),
-            ]);
+            ])
+            ->font(
+                'Battambang', 
+                url: 'https://fonts.googleapis.com/css2?family=Battambang:wght@100;300;400;700;900&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap',
+                provider: GoogleFontProvider::class);
     }
 }

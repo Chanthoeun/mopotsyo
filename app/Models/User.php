@@ -64,17 +64,21 @@ class User extends Authenticatable implements FilamentUser
         return true;
         // return str_ends_with($this->email, '@yourdomain.com') && $this->hasVerifiedEmail();
     }
-
-    public function supervisors(): HasMany
+    
+    public function profile(): HasOne
     {
-        return $this->hasMany(Supervisor::class);
+        return $this->hasOne(Profile::class);
     }
 
+    public function contracts(): HasMany
+    {
+        return $this->hasMany(Contract::class);
+    }
     
     protected function supervisor(): Attribute
     {
         return Attribute::make(
-            get: fn () => $this->supervisors->where('is_active', true)->first()->supervisor ?? null,
+            get: fn () => $this->profile->supervisor,
         );
     }
     
@@ -84,7 +88,7 @@ class User extends Authenticatable implements FilamentUser
     protected function supervisorName(): Attribute
     {
         return Attribute::make(
-            get: fn () => $this->supervisors->where('is_active', true)->first()->supervisor->name ?? null,
+            get: fn () => $this->profile->supervisor->name ?? null,
         );
     }
 }
