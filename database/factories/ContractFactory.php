@@ -6,7 +6,8 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 use App\Models\Contract;
 use App\Models\ContractType;
-use App\Models\User;
+use App\Models\Department;
+use App\Models\Shift;
 
 class ContractFactory extends Factory
 {
@@ -23,12 +24,14 @@ class ContractFactory extends Factory
     public function definition(): array
     {
         return [
+            'contract_type_id' => ContractType::factory(),
+            'position' => $this->faker->word(),
             'start_date' => $this->faker->date(),
             'end_date' => $this->faker->date(),
+            'department_id' => Department::factory(),
+            'shift_id' => Shift::factory(),
             'file' => $this->faker->word(),
             'is_active' => $this->faker->boolean(),
-            'user_id' => User::factory(),
-            'contract_type_id' => ContractType::factory(),
         ];
     }
 }

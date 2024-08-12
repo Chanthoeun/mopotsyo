@@ -29,5 +29,7 @@ return [
     'employees'         => 'Employees',
     'contract'          => 'Contract',
     'contracts'         => 'Contracts',
+    'nationality'       => 'Nationality',
+    'nationalities'     => 'Nationalities',
     
 ];

@@ -3,10 +3,12 @@
 namespace App\Imports;
 
 use App\Models\Location;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Maatwebsite\Excel\Concerns\ToModel;
+use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 
-class LocationsImport implements ToModel, WithHeadingRow
+class LocationsImport implements ToModel, WithHeadingRow , WithChunkReading, ShouldQueue
 {
     /**
     * @param array $row
@@ -15,6 +17,12 @@ class LocationsImport implements ToModel, WithHeadingRow
     */
     public function model(array $row)
     {
+        // skip if the value exists in database
+        $location = Location::where('code', $row['code'])->first();
+        if($location){
+            return null;
+        }
+
         // parent                 
         $parentCode = substr($row['code'], 0, (strlen($row['code']) - 2));
         $location = new Location();
@@ -32,5 +40,10 @@ class LocationsImport implements ToModel, WithHeadingRow
         $location->setTranslation('name', 'km', $row['khmer']);
         $location->save();
         return $location;
+    }
+
+    public function chunkSize(): int
+    {
+        return 1000;
     }
 }

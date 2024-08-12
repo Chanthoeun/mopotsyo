@@ -15,12 +15,16 @@ return new class extends Migration
 
         Schema::create('contracts', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('member_id')->constrained()->onDelete('restrict')->cascadeOnUpdate();
+            $table->foreignId('contract_type_id')->constrained()->onDelete('restrict')->cascadeOnUpdate();
+            $table->string('position')->nullable();
             $table->date('start_date');
-            $table->date('end_date')->nullable();
+            $table->date('end_date');
+            $table->foreignId('department_id')->constrained()->onDelete('restrict')->cascadeOnUpdate();
+            $table->foreignId('shift_id')->constrained()->onDelete('restrict')->cascadeOnUpdate();
+            $table->foreignId('supervisor_id')->nullable()->constrained('users')->onDelete('restrict')->cascadeOnUpdate();
             $table->string('file')->nullable();
             $table->boolean('is_active')->default(1);
-            $table->foreignId('user_id')->constrained()->onDelete('restrict')->cascadeOnUpdate();
-            $table->foreignId('contract_type_id')->constrained()->onDelete('restrict')->cascadeOnUpdate();
             $table->timestamps();
             $table->softDeletes();
         });
