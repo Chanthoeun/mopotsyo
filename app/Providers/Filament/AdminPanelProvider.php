@@ -82,6 +82,9 @@ class AdminPanelProvider extends PanelProvider
             ->unsavedChangesAlerts()
             ->navigationGroups([
                 NavigationGroup::make()
+                     ->label(fn() => __('nav.employee'))
+                     ->icon('fas-user'),
+                NavigationGroup::make()
                      ->label(fn() => __('nav.hr'))
                      ->icon('fas-users'),
                 NavigationGroup::make()

@@ -212,6 +212,8 @@ class ContractsRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('contract_no')
                     ->label(__('field.contract_no'))
                     ->toggleable(isToggledHiddenByDefault: true),                
+                Tables\Columns\ToggleColumn::make('is_active')
+                    ->label(__('field.is_active')),                
                 
             ])
             ->headerActions([
@@ -219,7 +221,12 @@ class ContractsRelationManager extends RelationManager
                     ->label(__('btn.label.new', ['label' => __('model.contract')]))
                     ->color('primary')
                     ->icon('heroicon-o-plus')
-                    ->modalWidth('6xl'),
+                    ->modalWidth('6xl')
+                    ->before(function () {
+                        $this->ownerRecord->contracts()->update([
+                            'is_active' => false,  
+                        ]);
+                    }),
             ])
             ->actions([
                 MediaAction::make('file')

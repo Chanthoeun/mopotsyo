@@ -66,12 +66,19 @@ if(!function_exists('getEntitlementBalance')){
     function getEntitlementBalance($jointDate, $leaveType) : int {
         $startDate = Carbon::parse($jointDate);
         $endDate  = Carbon::createFromDate(now()->year, $startDate->month, $startDate->day);
-        $duration = $endDate->diffInYears($startDate);
+        $duration = $startDate->diffInYears($endDate);        
         $increment = 0;
         if(!empty($leaveType->balance_increment_amount) && !empty($leaveType->balance_increment_period)){                                                                            
             $increment =  intval($duration / floatval($leaveType->balance_increment_period));
         }
-        return intval($leaveType->balance + $increment);
+
+        $balance = intval($leaveType->balance + $increment);
+
+        if(!empty($leaveType->maximum_balance) && $leaveType->maximum_balance > $balance){
+            return $balance;
+        }
+        
+        return $leaveType->maximum_balance;
     }
 }
 

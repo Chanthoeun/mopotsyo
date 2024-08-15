@@ -29,5 +29,8 @@ return [
     'employees'         => 'Employees',
     'contract'          => 'Contract',
     'contracts'         => 'Contracts',
-    
+    'entitlement'       => 'Entitlement',
+    'entitlements'      => 'Entitlements',
+    'carry_forward'     => 'Carry Forward',
+    'carry_forwards'    => 'Carry Forwards',    
 ];

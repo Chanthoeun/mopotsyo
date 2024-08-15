@@ -86,18 +86,26 @@ class LeaveTypeResource extends Resource
                                     ->helperText(__('helper.minimum_request_day'))
                                     ->hint(__('hint.day'))
                                     ->placeholder(__('placeholder.minimum_request_day')),
-                                Forms\Components\TextInput::make('balance_increment_period')
-                                    ->label(__('field.balance_increment_period'))
-                                    ->helperText(__('helper.balance_increment_period'))
-                                    ->placeholder(__('placeholder.balance_increment_period'))
-                                    ->hint(__('hint.duration'))
-                                    ->maxLength(10),
-                                Forms\Components\TextInput::make('balance_increment_amount')
-                                    ->label(__('field.balance_increment_amount'))
-                                    ->numeric()
-                                    ->helperText(__('helper.balance_increment_amount'))
-                                    ->placeholder(__('placeholder.balance_increment_amount'))
-                                    ->hint(__('hint.day')),
+                                Forms\Components\Grid::make(3)
+                                    ->schema([
+                                        Forms\Components\TextInput::make('balance_increment_period')
+                                            ->label(__('field.balance_increment_period'))
+                                            ->helperText(__('helper.balance_increment_period'))
+                                            ->placeholder(__('placeholder.balance_increment_period'))
+                                            ->hint(__('hint.duration'))
+                                            ->live()
+                                            ->maxLength(10),
+                                        Forms\Components\TextInput::make('balance_increment_amount')
+                                            ->label(__('field.balance_increment_amount'))
+                                            ->numeric()
+                                            ->helperText(fn(Get $get) => __('helper.balance_increment_amount', ['period' => $get('balance_increment_period')]))                                            
+                                            ->hint(__('hint.day')),
+                                        Forms\Components\TextInput::make('maximum_balance')
+                                            ->label(__('field.maximum_balance'))
+                                            ->numeric()
+                                            ->helperText(__('helper.maximum_balance'))
+                                            ->hint(__('hint.day')),
+                                    ])
                             ]),
                         Forms\Components\Group::make()
                             ->columns(1)

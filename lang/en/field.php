@@ -46,9 +46,12 @@ return [
     'male'      => 'Male',
     'female'    => 'Female',
     'balance'   => 'Balance',
+    'taken'     => 'Taken',
+    'remaining' => 'Remaining',
     'minimum_request_days' => 'Minimum Request Days',
     'balance_increment_period' => 'Balance Increment Period',
     'balance_increment_amount' => 'Balance Increment Amount',
+    'maximum_balance' => 'Maximum Balance',
     'carry_forward' => 'Carry Forward',
     'allow_carry_forward' => 'Allow Carry Forward',
     'carry_forward_duration' => 'Carry Forward Duration',
@@ -85,6 +88,7 @@ return [
     'account'       => 'Account',
     'contract_no'   => 'Contract No',
     'attachment'    => 'Attachment',
+    'balance'       => 'Balance',
 
 
     // day

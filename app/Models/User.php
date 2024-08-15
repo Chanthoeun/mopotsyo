@@ -65,11 +65,10 @@ class User extends Authenticatable implements FilamentUser
         // return str_ends_with($this->email, '@yourdomain.com') && $this->hasVerifiedEmail();
     }
 
-
-    public function contracts(): HasMany
+    public function employee(): HasOne
     {
-        return $this->hasMany(Contract::class);
-    }
+        return $this->hasOne(Employee::class);
+    }    
     
     protected function supervisor(): Attribute
     {
