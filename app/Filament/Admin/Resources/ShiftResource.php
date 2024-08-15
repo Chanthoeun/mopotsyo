@@ -74,62 +74,62 @@ class ShiftResource extends Resource
                                 $set("shiftWorkDays.4.from_time", '08:00:00');
                                 $set("shiftWorkDays.4.to_time",'17:00:00');
                             }),
-                        Forms\Components\TimePicker::make('start_time')
-                            ->label(__('field.start_time'))
-                            ->required()
-                            ->default('08:00:00'),
-                        Forms\Components\TimePicker::make('end_time')
-                            ->label(__('field.end_time'))
-                            ->required()
-                            ->default('17:00:00'),
-                        Forms\Components\Fieldset::make('break_time')
-                            ->label(__('field.break_time') . ' (' .__('hint.break_time') . ')')                            
-                            ->columns(3)
-                            ->schema([
-                                Forms\Components\TextInput::make('break_time')
-                                    ->label(__('field.hour'))
-                                    ->required()
-                                    ->numeric()
-                                    ->live()
-                                    ->inputMode('decimal')
-                                    ->default(1)
-                                    ->helperText(fn($state) => __('helper.break_time', ['time' => decimalToTime($state)])),
-                                Forms\Components\TimePicker::make('break_from')
-                                    ->label(__('field.from'))
-                                    ->required()
-                                    ->default('12:00:00'),
-                                Forms\Components\TimePicker::make('break_to')
-                                    ->label(__('field.to'))
-                                    ->required()
-                                    ->default('13:00:00'),
-                            ]),                        
-                        TableRepeater::make('shiftWorkDays')
-                            ->label(__('model.shift_work_days'))
-                            ->relationship()                            
-                            ->reorderable(true)
-                            ->maxItems(7)         
-                            ->defaultItems(0)  
-                            ->headers([
-                                Header::make(__('field.day')),
-                                Header::make(__('field.from')),
-                                Header::make(__('field.to')),
-                            ])                                             
-                            ->columnSpan('full')
-                            ->hiddenOn('edit')
-                            ->schema([
-                                Forms\Components\TextInput::make('day')
-                                    ->hiddenLabel()
-                                    ->required()
-                                    ->default('Monday'),
-                                Forms\Components\TimePicker::make('from_time')
-                                    ->hiddenLabel()
-                                    ->required()
-                                    ->default('08:00:00'),
-                                Forms\Components\TimePicker::make('to_time')
-                                    ->hiddenLabel()
-                                    ->required()
-                                    ->default('17:00:00'),
-                            ])
+                        // Forms\Components\TimePicker::make('start_time')
+                        //     ->label(__('field.start_time'))
+                        //     ->required()
+                        //     ->default('08:00:00'),
+                        // Forms\Components\TimePicker::make('end_time')
+                        //     ->label(__('field.end_time'))
+                        //     ->required()
+                        //     ->default('17:00:00'),
+                        // Forms\Components\Fieldset::make('break_time')
+                        //     ->label(__('field.break_time') . ' (' .__('hint.break_time') . ')')                            
+                        //     ->columns(3)
+                        //     ->schema([
+                        //         Forms\Components\TextInput::make('break_time')
+                        //             ->label(__('field.hour'))
+                        //             ->required()
+                        //             ->numeric()
+                        //             ->live()
+                        //             ->inputMode('decimal')
+                        //             ->default(1)
+                        //             ->helperText(fn($state) => __('helper.break_time', ['time' => decimalToTime($state)])),
+                        //         Forms\Components\TimePicker::make('break_from')
+                        //             ->label(__('field.from'))
+                        //             ->required()
+                        //             ->default('12:00:00'),
+                        //         Forms\Components\TimePicker::make('break_to')
+                        //             ->label(__('field.to'))
+                        //             ->required()
+                        //             ->default('13:00:00'),
+                        //     ]),                        
+                        // TableRepeater::make('shiftWorkDays')
+                        //     ->label(__('model.shift_work_days'))
+                        //     ->relationship()                            
+                        //     ->reorderable(true)
+                        //     ->maxItems(7)         
+                        //     ->defaultItems(0)  
+                        //     ->headers([
+                        //         Header::make(__('field.day')),
+                        //         Header::make(__('field.from')),
+                        //         Header::make(__('field.to')),
+                        //     ])                                             
+                        //     ->columnSpan('full')
+                        //     ->hiddenOn('edit')
+                        //     ->schema([
+                        //         Forms\Components\TextInput::make('day')
+                        //             ->hiddenLabel()
+                        //             ->required()
+                        //             ->default('Monday'),
+                        //         Forms\Components\TimePicker::make('from_time')
+                        //             ->hiddenLabel()
+                        //             ->required()
+                        //             ->default('08:00:00'),
+                        //         Forms\Components\TimePicker::make('to_time')
+                        //             ->hiddenLabel()
+                        //             ->required()
+                        //             ->default('17:00:00'),
+                        //     ])
                     ]),
                 
             ]);
@@ -142,23 +142,23 @@ class ShiftResource extends Resource
                 Tables\Columns\TextColumn::make('name')
                     ->label(__('field.name'))
                     ->searchable(),
-                Tables\Columns\TextColumn::make('start_time')
-                    ->label(__('field.start_time'))
-                    ->time(),
-                Tables\Columns\TextColumn::make('end_time')
-                    ->label(__('field.end_time'))
-                    ->time(),
-                Tables\Columns\TextColumn::make('break_time')
-                    ->label(__('field.break_time'))
-                    ->numeric()
-                    ->sortable()
-                    ->alignCenter(),
-                Tables\Columns\TextColumn::make('break_from')
-                    ->label(__('field.break_from'))
-                    ->time(),
-                Tables\Columns\TextColumn::make('break_to')
-                    ->label(__('field.break_to'))
-                    ->time(),
+                // Tables\Columns\TextColumn::make('start_time')
+                //     ->label(__('field.start_time'))
+                //     ->time(),
+                // Tables\Columns\TextColumn::make('end_time')
+                //     ->label(__('field.end_time'))
+                //     ->time(),
+                // Tables\Columns\TextColumn::make('break_time')
+                //     ->label(__('field.break_time'))
+                //     ->numeric()
+                //     ->sortable()
+                //     ->alignCenter(),
+                // Tables\Columns\TextColumn::make('break_from')
+                //     ->label(__('field.break_from'))
+                //     ->time(),
+                // Tables\Columns\TextColumn::make('break_to')
+                //     ->label(__('field.break_to'))
+                //     ->time(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label(__('field.created_at'))
                     ->dateTime()
@@ -193,7 +193,7 @@ class ShiftResource extends Resource
     public static function getRelations(): array
     {
         return [
-            ShiftWorkDaysRelationManager::class
+            // ShiftWorkDaysRelationManager::class
         ];
     }
 

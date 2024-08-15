@@ -6,10 +6,24 @@ use Filament\Support\Contracts\HasColor;
 use Filament\Support\Contracts\HasIcon;
 use Filament\Support\Contracts\HasLabel;
 
-enum Gender: string implements HasLabel, HasColor, HasIcon
+enum GenderEnum: string implements HasLabel, HasColor, HasIcon
 {
     case FEMALE = 'female';
     case MALE   = 'male';    
+
+    public static function fromString(string $value): self
+    {
+        return match($value) {
+            'female'    => self::FEMALE,
+            'male'      => self::MALE,
+            'Female'    => self::FEMALE,
+            'Male'      => self::MALE,
+            'f'         => self::FEMALE,
+            'm'         => self::MALE,
+            'F'         => self::FEMALE,
+            'M'         => self::MALE,
+        };
+    }
 
     public function getLabel(): ?string
     {        

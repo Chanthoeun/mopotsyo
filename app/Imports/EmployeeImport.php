@@ -2,10 +2,10 @@
 
 namespace App\Imports;
 
-use App\Models\User;
+use App\Models\Employee;
 use Maatwebsite\Excel\Concerns\ToModel;
 
-class UserImport implements ToModel
+class EmployeeImport implements ToModel
 {
     /**
     * @param array $row
@@ -14,7 +14,7 @@ class UserImport implements ToModel
     */
     public function model(array $row)
     {
-        return new User([
+        return new Employee([
             //
         ]);
     }

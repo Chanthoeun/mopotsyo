@@ -13,16 +13,17 @@ return new class extends Migration
     {
         Schema::disableForeignKeyConstraints();
 
-        Schema::create('contracts', function (Blueprint $table) {
+        Schema::create('employee_contracts', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('member_id')->constrained()->onDelete('restrict')->cascadeOnUpdate();
+            $table->foreignId('employee_id')->constrained()->onDelete('restrict')->cascadeOnUpdate();
             $table->foreignId('contract_type_id')->constrained()->onDelete('restrict')->cascadeOnUpdate();
-            $table->string('position')->nullable();
+            $table->string('position');
             $table->date('start_date');
-            $table->date('end_date');
+            $table->date('end_date')->nullable();
             $table->foreignId('department_id')->constrained()->onDelete('restrict')->cascadeOnUpdate();
+            $table->foreignId('supervisor_id')->nullable()->constrained('employees')->onDelete('restrict')->cascadeOnUpdate();
             $table->foreignId('shift_id')->constrained()->onDelete('restrict')->cascadeOnUpdate();
-            $table->foreignId('supervisor_id')->nullable()->constrained('users')->onDelete('restrict')->cascadeOnUpdate();
+            $table->string('contract_no')->nullable();
             $table->string('file')->nullable();
             $table->boolean('is_active')->default(1);
             $table->timestamps();
@@ -37,6 +38,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('contracts');
+        Schema::dropIfExists('employee_contracts');
     }
 };

@@ -1,16 +1,16 @@
 <?php
 
-namespace App\Filament\Admin\Resources\NationalityResource\Pages;
+namespace App\Filament\Admin\Resources\EmployeeResource\Pages;
 
-use App\Filament\Admin\Resources\NationalityResource;
+use App\Filament\Admin\Resources\EmployeeResource;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
 
-class EditNationality extends EditRecord
+class EditEmployee extends EditRecord
 {
     use EditRecord\Concerns\Translatable;
 
-    protected static string $resource = NationalityResource::class;
+    protected static string $resource = EmployeeResource::class;
 
     protected function getHeaderActions(): array
     {

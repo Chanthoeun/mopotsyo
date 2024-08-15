@@ -69,6 +69,7 @@ return [
     'personal_info' => 'Personal Info',
     'account_info'  => 'Account Info',
     'work_info'     => 'Work Info',
+    'working_hours' => 'Working Hours',
     'joint_date'    => 'Joint Date',
     'resign_date'   => 'Resign Date',
     'position'      => 'Position',
@@ -79,6 +80,23 @@ return [
     'files'         => 'Files',
     'start_date'    => 'Start Date',
     'end_date'      => 'End Date',
+    'nickname'      => 'Nickname',
+    'nationality'   => 'Nationality',
+    'account'       => 'Account',
+    'contract_no'   => 'Contract No',
+    'attachment'    => 'Attachment',
+
+
+    // day
+    'days' => [
+        'sunday' => 'Sunday',
+        'monday' => 'Monday',
+        'tuesday' => 'Tuesday',
+        'wednesday' => 'Wednesday',
+        'thursday' => 'Thursday',
+        'friday' => 'Friday',
+        'saturday' => 'Saturday',   
+    ],
 
 
     // Model

@@ -13,6 +13,7 @@ class Shift extends Model
     use HasFactory, SoftDeletes, HasTranslations;
 
     public $translatable = ['name'];
+    
     /**
      * The attributes that are mass assignable.
      *
@@ -20,11 +21,6 @@ class Shift extends Model
      */
     protected $fillable = [
         'name',
-        'start_time',
-        'end_time',
-        'break_time',
-        'break_from',
-        'break_to',
     ];
 
     /**
@@ -36,8 +32,8 @@ class Shift extends Model
         'id' => 'integer',
     ];
 
-    public function shiftWorkDays(): HasMany
+    public function employeeContracts(): HasMany
     {
-        return $this->hasMany(ShiftWorkDay::class);
+        return $this->hasMany(EmployeeContract::class);
     }
 }

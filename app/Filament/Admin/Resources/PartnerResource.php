@@ -8,6 +8,7 @@ use App\Models\Partner;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
+use Filament\Forms\Set;
 use Filament\Resources\Concerns\Translatable;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -71,22 +72,34 @@ class PartnerResource extends Resource
                             ->relationship('province', 'name', fn(Builder $query) => $query->where('location_type_id', 1))                            
                             ->preload()
                             ->searchable()
-                            ->live(onBlur: true),
+                            ->live(onBlur: true)
+                            ->afterStateUpdated(function(Set $set) {
+                                $set('district_id', null);
+                                $set('commune_id', null);
+                                $set('village_id', null);
+                            }),
                         Forms\Components\Select::make('district_id')
                             ->label(__('field.district'))
-                            ->relationship('district', 'name', fn(Builder $query, Get $get) => $query->where('parent_id', $get('province_id')))
+                            ->relationship('district', 'name', fn(Builder $query, Get $get) => $query->where('location_type_id', 2)->where('parent_id', $get('province_id')))
                             ->preload()
                             ->searchable()
-                            ->live(onBlur: true),
+                            ->live(onBlur: true)
+                            ->afterStateUpdated(function(Set $set) {
+                                $set('commune_id', null);
+                                $set('village_id', null);
+                            }),
                         Forms\Components\Select::make('commune_id')
                             ->label(__('field.commune'))
-                            ->relationship('commune', 'name', fn(Builder $query, Get $get) => $query->where('parent_id', $get('district_id')))                            
+                            ->relationship('commune', 'name', fn(Builder $query, Get $get) => $query->where('location_type_id', 3)->where('parent_id', $get('district_id')))                            
                             ->preload()
                             ->searchable()
-                            ->live(onBlur: true),
+                            ->live(onBlur: true)
+                            ->afterStateUpdated(function(Set $set) {
+                                $set('village_id', null);
+                            }),
                         Forms\Components\Select::make('village_id')
                             ->label(__('field.village'))
-                            ->relationship('village', 'name', fn(Builder $query, Get $get) => $query->where('parent_id', $get('commune_id')))                            
+                            ->relationship('village', 'name', fn(Builder $query, Get $get) => $query->where('location_type_id', 4)->where('parent_id', $get('commune_id')))                            
                             ->preload()
                             ->searchable(),                                                
                         Forms\Components\TextInput::make('map')

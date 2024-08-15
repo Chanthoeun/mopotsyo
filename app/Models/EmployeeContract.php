@@ -5,14 +5,15 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Translatable\HasTranslations;
 
-class Contract extends Model
+class EmployeeContract extends Model
 {
     use HasFactory, SoftDeletes, HasTranslations;
 
-    public $translatable = ['Position'];
+    public $translatable = ['position'];
 
     /**
      * The attributes that are mass assignable.
@@ -20,6 +21,7 @@ class Contract extends Model
      * @var array
      */
     protected $fillable = [
+        'employee_id',
         'contract_type_id',
         'position',
         'start_date',
@@ -30,7 +32,6 @@ class Contract extends Model
         'contract_no',
         'file',
         'is_active',
-        'employee_id',
     ];
 
     /**
@@ -40,6 +41,7 @@ class Contract extends Model
      */
     protected $casts = [
         'id' => 'integer',
+        'employee_id' => 'integer',
         'contract_type_id' => 'integer',
         'start_date' => 'date',
         'end_date' => 'date',
@@ -47,7 +49,6 @@ class Contract extends Model
         'supervisor_id' => 'integer',
         'shift_id' => 'integer',
         'is_active' => 'boolean',
-        'employee_id' => 'integer',
     ];
 
     public function employee(): BelongsTo
@@ -72,6 +73,11 @@ class Contract extends Model
 
     public function supervisor(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(Employee::class);
+    }
+
+    public function employeeWorkDays(): HasMany
+    {
+        return $this->hasMany(EmployeeWorkDay::class, 'contract_id');
     }
 }
