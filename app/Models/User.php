@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 
+use Carbon\Carbon;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -17,10 +18,13 @@ use Mchev\Banhammer\Traits\Bannable;
 use Rappasoft\LaravelAuthenticationLog\Traits\AuthenticationLoggable;
 use Spatie\Permission\Traits\HasRoles;
 use Spatie\Translatable\HasTranslations;
+use Yebor974\Filament\RenewPassword\Contracts\RenewPasswordContract;
+use Yebor974\Filament\RenewPassword\RenewPasswordPlugin;
+use Yebor974\Filament\RenewPassword\Traits\RenewPassword;
 
-class User extends Authenticatable implements FilamentUser  
+class User extends Authenticatable implements FilamentUser, RenewPasswordContract
 {
-    use Bannable, HasRoles, HasFactory, Notifiable, AuthenticationLoggable, SoftDeletes, HasTranslations;
+    use Bannable, HasRoles, HasFactory, Notifiable, AuthenticationLoggable, SoftDeletes, HasTranslations, RenewPassword;
 
     public $translatable = ['name'];
     
@@ -64,6 +68,21 @@ class User extends Authenticatable implements FilamentUser
         return true;
         // return str_ends_with($this->email, '@yourdomain.com') && $this->hasVerifiedEmail();
     }
+
+    // renew password
+    public function needRenewPassword(): bool
+{
+    $plugin = RenewPasswordPlugin::get();
+ 
+    return
+        (
+            !is_null($plugin->getPasswordExpiresIn())
+            && Carbon::parse($this->{$plugin->getTimestampColumn()})->addDays($plugin->getPasswordExpiresIn()) < now()
+        ) || (
+            $plugin->getForceRenewPassword()
+            && $this->{$plugin->getForceRenewColumn()}
+        );
+}
 
     public function employee(): HasOne
     {

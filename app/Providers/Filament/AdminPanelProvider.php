@@ -27,6 +27,7 @@ use Mchev\Banhammer\Middleware\AuthBanned;
 use Mchev\Banhammer\Middleware\LogoutBanned;
 use Njxqlus\FilamentProgressbar\FilamentProgressbarPlugin;
 use Tapp\FilamentAuthenticationLog\FilamentAuthenticationLogPlugin;
+use Yebor974\Filament\RenewPassword\RenewPasswordPlugin;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -73,13 +74,14 @@ class AdminPanelProvider extends PanelProvider
             ->sidebarCollapsibleOnDesktop()
             ->databaseNotifications()
             ->databaseNotificationsPolling('30s')
-            ->viteTheme('resources/css/filament/admin/theme.css')
-            ->plugin(FilamentProgressbarPlugin::make()->color('#29b'))
+            ->viteTheme('resources/css/filament/admin/theme.css')            
             ->plugins([
+                FilamentProgressbarPlugin::make()->color('#29b'),
                 FilamentAuthenticationLogPlugin::make(),
                 \BezhanSalleh\FilamentShield\FilamentShieldPlugin::make(),
                 SpatieLaravelTranslatablePlugin::make()->defaultLocales(['en', 'km']),
                 TranslationManagerPlugin::make(),
+                RenewPasswordPlugin::make()->forceRenewPassword()
             ])
             ->unsavedChangesAlerts()
             ->navigationGroups([
