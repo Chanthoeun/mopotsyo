@@ -9,6 +9,8 @@ return [
     'create' => 'Create',
     'update' => 'Update',
     'resign' => 'Resign',
+    'import' => 'Import',
+    'export' => 'Export',
 
     // Button title
     'label' => [
@@ -19,6 +21,8 @@ return [
         'create'    => 'Create :label',
         'update'    => 'Update :label',
         'resign'    => 'Resign :label',
+        'import'    => 'Import :label',
+        'export'    => 'Export :label',
     ],
 
     // Button message
@@ -30,5 +34,7 @@ return [
         'create'    => 'Would you like to create :name?',
         'update'    => 'Would you like to update :name?',
         'resign'    => 'Would you like to set resign date for :name?',
+        'import'    => 'Would you like to import :name?',
+        'export'    => 'Would you like to export :name?',
     ]
 ];

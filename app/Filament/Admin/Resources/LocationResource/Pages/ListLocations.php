@@ -3,6 +3,7 @@
 namespace App\Filament\Admin\Resources\LocationResource\Pages;
 
 use App\Filament\Admin\Resources\LocationResource;
+use App\Imports\LocationsImport;
 use App\Models\LocationType;
 use EightyNine\ExcelImport\ExcelImportAction;
 use Filament\Actions;
@@ -29,7 +30,7 @@ class ListLocations extends ListRecords
             ExcelImportAction::make()
                 ->color("primary")
                 ->icon('heroicon-o-arrow-up-tray')
-                ->use(\App\Imports\LocationsImport::class),            
+                ->use(LocationsImport::class),            
             ExportAction::make()
                 ->icon('heroicon-o-arrow-down-tray')
                 ->exports([
