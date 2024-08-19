@@ -8,6 +8,7 @@ use App\Filament\Admin\Resources\EmployeeResource\RelationManagers;
 use App\Filament\Admin\Resources\EmployeeResource\RelationManagers\ContractsRelationManager;
 use App\Models\Employee;
 use App\Models\User;
+use App\Notifications\WelcomeNotification;
 use Carbon\Carbon;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -27,6 +28,7 @@ use Parfaitementweb\FilamentCountryField\Tables\Columns\CountryColumn;
 use Rawilk\FilamentPasswordInput\Password;
 use Ysfkaya\FilamentPhoneInput\Forms\PhoneInput;
 use Ysfkaya\FilamentPhoneInput\Tables\PhoneColumn;
+use Illuminate\Support\Str;
 
 class EmployeeResource extends Resource
 {
@@ -259,37 +261,30 @@ class EmployeeResource extends Resource
                         ->color('info')
                         ->requiresConfirmation()
                         ->modalIcon('fas-user-plus')
-                        ->visible(fn(Model $record) => empty($record->user))                        
-                        ->form([
-                            Password::make('password')
-                                ->hiddenLabel()
-                                ->placeholder(__('field.user.password'))
-                                ->autocomplete(false)
-                                ->required()
-                                ->regeneratePassword(notify: false)
-                                ->newPasswordLength(8)
-                                ->minLength(8)
-                                ->maxLength(20)
-                                ->copyable()
-                                ->copyMessage(__('field.copied', ['name' => __('field.user.password')]))
-                                ->copyMessageDuration(3000)
-                                ->dehydrateStateUsing(fn ($state) => Hash::make($state))
-                                ->dehydrated(fn ($state) => filled($state)),
-                        ])
-                        ->action(function (array $data, Employee $record) {
+                        ->visible(fn(Model $record) => empty($record->user))                                                
+                        ->action(function (Employee $record) {
+                            $password = Str::password(12); // generate a default password with length of 12 caracters
                             // create login account
-                            $record->update([
-                                'user_id'   => User::updateOrCreate([
+                            $user = User::updateOrCreate(
+                                [
                                     'email'     => $record->email,                                    
                                 ],
                                 [
                                     'name'      => $record->getTranslations('name'),
                                     'username'  => $record->employee_id,
                                     'email'     => $record->email, 
-                                    'password'  => $data['password'],
-                                    'email_verified_at' => now()                               
-                                ])->id
-                            ]);                        
+                                    'password'  => $password,
+                                    'email_verified_at' => now(),
+                                    'force_renew_password' => true                          
+                                ])->assignRole('employee');
+                            
+                            // update employee
+                            $record->update([
+                                'user_id'   => $user->id
+                            ]); 
+                            
+                            // send email notification
+                            $user->notify(new WelcomeNotification($password));
 
                             // send notification
                             Notification::make()
