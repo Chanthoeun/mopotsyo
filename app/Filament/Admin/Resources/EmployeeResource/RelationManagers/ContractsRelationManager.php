@@ -117,7 +117,7 @@ class ContractsRelationManager extends RelationManager
                                 }),
                             Forms\Components\Select::make('supervisor_id')
                                 ->label(__('field.supervisor'))
-                                ->relationship('supervisor', 'name', fn(Builder $query) => $query->whereNot('id', $this->ownerRecord->id)->whereNull('resign_date')),
+                                ->relationship('supervisor', 'name', fn(Builder $query) => $query->whereHas('employee', fn(Builder $query) => $query->whereNull('resign_date')->orWhereDate('resign_date', '>=', now()))->orderBy('id', 'asc')),
                             Forms\Components\TextInput::make('contract_no')
                                 ->label(__('field.contract_no'))
                                 ->unique(ignoreRecord: true)

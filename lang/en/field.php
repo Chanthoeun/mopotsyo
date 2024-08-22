@@ -90,8 +90,13 @@ return [
     'account'       => 'Account',
     'contract_no'   => 'Contract No',
     'attachment'    => 'Attachment',
+    'reason'        => 'Reason',
     'balance'       => 'Balance',
     'allow_leave_request'    => 'Allow Leave Request',
+    'desc'          => 'Description',
+    'from_amount'   => 'From Amount',
+    'to_amount'     => 'To Amount',
+    'day_in_advance'=> 'Day In Advance',
 
 
     // day

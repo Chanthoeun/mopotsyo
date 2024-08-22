@@ -5,15 +5,14 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Translatable\HasTranslations;
 
-class Department extends Model
+class LeaveRequestRule extends Model
 {
     use HasFactory, SoftDeletes, HasTranslations;
 
-    public $translatable = ['name'];
+    public $translatable = ['name', 'description'];
 
     /**
      * The attributes that are mass assignable.
@@ -21,10 +20,16 @@ class Department extends Model
      * @var array
      */
     protected $fillable = [
+        'leave_type_id',
         'name',
-        'parent_id',
-        'is_active',
-        'supervisor_id',
+        'description',
+        'from_amount',
+        'to_amount',
+        'day_in_advance',
+        'reason',
+        'attachment',
+        'contract_types',
+        'user_id',
     ];
 
     /**
@@ -34,22 +39,22 @@ class Department extends Model
      */
     protected $casts = [
         'id' => 'integer',
-        'parent_id' => 'integer',
-        'is_active' => 'boolean',
+        'from_amount' => 'integer',
+        'to_amount' => 'integer',
+        'day_in_advance' => 'integer',
+        'reason' => 'boolean',
+        'attachment' => 'boolean',
+        'contract_types' => 'array',
+        'user_id' => 'integer',
     ];
 
-    public function supervisor(): BelongsTo
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    public function parent(): BelongsTo
+    public function leaveType(): BelongsTo
     {
-        return $this->belongsTo(self::class, 'parent_id');
-    }
-
-    public function children(): HasMany
-    {
-        return $this->hasMany(self::class, 'parent_id');
+        return $this->belongsTo(LeaveType::class);
     }
 }

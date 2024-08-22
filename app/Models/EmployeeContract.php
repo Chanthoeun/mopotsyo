@@ -73,7 +73,7 @@ class EmployeeContract extends Model
 
     public function supervisor(): BelongsTo
     {
-        return $this->belongsTo(Employee::class);
+        return $this->belongsTo(User::class);
     }
 
     public function employeeWorkDays(): HasMany

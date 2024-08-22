@@ -97,7 +97,14 @@ class User extends Authenticatable implements FilamentUser, RenewPasswordContrac
     protected function supervisor(): Attribute
     {
         return Attribute::make(
-            get: fn () => $this->profile->supervisor,
+            get: function(){
+                
+                $contract = $this->employee->contract()->where('is_active', true)->first();
+                if(empty($contract->supervisor)){
+                    return $contract->department->supervisor ?? null;
+                }
+                return $contract->supervisor;
+            },
         );
     }
     

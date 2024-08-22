@@ -22,7 +22,7 @@ class DepartmentResource extends Resource
 
     protected static ?string $navigationIcon = 'fas-building-user';
 
-    protected static ?int $navigationSort = 4;
+    protected static ?int $navigationSort = 1;
 
     public static function getModelLabel(): string
     {
@@ -36,19 +36,29 @@ class DepartmentResource extends Resource
 
     public static function getNavigationGroup(): ?string
     {
-        return __('nav.admin');
+        return __('nav.hr');
     }
 
     public static function form(Form $form): Form
     {
-        return $form
-            ->schema([
+        return $form            
+            ->schema([                
                 Forms\Components\TextInput::make('name')
                     ->label(__('field.name'))
                     ->required()
                     ->unique(ignoreRecord: true)
                     ->maxLength(255)
-                    ->columnSpanFull(),                
+                    ->columnSpanFull(), 
+                Forms\Components\Select::make('parent_id')
+                    ->label(__('field.parent'))
+                    ->relationship('parent', 'name')
+                    ->preload()
+                    ->searchable(),
+                Forms\Components\Select::make('supperior_id')
+                    ->label(__('field.supervisor'))
+                    ->relationship('supervisor', 'name', fn(Builder $query) => $query->whereHas('employee', fn(Builder $query) => $query->whereNull('resign_date')->orWhereDate('resign_date', '>=', now())))
+                    ->preload()
+                    ->searchable(),               
             ]);
     }
 
@@ -58,6 +68,12 @@ class DepartmentResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('name')
                     ->label(__('field.name'))
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('parent.name')
+                    ->label(__('field.parent'))
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('supervisor.name')
+                    ->label(__('field.supervisor'))
                     ->searchable(),
                 Tables\Columns\ToggleColumn::make('is_active')
                     ->label(__('field.is_active')),
