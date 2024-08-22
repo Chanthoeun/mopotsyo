@@ -24,6 +24,8 @@ return [
     'day'           => 'Day',
     'hours'         => 'Hour|Hours',
     'hour'          => 'Hour',
+    'leave_request_form' => 'Leave Request Form',
+    'leave_request_info' => 'Leave Request Info',
 
     'photo'    => 'Photo',
     'name'      => 'Name',
@@ -48,6 +50,7 @@ return [
     'balance'   => 'Balance',
     'taken'     => 'Taken',
     'remaining' => 'Remaining',
+    'accrued'   => 'Accrued',
     'minimum_request_days' => 'Minimum Request Days',
     'balance_increment_period' => 'Balance Increment Period',
     'balance_increment_amount' => 'Balance Increment Amount',
@@ -97,6 +100,9 @@ return [
     'from_amount'   => 'From Amount',
     'to_amount'     => 'To Amount',
     'day_in_advance'=> 'Day In Advance',
+    'rule'          => 'Rule',
+    'rules'         => 'Rules',
+    'request_dates' => 'Request Dates',
 
 
     // day
@@ -116,5 +122,14 @@ return [
         'username'          => 'Username',
         'email_verified'    => 'Email Verified',
         'password'          => 'Password'
+    ],
+
+    // Approval
+    'approval' => [
+        'submitted'     => 'Submitted',
+        'approved'      => 'Approved',
+        'rejected'      => 'Rejected',
+        'discarded'     => 'Discarded',
+        'returned'      => 'Returned',
     ]
 ];

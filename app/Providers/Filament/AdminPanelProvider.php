@@ -81,7 +81,8 @@ class AdminPanelProvider extends PanelProvider
                 \BezhanSalleh\FilamentShield\FilamentShieldPlugin::make(),
                 SpatieLaravelTranslatablePlugin::make()->defaultLocales(['en', 'km']),
                 TranslationManagerPlugin::make(),
-                RenewPasswordPlugin::make()->forceRenewPassword()
+                RenewPasswordPlugin::make()->forceRenewPassword(),
+                \EightyNine\Approvals\ApprovalPlugin::make()
             ])
             ->unsavedChangesAlerts()
             ->navigationGroups([

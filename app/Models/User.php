@@ -93,13 +93,18 @@ class User extends Authenticatable implements FilamentUser, RenewPasswordContrac
     {
         return $this->hasMany(LeaveEntitlement::class);
     }
+
+    public function leaveRequests(): HasMany
+    {
+        return $this->hasMany(LeaveRequest::class);
+    }
     
     protected function supervisor(): Attribute
     {
         return Attribute::make(
             get: function(){
                 
-                $contract = $this->employee->contract()->where('is_active', true)->first();
+                $contract = $this->employee->contracts()->where('is_active', true)->first();
                 if(empty($contract->supervisor)){
                     return $contract->department->supervisor ?? null;
                 }
@@ -108,13 +113,5 @@ class User extends Authenticatable implements FilamentUser, RenewPasswordContrac
         );
     }
     
-    /**
-     * Get the user's supervisor name.
-     */
-    protected function supervisorName(): Attribute
-    {
-        return Attribute::make(
-            get: fn () => $this->profile->supervisor->name ?? null,
-        );
-    }
+    
 }

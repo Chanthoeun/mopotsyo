@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Enums\ApprovalStatuEnum;
+use EightyNine\Approvals\Models\ApprovableModel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -9,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class LeaveRequest extends Model
+class LeaveRequest extends ApprovableModel
 {
     use HasFactory, SoftDeletes;
 
@@ -37,7 +39,7 @@ class LeaveRequest extends Model
         'leave_type_id' => 'integer',
         'from_date' => 'date',
         'to_date' => 'date',
-        'status' => 'integer',
+        'status' => ApprovalStatuEnum::class,
         'user_id' => 'integer',
     ];
 
@@ -54,11 +56,6 @@ class LeaveRequest extends Model
     public function requestDates(): MorphMany
     {
         return $this->morphMany(RequestDate::class, 'requestdateable');
-    }
-
-    public function actionStatuses(): MorphMany
-    {
-        return $this->morphMany(ActionStatus::class, 'actionstatusable');
     }
 
     public function leaverequestable(): MorphTo

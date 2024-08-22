@@ -7,6 +7,7 @@
 // use App\Models\User;
 
 use App\Enums\ActionStatusEnum;
+use App\Models\PublicHoliday;
 use App\Models\User;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
@@ -58,7 +59,11 @@ if(!function_exists('getHoursBetweenTwoTimes')){
     function getHoursBetweenTwoTimes($stat_time, $end_time){
         $startTime  = Carbon::parse($stat_time);
         $endTime    = Carbon::parse($end_time);
-        return $startTime->floatDiffInHours($endTime);
+        $hours = $startTime->floatDiffInHours($endTime);
+        if($hours < 8){
+            return 8;
+        }
+        return $hours;
     }
 }
 
@@ -66,7 +71,7 @@ if(!function_exists('getEntitlementBalance')){
     function getEntitlementBalance($jointDate, $leaveType) : int {
         $startDate = Carbon::parse($jointDate);
         $endDate  = Carbon::createFromDate(now()->year, $startDate->month, $startDate->day);
-        $duration = $startDate->diffInYears($endDate);        
+        $duration = intval($startDate->diffInYears($endDate));        
         $increment = 0;
         if(!empty($leaveType->balance_increment_amount) && !empty($leaveType->balance_increment_period)){                                                                            
             $increment =  intval($duration / floatval($leaveType->balance_increment_period));
@@ -113,7 +118,9 @@ if(!function_exists('isWeekend')){
 
 
 if(!function_exists('isPublicHoliday')){
-    function isPublicHoliday($user, $date): bool{
+    function isPublicHoliday($date): bool{
+        $publicHoliday = PublicHoliday::whereDate('date', $date)->first();
+        return $publicHoliday ? true : false;
         return $user->profile->law->publicHolidays->map(function($holiday){
             return [
                 'date'  => Carbon::parse($holiday->date)->toDateString(),
@@ -195,6 +202,7 @@ if(!function_exists('calculateAccrud'))
         $from   = Carbon::parse($startDate, config('app.timezone'));
         $to     = Carbon::parse($endDate, config('app.timezone'));
         $days   = $from->diffInDays($to);
+
         if($days > 0)
         {
             $perDay = ($balance / getDaysOfTheYear(now()->year));  

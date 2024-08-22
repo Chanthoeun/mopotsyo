@@ -54,156 +54,51 @@ class UserResource extends Resource implements HasShieldPermissions
                 Forms\Components\Section::make()                    
                     ->columns(2)
                     ->schema([
-                        Forms\Components\Fieldset::make(__('field.account_info'))
-                            ->columns(1)
-                            ->columnSpan(fn(string $operation) => $operation === 'edit' ? 2 : 1)                            
-                            ->schema([
+                        Forms\Components\TextInput::make('name')
+                            ->hiddenLabel()
+                            ->placeholder(__('field.name'))
+                            ->required()
+                            ->maxLength(50)
+                            ->suffixIcon('fas-language'),
+                        Forms\Components\TextInput::make('username')
+                            ->hiddenLabel()
+                            ->placeholder(__('field.user.username'))
+                            ->required()
+                            ->maxLength(50),
+                        Forms\Components\TextInput::make('email')
+                            ->hiddenLabel()
+                            ->placeholder(__('field.email'))
+                            ->email()
+                            ->unique(ignoreRecord: true)
+                            ->maxLength(50),
+                        Password::make('password')
+                            ->hiddenLabel()
+                            ->placeholder(__('field.user.password'))
+                            ->autocomplete(false)
+                            ->required(fn (string $context): bool => $context === 'create')
+                            ->regeneratePassword(notify: false)
+                            ->newPasswordLength(8)
+                            ->minLength(8)
+                            ->maxLength(20)
+                            ->copyable()
+                            ->copyMessage(__('field.copied', ['name' => __('field.user.password')]))
+                            ->copyMessageDuration(3000)
+                            ->dehydrateStateUsing(fn ($state) => Hash::make($state))
+                            ->dehydrated(fn ($state) => filled($state)),
+                        Forms\Components\Select::make('roles')
+                            ->hiddenLabel()
+                            ->placeholder(__('model.roles'))
+                            ->multiple()
+                            ->relationship('roles', 'name')
+                            ->getOptionLabelFromRecordUsing(fn (Role $record) => ucwords(Str::of($record->name)->replace('_', ' ')))
+                            ->preload()
+                            ->createOptionForm([
                                 Forms\Components\TextInput::make('name')
-                                    ->hiddenLabel()
-                                    ->placeholder(__('field.name'))
+                                    ->label(__('field.name'))
                                     ->required()
-                                    ->maxLength(50)
-                                    ->suffixIcon('fas-language'),
-                                Forms\Components\TextInput::make('username')
-                                    ->hiddenLabel()
-                                    ->placeholder(__('field.user.username'))
-                                    ->required()
-                                    ->maxLength(50),
-                                Forms\Components\TextInput::make('email')
-                                    ->hiddenLabel()
-                                    ->placeholder(__('field.email'))
-                                    ->email()
-                                    ->unique(ignoreRecord: true)
-                                    ->maxLength(50),
-                                Password::make('password')
-                                    ->hiddenLabel()
-                                    ->placeholder(__('field.user.password'))
-                                    ->autocomplete(false)
-                                    ->required(fn (string $context): bool => $context === 'create')
-                                    ->regeneratePassword(notify: false)
-                                    ->newPasswordLength(8)
-                                    ->minLength(8)
-                                    ->maxLength(20)
-                                    ->copyable()
-                                    ->copyMessage(__('field.copied', ['name' => __('field.user.password')]))
-                                    ->copyMessageDuration(3000)
-                                    ->dehydrateStateUsing(fn ($state) => Hash::make($state))
-                                    ->dehydrated(fn ($state) => filled($state)),
-                                Forms\Components\Select::make('roles')
-                                    ->hiddenLabel()
-                                    ->placeholder(__('model.roles'))
-                                    ->multiple()
-                                    ->relationship('roles', 'name')
-                                    ->getOptionLabelFromRecordUsing(fn (Role $record) => ucwords(Str::of($record->name)->replace('_', ' ')))
-                                    ->preload()
-                                    ->createOptionForm([
-                                        Forms\Components\TextInput::make('name')
-                                            ->label(__('field.name'))
-                                            ->required()
-                                            ->dehydrateStateUsing(fn ($state) => Str::of($state)->lower()->replace(' ', '_'))
-                                    ]),
-
-                                Forms\Components\Repeater::make('contracts')
-                                    ->relationship()
-                                    ->columns(2)
-                                    ->hiddenOn('edit')
-                                    ->addable(false)
-                                    ->deletable(false)
-                                    ->schema([
-                                        Forms\Components\Select::make('contract_type_id')
-                                            ->placeholder(__('model.contract_type'))
-                                            ->hiddenLabel()
-                                            ->relationship('contractType', 'name', fn(Builder $query) => $query->orderBy('id', 'asc'))
-                                            ->required()
-                                            ->columnSpanFull(),
-                                        Forms\Components\DatePicker::make('start_date')
-                                            ->hiddenLabel()
-                                            ->placeholder(__('field.start_date'))
-                                            ->required()
-                                            ->native(false),
-                                        Forms\Components\DatePicker::make('end_date')
-                                            ->hiddenLabel()
-                                            ->placeholder(__('field.end_date'))
-                                            ->native(false),
-                                            
-                                    ])
-                            ]),
-                        Forms\Components\Fieldset::make(__('field.personal_info'))
-                            ->columns(3)
-                            ->columnSpan(['lg' => 1])
-                            ->relationship('profile', 'position', fn (Component $livewire): string => 'position->'.$livewire->activeLocale)
-                            ->hiddenOn('edit')
-                            ->schema([
-                                Forms\Components\Group::make()
-                                    ->columnSpan(['lg' => 1])
-                                    ->schema([
-                                        Forms\Components\FileUpload::make('photo')
-                                            ->hiddenLabel()
-                                            ->placeholder(__('field.photo'))
-                                            ->directory('employee-photos')
-                                            ->image()
-                                            ->imageEditor()
-                                            ->imageEditorAspectRatios([
-                                                null,                                                                
-                                                '1:1',
-                                            ]),
-                                    ]),
-                                Forms\Components\Group::make()
-                                    ->columnSpan(['lg' => 2])
-                                    ->schema([
-                                        Forms\Components\ToggleButtons::make('gender')
-                                            ->label(__('field.gender'))
-                                            ->hiddenLabel()
-                                            ->options(Gender::class)
-                                            ->inline()
-                                            ->required(),
-                                        Forms\Components\DatePicker::make('date_of_birth')
-                                            ->hiddenLabel()
-                                            ->placeholder(__('field.date_of_birth'))
-                                            ->required()
-                                            ->native(false),
-                                    ]),
-                                Forms\Components\Group::make()
-                                    ->columns(1)
-                                    ->columnSpanFull()
-                                    ->schema([
-                                        Forms\Components\TextInput::make('telephone')
-                                            ->hiddenLabel()
-                                            ->placeholder(__('field.telephone'))
-                                            ->required(),
-                                        Forms\Components\TextInput::make('address')
-                                            ->hiddenLabel()
-                                            ->placeholder(__('field.address'))
-                                            ->required()
-                                            ->suffixIcon('fas-language'),
-                                        Forms\Components\TextInput::make('position')
-                                            ->hiddenLabel()
-                                            ->placeholder(__('field.position'))
-                                            ->required()
-                                            ->suffixIcon('fas-language'),
-                                        Forms\Components\Select::make('department_id')
-                                            ->hiddenLabel()
-                                            ->placeholder(__('model.departments'))
-                                            ->relationship('department', 'name')
-                                            ->required()
-                                            ->createOptionForm([
-                                                Forms\Components\TextInput::make('name')
-                                                    ->label(__('field.name'))
-                                                    ->required()
-                                            ]),
-                                        Forms\Components\Select::make('shift_id')
-                                            ->hiddenLabel()
-                                            ->placeholder(__('model.shifts'))
-                                            ->relationship('shift', 'name')
-                                            ->required(),
-                                        Forms\Components\Select::make('supervisor_id')
-                                            ->hiddenLabel()
-                                            ->placeholder(__('field.supervisor'))
-                                            ->relationship('supervisor', 'name', fn(Builder $query) => $query->whereNot('id', 1)),
-                                    ])
-                                    
+                                    ->dehydrateStateUsing(fn ($state) => Str::of($state)->lower()->replace(' ', '_'))
                             ])
-                        
+                            ->columnSpanFull(), 
                     ])
             ]);
     }
@@ -212,7 +107,7 @@ class UserResource extends Resource implements HasShieldPermissions
     {
         return $table
             ->columns([
-                Tables\Columns\ImageColumn::make('profile.photo')
+                Tables\Columns\ImageColumn::make('employee.photo')
                     ->label(__('field.photo'))
                     ->circular()
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -224,10 +119,7 @@ class UserResource extends Resource implements HasShieldPermissions
                     ->searchable(),
                 Tables\Columns\TextColumn::make('email')
                     ->label(__('field.email'))
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('profile.position')
-                    ->label(__('field.position'))
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->searchable(),                
                 Tables\Columns\TextColumn::make('roles.name')
                     ->label(__('model.roles'))
                     ->badge()
@@ -298,8 +190,6 @@ class UserResource extends Resource implements HasShieldPermissions
     public static function getRelations(): array
     {
         return [
-            ProfileRelationManager::class,
-            ContractsRelationManager::class,
             AuthenticationLogsRelationManager::class,
         ];
     }

@@ -71,4 +71,16 @@ class LeaveEntitlement extends Model
             get: fn () => floatval($this->balance - $this->taken),
         );
     }
+
+    protected function accrued(): Attribute
+    {
+        return Attribute::make(
+            get: function(){
+                if($this->leaveType->allow_accrual){
+                    return calculateAccrud($this->balance, $this->start_date, now());
+                }
+                return 0;
+            },
+        );
+    }
 }
