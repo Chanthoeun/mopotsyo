@@ -33,4 +33,8 @@ return [
     'entitlements'      => 'Entitlements',
     'carry_forward'     => 'Carry Forward',
     'carry_forwards'    => 'Carry Forwards',    
+    'leave_request'     => 'Leave Request',
+    'leave_requests'    => 'Leave Requests',    
+    'leave'             => 'Leave',
+    'leaves'            => 'Leaves',    
 ];

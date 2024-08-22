@@ -19,6 +19,7 @@ return new class extends Migration
             $table->string('name');
             $table->string('nickname')->nullable();
             $table->string('gender', 6);
+            $table->boolean('married')->default(0);
             $table->date('date_of_birth')->nullable();
             $table->string('nationality', 3)->nullable();
             $table->string('email')->unique();
@@ -29,6 +30,7 @@ return new class extends Migration
             $table->foreignId('district_id')->nullable()->constrained('locations')->onDelete('restrict')->cascadeOnUpdate();
             $table->foreignId('province_id')->nullable()->constrained('locations')->onDelete('restrict')->cascadeOnUpdate();
             $table->string('photo')->nullable();
+            $table->date('join_date')->nullable();
             $table->date('resign_date')->nullable();
             $table->boolean('status')->default(0);
             $table->foreignId('user_id')->nullable()->constrained()->onDelete('restrict')->cascadeOnUpdate();

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Translatable\HasTranslations;
 
@@ -55,4 +56,9 @@ class LeaveType extends Model
         'advance_limit' => 'integer',
         'allow_accrual' => 'boolean',
     ];
+
+    public function entitlements(): HasMany
+    {
+        return $this->hasMany(LeaveEntitlement::class);
+    }
 }

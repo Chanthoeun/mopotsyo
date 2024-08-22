@@ -15,7 +15,8 @@ return new class extends Migration
             $table->id();
             $table->string('name')->unique();
             $table->string('abbr', 5)->unique();
-            $table->json('options')->nullable();
+            $table->boolean('allow_leave_request')->default(1);
+            $table->json('leave_types')->nullable();
             $table->timestamps();
             $table->softDeletes();
         });

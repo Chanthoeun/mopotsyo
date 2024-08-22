@@ -67,14 +67,16 @@ return [
     'break_to'      => 'Break To',
     'from_time'     => 'From Time',
     'to_time'       => 'To Time',
-    'from'          => 'From',
-    'to'            => 'To',
+    'from_date'     => 'From Date',
+    'to_date'       => 'To Date',
+    'select_date'   => 'Select Date',
     'personal_info' => 'Personal Info',
     'account_info'  => 'Account Info',
     'work_info'     => 'Work Info',
     'working_hours' => 'Working Hours',
-    'joint_date'    => 'Joint Date',
+    'join_date'     => 'Join Date',
     'resign_date'   => 'Resign Date',
+    'married'       => 'Married',
     'position'      => 'Position',
     'employee_id'   => 'Employee ID',
     'supervisor'    => 'Supervisor',
@@ -89,6 +91,7 @@ return [
     'contract_no'   => 'Contract No',
     'attachment'    => 'Attachment',
     'balance'       => 'Balance',
+    'allow_leave_request'    => 'Allow Leave Request',
 
 
     // day

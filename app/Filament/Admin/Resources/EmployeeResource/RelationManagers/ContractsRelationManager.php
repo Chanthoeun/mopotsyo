@@ -195,7 +195,7 @@ class ContractsRelationManager extends RelationManager
             ->columns([
                 Tables\Columns\TextColumn::make('position')
                     ->label(__('field.position')),
-                Tables\Columns\TextColumn::make('contractType.abbr')
+                Tables\Columns\TextColumn::make('contractType.name')
                     ->label(__('model.contract_type'))
                     ->alignCenter(),
                 Tables\Columns\TextColumn::make('start_date')

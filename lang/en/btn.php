@@ -11,6 +11,8 @@ return [
     'resign' => 'Resign',
     'import' => 'Import',
     'export' => 'Export',
+    'request' => 'Request',
+    'generate' => 'Generate',
 
     // Button title
     'label' => [
@@ -23,6 +25,8 @@ return [
         'resign'    => 'Resign :label',
         'import'    => 'Import :label',
         'export'    => 'Export :label',
+        'request'   => 'Request :label',
+        'generate'  => 'Generate :label',
     ],
 
     // Button message
@@ -36,5 +40,7 @@ return [
         'resign'    => 'Would you like to set resign date for :name?',
         'import'    => 'Would you like to import :name?',
         'export'    => 'Would you like to export :name?',
+        'request'   => 'Would you like to request :name?',
+        'generate'  => 'Would you like to generate :name?',
     ]
 ];

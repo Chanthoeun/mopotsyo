@@ -52,7 +52,6 @@ class LeaveTypeResource extends Resource
                             ->label(__('field.name'))
                             ->required()
                             ->unique(ignoreRecord:true)
-                            ->maxLength(50)
                             ->columnSpanFull(),
                         Forms\Components\TextInput::make('abbr')
                             ->label(__('field.abbr'))

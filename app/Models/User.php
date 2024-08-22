@@ -88,6 +88,11 @@ class User extends Authenticatable implements FilamentUser, RenewPasswordContrac
     {
         return $this->hasOne(Employee::class);
     }    
+
+    public function entitlements(): HasMany
+    {
+        return $this->hasMany(LeaveEntitlement::class);
+    }
     
     protected function supervisor(): Attribute
     {

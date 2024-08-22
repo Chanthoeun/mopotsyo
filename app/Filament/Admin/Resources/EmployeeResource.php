@@ -69,17 +69,28 @@ class EmployeeResource extends Resource
                         Forms\Components\TextInput::make('nickname')
                             ->label(__('field.nickname'))
                             ->maxLength(255),
-                        Forms\Components\TextInput::make('employee_id')
-                            ->label(__('field.employee_id'))
-                            ->required()
-                            ->unique(ignoreRecord: true)
-                            ->prefixIcon('fas-id-card')
-                            ->maxLength(20),                        
-                        Forms\Components\ToggleButtons::make('gender')
-                            ->label(__('field.gender'))
-                            ->required()
-                            ->options(GenderEnum::class)
-                            ->inline(),
+                        Forms\Components\Grid::make(3)
+                            ->schema([
+                                Forms\Components\TextInput::make('employee_id')
+                                    ->label(__('field.employee_id'))
+                                    ->required()
+                                    ->unique(ignoreRecord: true)
+                                    ->prefixIcon('fas-id-card')
+                                    ->maxLength(20),                        
+                                Forms\Components\ToggleButtons::make('gender')
+                                    ->label(__('field.gender'))
+                                    ->required()
+                                    ->options(GenderEnum::class)
+                                    ->inline()
+                                    ->grouped(),
+                                Forms\Components\ToggleButtons::make('married')
+                                    ->label(__('field.married'))
+                                    ->required()
+                                    ->boolean()
+                                    ->inline()
+                                    ->grouped(),
+                            ]),
+                        
                         Forms\Components\TextInput::make('email')
                             ->label(__('field.email'))
                             ->email()
@@ -90,16 +101,25 @@ class EmployeeResource extends Resource
                         PhoneInput::make('telephone')
                             ->label(__('field.telephone'))
                             ->prefixIcon('fas-phone'),
+                        Forms\Components\Grid::make(3)
+                            ->schema([
+                                Forms\Components\DatePicker::make('date_of_birth')
+                                    ->label(__('field.date_of_birth'))
+                                    ->placeholder(__('field.select_date'))
+                                    ->native(false)
+                                    ->suffixIcon('fas-calendar'),
+                                Forms\Components\DatePicker::make('join_date')
+                                    ->label(__('field.join_date'))
+                                    ->placeholder(__('field.select_date'))
+                                    ->native(false)
+                                    ->suffixIcon('fas-calendar'),
+                                Country::make('nationality')
+                                    ->label(__('field.nationality'))
+                                    ->required()
+                                    ->searchable()
+                                    ->default('KH'),
+                            ]),
                         
-                        Forms\Components\DatePicker::make('date_of_birth')
-                            ->label(__('field.date_of_birth'))
-                            ->native(false)
-                            ->suffixIcon('fas-calendar'),
-                        Country::make('nationality')
-                            ->label(__('field.nationality'))
-                            ->required()
-                            ->searchable()
-                            ->default('KH'),
                         Forms\Components\TextInput::make('address')
                             ->label(__('field.address'))
                             ->maxLength(255)
@@ -180,10 +200,16 @@ class EmployeeResource extends Resource
                     ->label(__('field.gender'))
                     ->searchable()
                     ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\IconColumn::make('married')
+                    ->label(__('field.married'))
+                    ->boolean()
+                    ->alignCenter()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('date_of_birth')
                     ->label(__('field.date_of_birth'))
                     ->date()
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(),
                 CountryColumn::make('nationality')
                     ->label(__('field.nationality'))
                     ->searchable()
@@ -193,7 +219,12 @@ class EmployeeResource extends Resource
                     ->searchable(),
                 PhoneColumn::make('telephone')
                     ->label(__('field.telephone'))
-                    ->searchable(),  
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true), 
+                Tables\Columns\TextColumn::make('join_date')
+                    ->label(__('field.join_date'))
+                    ->date()
+                    ->sortable(), 
                 Tables\Columns\TextColumn::make('resign_date')
                     ->label(__('field.resign_date'))
                     ->date()

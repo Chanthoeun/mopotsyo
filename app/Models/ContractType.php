@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Translatable\HasTranslations;
 
@@ -22,7 +23,8 @@ class ContractType extends Model
     protected $fillable = [
         'name',
         'abbr',
-        'options',
+        'allow_leave_request',
+        'leave_types'
     ];
 
     /**
@@ -32,6 +34,12 @@ class ContractType extends Model
      */
     protected $casts = [
         'id' => 'integer',
-        'options' => 'array',
+        'allow_leave_request' => 'boolean',
+        'leave_types' => 'array',
     ];
+
+    public function contracts(): HasMany
+    {
+        return $this->hasMany(Contract::class);
+    }
 }

@@ -9,6 +9,8 @@ use Awcodes\TableRepeater\Components\TableRepeater;
 use Awcodes\TableRepeater\Header;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Forms\Get;
+use Filament\Forms\Set;
 use Filament\Resources\Concerns\Translatable;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -46,7 +48,7 @@ class ContractTypeResource extends Resource
         return $form
             ->schema([
                 Forms\Components\Section::make()
-                    ->columns(2)
+                    ->columns(3)
                     ->schema([
                         Forms\Components\TextInput::make('name')
                             ->label(__('field.name'))
@@ -58,19 +60,20 @@ class ContractTypeResource extends Resource
                             ->required()
                             ->unique(ignoreRecord: true)
                             ->maxLength(5),
-                        TableRepeater::make('options')
-                            ->label(__('field.options'))
-                            ->headers([
-                                Header::make(__('field.name'))->width('150px'),
-                                Header::make(__('field.value'))->width('150px'),
-                            ])
-                            ->columnSpanFull()
-                            ->schema([
-                                Forms\Components\TextInput::make('name')
-                                    ->required(),
-                                Forms\Components\TextInput::make('value')
-                                    ->required(),
-                            ])
+                        Forms\Components\ToggleButtons::make('allow_leave_request')
+                            ->label(__('field.allow_leave_request'))
+                            ->required()
+                            ->boolean()
+                            ->inline()
+                            ->grouped()
+                            ->live(),
+                        Forms\Components\CheckboxList::make('leave_types')
+                            ->label(__('model.leave_type'))
+                            ->options(fn () => \App\Models\LeaveType::all()->pluck('name', 'id')->toArray())
+                            ->required(fn(Get $get) => $get('allow_leave_request'))                            
+                            ->columns(3)
+                            ->columnSpanFull(),
+                        
                     ])
                 
             ]);
@@ -81,18 +84,27 @@ class ContractTypeResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('name')
+                    ->label(__('field.name'))
                     ->searchable(),
-                Tables\Columns\TextColumn::make('abbr')
+                Tables\Columns\TextColumn::make('abbr') 
+                    ->label(__('field.abbr'))
                     ->searchable(),
+                Tables\Columns\IconColumn::make('allow_leave_request')
+                    ->label(__('field.allow_leave_request'))
+                    ->boolean()
+                    ->alignCenter(),
                 Tables\Columns\TextColumn::make('created_at')
+                    ->label(__('field.created_at'))
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('updated_at')
+                    ->label(__('field.updated_at'))
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('deleted_at')
+                    ->label(__('field.deleted_at'))
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),

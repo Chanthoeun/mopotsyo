@@ -26,6 +26,7 @@ class Employee extends Model
         'name',
         'nickname',
         'gender',
+        'married',
         'date_of_birth',
         'nationality',
         'email',
@@ -36,6 +37,7 @@ class Employee extends Model
         'district_id',
         'province_id',
         'photo',
+        'join_date',
         'resign_date',
         'user_id',
     ];
@@ -48,11 +50,14 @@ class Employee extends Model
     protected $casts = [
         'id' => 'integer',
         'gender' => GenderEnum::class,
+        'married' => 'boolean',
         'date_of_birth' => 'date',
         'village_id' => 'integer',
         'commune_id' => 'integer',
         'district_id' => 'integer',
         'province_id' => 'integer',
+        'join_date' => 'date',
+        'resign_date' => 'date',
         'user_id' => 'integer',
     ];
 

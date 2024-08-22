@@ -10,12 +10,14 @@ return [
     'failed'            => 'Failed!',
     'imported'          => 'Imported',
     'in_progress'       => 'In Progress',
+    'success'           => 'Success',
 
     // label
     'label' => [
         'failed'        => ':label Failed!',
         'imported'      => ':label Imported!',
         'in_progress'   => ':label In Progress',
+        'success'       => ':label Success',
     ],
 
     // message
@@ -27,5 +29,6 @@ return [
         'imported'            => ':name was imported successfully with :count records!',
         'failed'              => ':name was :action failed, please try again!',
         'in_progress'         => 'We are :name :count records. we will notify you when it is done.',
+        'success'             => ':name was :action successfully.',
     ]
 ];
