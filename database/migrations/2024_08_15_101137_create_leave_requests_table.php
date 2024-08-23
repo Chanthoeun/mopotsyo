@@ -19,6 +19,7 @@ return new class extends Migration
             $table->date('from_date');
             $table->date('to_date');
             $table->text('reason')->nullable();
+            $table->string('attachment')->nullable();
             $table->unsignedTinyInteger('status')->default(0);
             $table->foreignId('user_id')->constrained()->onDelete('restrict')->cascadeOnUpdate();
             $table->morphs('leaverequestable');

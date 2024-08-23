@@ -56,14 +56,15 @@ if(!function_exists('decimalToTime')){
 }
 
 if(!function_exists('getHoursBetweenTwoTimes')){
-    function getHoursBetweenTwoTimes($stat_time, $end_time){
+    function getHoursBetweenTwoTimes($stat_time, $end_time, $break_time = 0){
+        
         $startTime  = Carbon::parse($stat_time);
-        $endTime    = Carbon::parse($end_time);
+        $endTime    = Carbon::parse($end_time);        
         $hours = $startTime->floatDiffInHours($endTime);
-        if($hours < 8){
-            return 8;
+        if(!empty($break_time) && $hours > 4){
+            return intval($hours - $break_time);
         }
-        return $hours;
+        return intval($hours);
     }
 }
 

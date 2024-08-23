@@ -99,6 +99,9 @@ class AdminPanelProvider extends PanelProvider
                     ->label(fn() => __('nav.admin'))
                     ->icon('fas-gears'),
                 NavigationGroup::make()
+                    ->label(fn() => __('nav.settings'))
+                    ->icon('fas-gear'),
+                NavigationGroup::make()
                     ->label(fn (): string => __('nav.log'))
                     ->icon('fas-file-lines')
                     ->collapsed(),

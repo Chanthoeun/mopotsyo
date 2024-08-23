@@ -20,7 +20,7 @@ return [
     'reference'     => 'Reference',
     'date'          => 'Date',
     'color'         => 'Color',
-    'days'          => 'Day|Days',
+    'days_with_count'          => ':count Days|:count Days',
     'day'           => 'Day',
     'hours'         => 'Hour|Hours',
     'hour'          => 'Hour',
@@ -103,6 +103,11 @@ return [
     'rule'          => 'Rule',
     'rules'         => 'Rules',
     'request_dates' => 'Request Dates',
+    'working_hours_per_day' => 'Working Hours Per Day',
+    'working_hours_per_week' => 'Working Hours Per Week',
+    'working_days_per_week' => 'Working Days Per Week',
+    'working_day'   => 'Working Day',
+    'total'         => 'Total',
 
 
     // day
@@ -131,5 +136,10 @@ return [
         'rejected'      => 'Rejected',
         'discarded'     => 'Discarded',
         'returned'      => 'Returned',
+    ],
+
+    // label
+    'label' => [
+        'total' => 'Total :label:',
     ]
 ];

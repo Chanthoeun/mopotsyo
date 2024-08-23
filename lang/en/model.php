@@ -1,6 +1,13 @@
 <?php 
 
 return [
+    // Page
+    'page'              => [
+        'working_hour'  => 'Working Hour',
+        'working_hours' => 'Working Hours',
+    ],
+    
+    // Model
     'user'              => 'User',
     'users'             => 'Users',
     'role'              => 'Role',

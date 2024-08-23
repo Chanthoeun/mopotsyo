@@ -90,4 +90,9 @@ class Employee extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    public function workDays(): HasMany
+    {
+        return $this->hasMany(EmployeeWorkDay::class);
+    }
 }

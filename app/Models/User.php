@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Mchev\Banhammer\Traits\Bannable;
+use PhpOffice\PhpSpreadsheet\Calculation\DateTimeExcel\WorkDay;
 use Rappasoft\LaravelAuthenticationLog\Traits\AuthenticationLoggable;
 use Spatie\Permission\Traits\HasRoles;
 use Spatie\Translatable\HasTranslations;
@@ -113,5 +114,10 @@ class User extends Authenticatable implements FilamentUser, RenewPasswordContrac
         );
     }
     
-    
+    protected function workDays(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->employee->workDays->where('is_active', true),
+        );
+    }
 }

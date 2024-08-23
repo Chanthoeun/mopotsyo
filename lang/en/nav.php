@@ -1,6 +1,7 @@
 <?php 
 
 return [
+    'settings'     => 'Settings',
     'admin'     => 'Administration',
     'log'       => 'Logs',
     'rdf'       => 'RDF',

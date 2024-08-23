@@ -3,6 +3,7 @@
 namespace App\Filament\Admin\Resources\EmployeeResource\RelationManagers;
 
 use App\Enums\DayOfWeekEnum;
+use App\Settings\SettingWorkingHours;
 use Awcodes\TableRepeater\Components\TableRepeater;
 use Awcodes\TableRepeater\Header;
 use Filament\Forms;
@@ -73,46 +74,56 @@ class ContractsRelationManager extends RelationManager
                                 ->live(onBlur: true)
                                 ->afterStateUpdated(function($state, Set $set){
                                     if($state == 1){
-                                        // Monday
-                                        $set('employeeWorkDays.0.employee_id', $this->ownerRecord->id);
-                                        $set('employeeWorkDays.0.day_name', DayOfWeekEnum::MONDAY);
-                                        $set('employeeWorkDays.0.start_time', '08:00:00');
-                                        $set('employeeWorkDays.0.end_time', '17:00:00');
-                                        $set('employeeWorkDays.0.break_time', 1);
-                                        $set('employeeWorkDays.0.break_from', '12:00:00');
-                                        $set('employeeWorkDays.0.break_to', '13:00:00');
-                                        // Tuesday
-                                        $set('employeeWorkDays.1.employee_id', $this->ownerRecord->id);
-                                        $set('employeeWorkDays.1.day_name', DayOfWeekEnum::TUESDAY);
-                                        $set('employeeWorkDays.1.start_time', '08:00:00');
-                                        $set('employeeWorkDays.1.end_time', '17:00:00');
-                                        $set('employeeWorkDays.1.break_time', 1);
-                                        $set('employeeWorkDays.1.break_from', '12:00:00');
-                                        $set('employeeWorkDays.1.break_to', '13:00:00');
-                                        // Wednesday
-                                        $set('employeeWorkDays.2.employee_id', $this->ownerRecord->id);
-                                        $set('employeeWorkDays.2.day_name', DayOfWeekEnum::WEDNESDAY);
-                                        $set('employeeWorkDays.2.start_time', '08:00:00');
-                                        $set('employeeWorkDays.2.end_time', '17:00:00');
-                                        $set('employeeWorkDays.2.break_time', 1);
-                                        $set('employeeWorkDays.2.break_from', '12:00:00');
-                                        $set('employeeWorkDays.2.break_to', '13:00:00');
-                                        // Thursday
-                                        $set('employeeWorkDays.3.employee_id', $this->ownerRecord->id);
-                                        $set('employeeWorkDays.3.day_name', DayOfWeekEnum::THURSDAY);
-                                        $set('employeeWorkDays.3.start_time', '08:00:00');
-                                        $set('employeeWorkDays.3.end_time', '17:00:00');
-                                        $set('employeeWorkDays.3.break_time', 1);
-                                        $set('employeeWorkDays.3.break_from', '12:00:00');
-                                        $set('employeeWorkDays.3.break_to', '13:00:00');
-                                        // Friday
-                                        $set('employeeWorkDays.4.employee_id', $this->ownerRecord->id);
-                                        $set('employeeWorkDays.4.day_name', DayOfWeekEnum::FRIDAY);
-                                        $set('employeeWorkDays.4.start_time', '08:00:00');
-                                        $set('employeeWorkDays.4.end_time', '17:00:00');
-                                        $set('employeeWorkDays.4.break_time', 1);
-                                        $set('employeeWorkDays.4.break_from', '12:00:00');
-                                        $set('employeeWorkDays.4.break_to', '13:00:00');
+                                        $set('employeeWorkDays', app(SettingWorkingHours::class)->work_days);
+                                        foreach(app(SettingWorkingHours::class)->work_days as $workDay){
+                                            $set('employeeWorkDays.0.employee_id', $this->ownerRecord->id);
+                                            $set('employeeWorkDays.0.day_name', $workDay['day_name']);
+                                            $set('employeeWorkDays.0.start_time', $workDay['start_time']);
+                                            $set('employeeWorkDays.0.end_time', $workDay['end_time']);
+                                            $set('employeeWorkDays.0.break_time', $workDay['break_time']);
+                                            $set('employeeWorkDays.0.break_from', $workDay['break_from']);
+                                            $set('employeeWorkDays.0.break_to', $workDay['break_to']);
+                                        }
+                                        // // Monday
+                                        // $set('employeeWorkDays.0.employee_id', $this->ownerRecord->id);
+                                        // $set('employeeWorkDays.0.day_name', DayOfWeekEnum::MONDAY);
+                                        // $set('employeeWorkDays.0.start_time', '08:00:00');
+                                        // $set('employeeWorkDays.0.end_time', '17:00:00');
+                                        // $set('employeeWorkDays.0.break_time', 1);
+                                        // $set('employeeWorkDays.0.break_from', '12:00:00');
+                                        // $set('employeeWorkDays.0.break_to', '13:00:00');
+                                        // // Tuesday
+                                        // $set('employeeWorkDays.1.employee_id', $this->ownerRecord->id);
+                                        // $set('employeeWorkDays.1.day_name', DayOfWeekEnum::TUESDAY);
+                                        // $set('employeeWorkDays.1.start_time', '08:00:00');
+                                        // $set('employeeWorkDays.1.end_time', '17:00:00');
+                                        // $set('employeeWorkDays.1.break_time', 1);
+                                        // $set('employeeWorkDays.1.break_from', '12:00:00');
+                                        // $set('employeeWorkDays.1.break_to', '13:00:00');
+                                        // // Wednesday
+                                        // $set('employeeWorkDays.2.employee_id', $this->ownerRecord->id);
+                                        // $set('employeeWorkDays.2.day_name', DayOfWeekEnum::WEDNESDAY);
+                                        // $set('employeeWorkDays.2.start_time', '08:00:00');
+                                        // $set('employeeWorkDays.2.end_time', '17:00:00');
+                                        // $set('employeeWorkDays.2.break_time', 1);
+                                        // $set('employeeWorkDays.2.break_from', '12:00:00');
+                                        // $set('employeeWorkDays.2.break_to', '13:00:00');
+                                        // // Thursday
+                                        // $set('employeeWorkDays.3.employee_id', $this->ownerRecord->id);
+                                        // $set('employeeWorkDays.3.day_name', DayOfWeekEnum::THURSDAY);
+                                        // $set('employeeWorkDays.3.start_time', '08:00:00');
+                                        // $set('employeeWorkDays.3.end_time', '17:00:00');
+                                        // $set('employeeWorkDays.3.break_time', 1);
+                                        // $set('employeeWorkDays.3.break_from', '12:00:00');
+                                        // $set('employeeWorkDays.3.break_to', '13:00:00');
+                                        // // Friday
+                                        // $set('employeeWorkDays.4.employee_id', $this->ownerRecord->id);
+                                        // $set('employeeWorkDays.4.day_name', DayOfWeekEnum::FRIDAY);
+                                        // $set('employeeWorkDays.4.start_time', '08:00:00');
+                                        // $set('employeeWorkDays.4.end_time', '17:00:00');
+                                        // $set('employeeWorkDays.4.break_time', 1);
+                                        // $set('employeeWorkDays.4.break_from', '12:00:00');
+                                        // $set('employeeWorkDays.4.break_to', '13:00:00');
                                     }
                                 }),
                             Forms\Components\Select::make('supervisor_id')
@@ -154,30 +165,37 @@ class ContractsRelationManager extends RelationManager
                                         ->hiddenLabel()
                                         ->required()
                                         ->options(DayOfWeekEnum::class)
-                                        ->default(DayOfWeekEnum::MONDAY),
+                                        ->default(DayOfWeekEnum::MONDAY)
+                                        ->live()
+                                        ->afterStateUpdated(function($state, Set $set) {
+                                            if($state){
+                                                $workDays = app(SettingWorkingHours::class)->work_days;
+                                                $workDay = collect($workDays)->where('day_name', $state->value)->first();                                                
+                                                $set('start_time', $workDay['start_time']);
+                                                $set('end_time', $workDay['end_time']);
+                                                $set('break_time', $workDay['break_time']);
+                                                $set('break_from', $workDay['break_from']);
+                                                $set('break_to', $workDay['break_to']);
+                                            }
+                                        }),
                                     Forms\Components\TimePicker::make('start_time') 
                                         ->hiddenLabel()                                       
-                                        ->required()
-                                        ->default('08:00:00'),
+                                        ->required(),
                                     Forms\Components\TimePicker::make('end_time')
                                         ->hiddenLabel()
-                                        ->required()
-                                        ->default('17:00:00'),
+                                        ->required(),
                                     Forms\Components\TextInput::make('break_time')
                                         ->hiddenLabel()
                                         ->required()
                                         ->numeric()
                                         ->live()
-                                        ->inputMode('decimal')
-                                        ->default(1),
+                                        ->inputMode('decimal'),
                                     Forms\Components\TimePicker::make('break_from')
                                         ->hiddenLabel()
-                                        ->required()
-                                        ->default('12:00:00'),
+                                        ->required(),
                                     Forms\Components\TimePicker::make('break_to')
                                         ->hiddenLabel()
-                                        ->required()
-                                        ->default('13:00:00'),
+                                        ->required(),
                                 ]),
                             Placeholder::make('breakTimesPlaceholder')
                                 ->hiddenLabel()

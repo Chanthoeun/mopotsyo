@@ -10,6 +10,7 @@ use App\Models\LeaveRequestRule;
 use App\Models\LeaveType;
 use App\Models\PublicHoliday;
 use App\Models\User;
+use App\Settings\SettingWorkingHours;
 use Awcodes\TableRepeater\Components\TableRepeater;
 use Awcodes\TableRepeater\Header;
 use Filament\Forms;
@@ -76,15 +77,30 @@ class LeaveRequestResource extends Resource
                             ->label(__('model.leave_type'))
                             ->options(function(Get $get) {
                                 if($get('user_id')){
-                                    $user = User::with('employee.contracts.contractType')->find($get('user_id'));
+                                    $user = User::with(['employee.contracts.contractType', 'entitlements'])->find($get('user_id'));
                                     $contract = $user->employee->contracts->where('is_active', true)->first();                                            
-                                    return LeaveType::whereIn('id', $contract->contractType->leave_types)->where($user->employee->gender->value, true)->get()->pluck('abbr', 'id');
+                                    $leaveTypes = LeaveType::whereIn('id', $contract->contractType->leave_types)->where($user->employee->gender->value, true)->where('balance', '>', 0)->orderBy('id', 'asc')->get();
+                                    
+                                    // remvoe leave type if balance is 0
+                                    $ids = collect();
+                                    foreach($user->entitlements as $entitlement){
+                                        if($entitlement->remaining > 0){
+                                            $ids->push($entitlement->leave_type_id);
+                                        }
+                                    }
+                                        
+                                    return $leaveTypes->whereIn('id', $ids)->pluck('abbr', 'id');
                                 }
-                                return LeaveType::all()->pluck('abbr', 'id');
+                                return LeaveType::where('balance', '>', 0)->orderBy('id', 'asc')->get()->pluck('abbr', 'id');
                             })
                             ->required()                                    
                             ->inline()
-                            ->grouped()                            
+                            ->grouped()
+                            ->helperText(function($state) {
+                                if($state){
+                                    return LeaveType::find($state)->name;
+                                }
+                            })                            
                             ->live()
                             ->columnSpanFull(),
                         Forms\Components\DatePicker::make('from_date')
@@ -93,8 +109,7 @@ class LeaveRequestResource extends Resource
                             ->required()
                             ->native(false)
                             ->suffixIcon('fas-calendar')
-                            ->live()
-                            ->afterStateUpdated(fn($state, Set $set) => $set('to_date', $state)),
+                            ->live(),
                         Forms\Components\DatePicker::make('to_date')
                             ->label(__('field.to_date'))
                             ->placeholder(__('field.select_date'))
@@ -105,52 +120,121 @@ class LeaveRequestResource extends Resource
                             ->afterStateUpdated(function($state, Get $get, Set $set, string $operation, ?Model $record){
                                 $set("requestDates", []);
                                 if($get('user_id') && $get('leave_type_id') && $get('from_date')){
-                                    if($operation == 'edit'){
-                                        $user = User::with(['employee.contracts', 'leaveRequests' => function($query) use($record){
-                                            return $query->whereNot('id', $record->id)->whereIn('status', [ApprovalStatuEnum::SUBMITTED, ApprovalStatuEnum::APPROVED]);
-                                        }])->find($get('user_id'));
-                                    }else{
-                                        $user = User::with(['leaveRequests' => function($query){
-                                            return $query->whereIn('status', [ApprovalStatuEnum::SUBMITTED, ApprovalStatuEnum::APPROVED]);
-                                        }])->find($get('user_id'));
-                                    }
+                                    $user = User::find($get('user_id'));
                                     
-                                    $contract = $user->employee->contracts->where('is_active', true)->first();
-                                    $dates = getDateRangeBetweenTwoDates($get('from_date'), $state);
-                                    $key = 0;
-                                    foreach($dates as $date){
-                                        if(isWeekend($date) == false && isPublicHoliday($date) == false){
-                                            $requestDate = checkDuplicatedLeaveRequest($user, $date);                                                    
-                                            if($requestDate == false){
-                                                $set("requestDates.{$key}.date", $date->toDateString());    
-                                                $set("requestDates.{$key}.start_time", '08:00');
-                                                $set("requestDates.{$key}.end_time", '17:00');
-                                                $set("requestDates.{$key}.hours", round(getHoursBetweenTwoTimes($get('start_time'), $state), 1));
-                                                $key++;  
-                                            }else if($requestDate->hours < $contract->shift->work_hours){
-                                                if($requestDate->end_time == '12:00:00'){
-                                                    $startTime = '13:00:00';
-                                                }else{
-                                                    $startTime = $requestDate->end_time;
-                                                }
-                                                $set("requestDates.{$key}.date", $date->toDateString());   
-                                                $set("requestDates.{$key}.start_time", $startTime);
-                                                $set("requestDates.{$key}.end_time", '17:00');                                                     
-                                                $set("requestDates.{$key}.hours", round(getHoursBetweenTwoTimes($get('start_time'), $state), 1));
-                                                $key++;  
-                                            }                                    
-                                        }                                                
+                                    // add date to request dates list
+                                    foreach(getDateRangeBetweenTwoDates($get('from_date'), $state) as $key => $date){                                          
+                                        $workDay = $user->workDays->where('day_name.value', $date->dayOfWeek())->first();
+                                        if($workDay){
+                                            $set("requestDates.{$key}.date", $date->toDateString()); 
+                                            $set("requestDates.{$key}.start_time", $workDay->start_time);
+                                            $set("requestDates.{$key}.end_time", $workDay->end_time);
+                                            $set("requestDates.{$key}.hours", getHoursBetweenTwoTimes($workDay->start_time, $workDay->end_time, $workDay->break_time));
+                                        }                                     
                                     }
 
-                                    // adjust from and to date base requestDates
-                                    $repeaters = $get('requestDates');
-                                    if(count($repeaters) > 0){
-                                        $set('from_date', $repeaters[0]['date']);
-                                        $set('to_date', $repeaters[count($repeaters) - 1]['date']);
-                                    }
+                                    // if($operation == 'edit'){
+                                    //     $user = User::with(['employee.contracts', 'leaveRequests' => function($query) use($record){
+                                    //         return $query->whereNot('id', $record->id)->whereIn('status', [ApprovalStatuEnum::SUBMITTED, ApprovalStatuEnum::APPROVED]);
+                                    //     }])->find($get('user_id'));
+                                    // }else{
+                                    //     $user = User::with(['leaveRequests' => function($query){
+                                    //         return $query->whereIn('status', [ApprovalStatuEnum::SUBMITTED, ApprovalStatuEnum::APPROVED]);
+                                    //     }])->find($get('user_id'));
+                                    // }
+                                    
+                                    // $contract = $user->employee->contracts->where('is_active', true)->first();
+                                    // $dates = getDateRangeBetweenTwoDates($get('from_date'), $state);
+                                    // //$key = 0;
+                                    // foreach($dates as $key => $date){
+                                    //     if(isWeekend($date) == false && isPublicHoliday($date) == false){
+                                    //         $requestDate = checkDuplicatedLeaveRequest($user, $date);                                                    
+                                    //         if($requestDate == false){
+                                    //             $set("requestDates.{$key}.date", $date->toDateString());    
+                                    //             $set("requestDates.{$key}.start_time", '08:00');
+                                    //             $set("requestDates.{$key}.end_time", '17:00');
+                                    //             $set("requestDates.{$key}.hours", round(getHoursBetweenTwoTimes($get('start_time'), $state), 1));
+                                    //             $key++;  
+                                    //         }else if($requestDate->hours < $contract->shift->work_hours){
+                                    //             if($requestDate->end_time == '12:00:00'){
+                                    //                 $startTime = '13:00:00';
+                                    //             }else{
+                                    //                 $startTime = $requestDate->end_time;
+                                    //             }
+                                    //             $set("requestDates.{$key}.date", $date->toDateString());   
+                                    //             $set("requestDates.{$key}.start_time", $startTime);
+                                    //             $set("requestDates.{$key}.end_time", '17:00');                                                     
+                                    //             $set("requestDates.{$key}.hours", round(getHoursBetweenTwoTimes($get('start_time'), $state), 1));
+                                    //             $key++;  
+                                    //         }                                    
+                                    //     }                                                
+                                    // }
+
+                                    // // adjust from and to date base requestDates
+                                    // $repeaters = $get('requestDates');
+                                    // if(count($repeaters) > 0){
+                                    //     $set('from_date', $repeaters[0]['date']);
+                                    //     $set('to_date', $repeaters[count($repeaters) - 1]['date']);
+                                    // }
                                 }
                             }),
                         Forms\Components\Textarea::make('reason')
+                            ->label(__('field.reason'))
+                            ->required(function(Get $get){
+                                if($get('requestDates')){
+                                    // get leave request days                                    
+                                    $requestDays = 0;
+
+                                    // If there are items in the repeater, loop through and add the sub_totals to $total                                    
+                                    foreach ($get('requestDates') as $repeater) {
+                                        if(!empty($repeater['hours'])){
+                                            $requestDays += $repeater['hours'];
+                                        }
+                                    }
+
+                                    $requestDays = floatval($requestDays / app(SettingWorkingHours::class)->day);     
+
+
+                                    // check rule
+                                    $leaveRequestRules = LeaveRequestRule::where('leave_type_id', $get('leave_type_id'))->where('reason', true)->get();
+                                    foreach($leaveRequestRules as $rule){
+                                        if($requestDays >= $rule->from_amount){
+                                            return true;
+                                        }
+                                    }
+                                    return false;
+                                }
+                            })
+                            ->columnSpanFull(),
+                        Forms\Components\FileUpload::make('attachement')
+                            ->label(__('field.attachment'))
+                            ->directory('leave-attachments')
+                            ->acceptedFileTypes(['application/pdf'])
+                            ->required(function(Get $get){
+                                if($get('requestDates')){
+                                    // get leave request days                                    
+                                    $requestDays = 0;
+
+                                    // If there are items in the repeater, loop through and add the sub_totals to $total                                    
+                                    foreach ($get('requestDates') as $repeater) {
+                                        if(!empty($repeater['hours'])){
+                                            $requestDays += $repeater['hours'];
+                                        }
+                                    }
+
+                                    $requestDays = floatval($requestDays / app(SettingWorkingHours::class)->day);     
+
+
+                                    // check rule
+                                    $leaveRequestRules = LeaveRequestRule::where('leave_type_id', $get('leave_type_id'))->where('attachment', true)->get();
+                                    foreach($leaveRequestRules as $rule){
+                                        if($requestDays >= $rule->from_amount){
+                                            return true;
+                                        }
+                                    }
+                                    return false;
+                                }
+                            })
                             ->columnSpanFull(),
                         TableRepeater::make('requestDates')
                             ->label(__('field.request_dates'))
@@ -158,13 +242,14 @@ class LeaveRequestResource extends Resource
                             ->required()                                                                        
                             ->addable(false)  
                             ->deletable(false)
-                            ->defaultItems(0)                              
+                            ->defaultItems(0)   
+                            ->live()                           
                             ->columnSpanFull()
                             ->headers([
                                 Header::make(__('field.date')),
                                 Header::make(__('field.start_time'))->width('150px'),
                                 Header::make(__('field.end_time'))->width('150px'),
-                                Header::make(__('field.hour'))->width('80px'),
+                                Header::make(__('field.hours'))->width('80px'),
                             ])
                             ->schema([
                                 Forms\Components\DatePicker::make('date')
@@ -192,31 +277,31 @@ class LeaveRequestResource extends Resource
                                     ->readOnly()
                                     ->default(0),
                             ]),                                 
-                        // Forms\Components\Placeholder::make('total')
-                        //     ->label(__('field.total', ['name' => __('model.request_dates')]))
-                        //     ->inlineLabel()
-                        //     ->columnSpanFull()
-                        //     ->content(function(Get $get, Set $set): string {
-                        //         // variable to hold the total price
-                        //         $total = 0;
-                        //         $user = User::with(['profile.shift', 'entitlements'])->find(Auth::id());
+                        Forms\Components\Placeholder::make('total')
+                            ->label(__('field.label.total', ['label' => __('model.leave_request')]))
+                            ->inlineLabel()
+                            ->columnSpanFull()
+                            ->content(function(Get $get, Set $set): string {
+                                // variable to hold the total price
+                                $total = 0;
+                                
 
-                        //         // If there are no items in the repeater, return $total as 0
-                        //         if (! $repeaters = $get('requestDates')) {
-                        //             return trans_choice('field.day_with_num', $total, ['number' => $total]);
-                        //         }
+                                // If there are no items in the repeater, return $total as 0
+                                if (! $repeaters = $get('requestDates')) {
+                                    return $total;
+                                }
 
-                        //         // If there are items in the repeater, loop through and add the sub_totals to $total
-                        //         foreach ($repeaters as $repeater) {
-                        //             if(!empty($repeater['hours'])){
-                        //                 $total += $repeater['hours'];
-                        //             }
-                        //         }
+                                // If there are items in the repeater, loop through and add the sub_totals to $total
+                                foreach ($repeaters as $repeater) {
+                                    if(!empty($repeater['hours'])){
+                                        $total += $repeater['hours'];
+                                    }
+                                }
 
-                        //         $total = floatval($total / $user->profile->shift->work_hours);
+                                $total = floatval($total / app(SettingWorkingHours::class)->day);                               
 
-                        //         return trans_choice('field.day_with_num', $total, ['number' => $total]);
-                        //     }),
+                                return strtolower(trans_choice('field.days_with_count', $total, ['count' => $total]));
+                            }),
                     ]),
                 Forms\Components\Section::make(__('field.leave_request_info'))
                     ->columnSpan(['lg' => 1])

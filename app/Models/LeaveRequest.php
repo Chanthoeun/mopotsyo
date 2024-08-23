@@ -25,6 +25,7 @@ class LeaveRequest extends ApprovableModel
         'from_date',
         'to_date',
         'reason',
+        'attachment',
         'status',
         'user_id',
     ];
