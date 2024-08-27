@@ -2,27 +2,31 @@
 
 namespace App\Filament\Admin\Resources;
 
-use App\Enums\ApprovalStatuEnum;
 use App\Filament\Admin\Resources\LeaveRequestResource\Pages;
 use App\Filament\Admin\Resources\LeaveRequestResource\RelationManagers;
+use App\Models\LeaveEntitlement;
 use App\Models\LeaveRequest;
 use App\Models\LeaveRequestRule;
 use App\Models\LeaveType;
-use App\Models\PublicHoliday;
 use App\Models\User;
 use App\Settings\SettingWorkingHours;
 use Awcodes\TableRepeater\Components\TableRepeater;
 use Awcodes\TableRepeater\Header;
+use Closure;
+use EightyNine\Approvals\Tables\Actions\ApprovalActions;
+use EightyNine\Approvals\Tables\Columns\ApprovalStatusColumn;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
 use Filament\Forms\Set;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Actions\Action;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\HtmlString;
 
 class LeaveRequestResource extends Resource
@@ -51,10 +55,10 @@ class LeaveRequestResource extends Resource
     public static function form(Form $form): Form
     {
         return $form
-            ->columns(2)
+            ->columns(12)
             ->schema([
                 Forms\Components\Section::make(__('field.leave_request_form'))
-                    ->columnSpan(['lg' => 1])
+                    ->columnSpan(['lg' => 7])
                     ->columns(2)
                     ->schema([
                         Forms\Components\Select::make('user_id')
@@ -96,12 +100,41 @@ class LeaveRequestResource extends Resource
                             ->required()                                    
                             ->inline()
                             ->grouped()
-                            ->helperText(function($state) {
+                            ->hint(function($state) {
                                 if($state){
                                     return LeaveType::find($state)->name;
                                 }
                             })                            
                             ->live()
+                            ->afterStateUpdated(function(Set $set){
+                                $set('from_date', null);
+                                $set('to_date', null);
+                            })
+                            ->rules([
+                                function (Get $get) {
+                                    return function (string $attribute, $value, Closure $fail) use($get) {
+                                        if($get('requestDates')){
+                                            // get leave request days                                    
+                                            $requestDays = 0;
+        
+                                            // If there are items in the repeater, loop through and add the sub_totals to $total                                    
+                                            foreach ($get('requestDates') as $repeater) {
+                                                if(!empty($repeater['hours'])){
+                                                    $requestDays += $repeater['hours'];
+                                                }
+                                            }
+                                            // leave day request
+                                            $requestDays = floatval($requestDays / app(SettingWorkingHours::class)->day);     
+                                            
+                                            $entitlement = LeaveEntitlement::where('user_id', $get('user_id'))->where('leave_type_id', $get('leave_type_id'))->where('is_active', true)->first();
+                                            if($requestDays > $entitlement->remaining){
+                                                $fail(__('msg.balance_is_not_enough'));
+                                            }
+                                            
+                                        }                                                                               
+                                    };
+                                },
+                            ])
                             ->columnSpanFull(),
                         Forms\Components\DatePicker::make('from_date')
                             ->label(__('field.from_date'))
@@ -109,7 +142,46 @@ class LeaveRequestResource extends Resource
                             ->required()
                             ->native(false)
                             ->suffixIcon('fas-calendar')
-                            ->live(),
+                            ->live()                            
+                            ->rules([
+                                function (Get $get) {
+                                    return function (string $attribute, $value, Closure $fail) use($get) {
+                                        if($get('leave_type_id') && $get('to_date')){  
+                                            if($get('requestDates')){
+                                                // get leave request days                                    
+                                                $requestDays = 0;
+            
+                                                // If there are items in the repeater, loop through and add the sub_totals to $total                                    
+                                                foreach ($get('requestDates') as $repeater) {
+                                                    if(!empty($repeater['hours'])){
+                                                        $requestDays += $repeater['hours'];
+                                                    }
+                                                }
+                                                // leave day request
+                                                $requestDays = floatval($requestDays / app(SettingWorkingHours::class)->day);     
+
+                                                // request days in advance
+                                                $inAdvance = round(now()->diffInDays($value), 0);
+            
+                                                // check rule
+                                                $leaveRequestRules = LeaveRequestRule::where('leave_type_id', $get('leave_type_id'))->get();
+                                                foreach($leaveRequestRules as $rule){
+                                                    if(empty($rule->to_amount)){
+                                                        if($requestDays > $rule->from_amount && $inAdvance < $rule->day_in_advance){
+                                                            $fail(__('msg.body.in_advance', ['days' => $rule->day_in_advance]));
+                                                        }
+                                                    }else{
+                                                        if($requestDays >= $rule->from_amount && $requestDays <= $rule->to_amount && $inAdvance < $rule->day_in_advance){
+                                                            $fail(__('msg.body.in_advance', ['days' => $rule->day_in_advance]));
+                                                        }
+                                                    }                                                    
+                                                }
+                                                
+                                            }
+                                        }                                                                                
+                                    };
+                                },
+                            ]),
                         Forms\Components\DatePicker::make('to_date')
                             ->label(__('field.to_date'))
                             ->placeholder(__('field.select_date'))
@@ -180,7 +252,8 @@ class LeaveRequestResource extends Resource
                             }),
                         Forms\Components\Textarea::make('reason')
                             ->label(__('field.reason'))
-                            ->required(function(Get $get){
+                            ->required()
+                            ->visible(function(Get $get){
                                 if($get('requestDates')){
                                     // get leave request days                                    
                                     $requestDays = 0;
@@ -208,9 +281,10 @@ class LeaveRequestResource extends Resource
                             ->columnSpanFull(),
                         Forms\Components\FileUpload::make('attachement')
                             ->label(__('field.attachment'))
+                            ->required()
                             ->directory('leave-attachments')
                             ->acceptedFileTypes(['application/pdf'])
-                            ->required(function(Get $get){
+                            ->visible(function(Get $get){
                                 if($get('requestDates')){
                                     // get leave request days                                    
                                     $requestDays = 0;
@@ -246,10 +320,10 @@ class LeaveRequestResource extends Resource
                             ->live()                           
                             ->columnSpanFull()
                             ->headers([
-                                Header::make(__('field.date')),
-                                Header::make(__('field.start_time'))->width('150px'),
-                                Header::make(__('field.end_time'))->width('150px'),
-                                Header::make(__('field.hours'))->width('80px'),
+                                Header::make(__('field.date'))->width('150px'),
+                                Header::make(__('field.start_time'))->width('140px'),
+                                Header::make(__('field.end_time'))->width('140px'),
+                                Header::make(__('field.hours'))->width('50px'),
                             ])
                             ->schema([
                                 Forms\Components\DatePicker::make('date')
@@ -304,7 +378,7 @@ class LeaveRequestResource extends Resource
                             }),
                     ]),
                 Forms\Components\Section::make(__('field.leave_request_info'))
-                    ->columnSpan(['lg' => 1])
+                    ->columnSpan(['lg' => 5])
                     ->visible(fn(Get $get): bool => $get('user_id') && $get('leave_type_id') ? true : false)
                     ->schema([
                         Forms\Components\Section::make(fn(Get $get): string => !empty($get('leave_type_id')) ? LeaveType::find($get('leave_type_id'))->name : __('model.entitlement'))                                                        
@@ -376,35 +450,41 @@ class LeaveRequestResource extends Resource
     {
         return $table
             ->columns([
+                Tables\Columns\TextColumn::make('requested_by')
+                    ->label(__('field.requested_by'))
+                    ->numeric()
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('leaveType.name')
+                    ->label(__('model.leave_type'))
                     ->numeric()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('from_date')
+                    ->label(__('field.from_date'))
                     ->date()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('to_date')
+                    ->label(__('field.to_date'))
                     ->date()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('status')
-                    ->numeric()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('user.name')
-                    ->numeric()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('leaverequestable_type')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('leaverequestable_id')
-                    ->numeric()
-                    ->sortable(),
+
+                Tables\Columns\TextColumn::make('days')
+                    ->label(__('field.requested_days'))                    
+                    ->formatStateUsing(fn($state) => trans_choice('field.days_with_count', $state, ['count' => $state]))
+                    ->alignCenter(),
+                ApprovalStatusColumn::make("approvalStatus.status"),
+                
                 Tables\Columns\TextColumn::make('created_at')
+                    ->label(__('field.created_at'))
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('updated_at')
+                    ->label(__('field.updated_at'))
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('deleted_at')
+                    ->label(__('field.deleted_at'))
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -412,9 +492,13 @@ class LeaveRequestResource extends Resource
             ->filters([
                 Tables\Filters\TrashedFilter::make(),
             ])
-            ->actions([
-                Tables\Actions\EditAction::make(),
-            ])
+            ->actions(
+                ApprovalActions::make(
+                    [                        
+                        Tables\Actions\ViewAction::make()
+                    ]
+                )
+            )
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),

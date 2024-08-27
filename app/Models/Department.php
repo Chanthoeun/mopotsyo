@@ -22,7 +22,6 @@ class Department extends Model
      */
     protected $fillable = [
         'name',
-        'parent_id',
         'is_active',
         'supervisor_id',
     ];
@@ -34,7 +33,6 @@ class Department extends Model
      */
     protected $casts = [
         'id' => 'integer',
-        'parent_id' => 'integer',
         'is_active' => 'boolean',
     ];
 

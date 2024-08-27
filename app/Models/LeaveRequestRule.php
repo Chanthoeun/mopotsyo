@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Spatie\Permission\Models\Role;
 use Spatie\Translatable\HasTranslations;
 
 class LeaveRequestRule extends Model
@@ -29,6 +30,7 @@ class LeaveRequestRule extends Model
         'reason',
         'attachment',
         'contract_types',
+        'role_id',
         'user_id',
     ];
 
@@ -45,12 +47,18 @@ class LeaveRequestRule extends Model
         'reason' => 'boolean',
         'attachment' => 'boolean',
         'contract_types' => 'array',
+        'role_id' => 'integer',
         'user_id' => 'integer',
     ];
 
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function role(): BelongsTo
+    {
+        return $this->belongsTo(Role::class);
     }
 
     public function leaveType(): BelongsTo

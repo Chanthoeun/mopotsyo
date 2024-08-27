@@ -3,13 +3,17 @@
 namespace App\Models;
 
 use App\Enums\ApprovalStatuEnum;
+use App\Settings\SettingWorkingHours;
 use EightyNine\Approvals\Models\ApprovableModel;
+use Filament\Notifications\Notification;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use RingleSoft\LaravelProcessApproval\Enums\ApprovalStatusEnum;
 
 class LeaveRequest extends ApprovableModel
 {
@@ -62,5 +66,20 @@ class LeaveRequest extends ApprovableModel
     public function leaverequestable(): MorphTo
     {
         return $this->morphTo();
+    }
+    
+
+    protected function requestedBy(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->createdBy()->name ?? null,
+        );
+    }
+
+    protected function days(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => floatval($this->requestDates()->sum('hours') / app(SettingWorkingHours::class)->day),
+        );
     }
 }

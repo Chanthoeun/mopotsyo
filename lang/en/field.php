@@ -7,10 +7,12 @@ return [
     'updated_by'    => 'Updated By',
     'modified_by'   => 'Modified By',
     'deleted_by'    => 'Deleted By',
+    'requested_by'  => 'Requested By',
     'created_at'    => 'Created At',
     'updated_at'    => 'Updated At',
     'modified_at'   => 'Modified At',
     'deleted_at'    => 'Deleted At',
+    'request_at'    => 'Request At',
     'copied'        => ':name Copied!',
     'status'        => 'Status',
     'is_active'     => 'Active',
@@ -108,6 +110,8 @@ return [
     'working_days_per_week' => 'Working Days Per Week',
     'working_day'   => 'Working Day',
     'total'         => 'Total',
+    'approval_role' => 'Approval Role',
+    'requested_days' => 'Requested Days',
 
 
     // day

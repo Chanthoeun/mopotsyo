@@ -24,6 +24,7 @@ return new class extends Migration
             $table->boolean('reason')->default(0);
             $table->boolean('attachment')->default(0);
             $table->json('contract_types');
+            $table->foreignId('role_id')->constrained()->onDelete('restrict')->cascadeOnUpdate();
             $table->foreignId('user_id')->constrained()->onDelete('restrict')->cascadeOnUpdate();
             $table->timestamps();
             $table->softDeletes();

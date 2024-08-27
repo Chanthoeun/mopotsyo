@@ -4,7 +4,10 @@ namespace App\Filament\Admin\Resources\LeaveRequestResource\Pages;
 
 use App\Filament\Admin\Resources\LeaveRequestResource;
 use Filament\Actions;
+use Filament\Resources\Components\Tab;
 use Filament\Resources\Pages\ListRecords;
+use Illuminate\Database\Eloquent\Builder;
+use RingleSoft\LaravelProcessApproval\Enums\ApprovalStatusEnum;
 
 class ListLeaveRequests extends ListRecords
 {
@@ -18,5 +21,18 @@ class ListLeaveRequests extends ListRecords
                 ->color('primary')
                 ->icon('heroicon-o-plus'),
         ];
+    }
+
+    public function getTabs(): array
+    {   
+        $tabs = array();
+        foreach(ApprovalStatusEnum::cases() as $type){
+            $tabs[$type->name] = Tab::make($type->name)
+                                    ->modifyQueryUsing(fn (Builder $query) => $query->whereHas('approvalStatus', fn (Builder $query) => $query->where('status', $type->value)));
+        }
+
+        $tabs['all']    = Tab::make(strtoupper(__('field.all')));
+
+        return $tabs;
     }
 }

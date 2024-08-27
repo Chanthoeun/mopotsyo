@@ -61,4 +61,9 @@ class LeaveType extends Model
     {
         return $this->hasMany(LeaveEntitlement::class);
     }
+
+    public function rules(): HasMany
+    {
+        return $this->hasMany(LeaveRequestRule::class);
+    }
 }

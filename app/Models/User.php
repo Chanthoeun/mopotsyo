@@ -6,6 +6,7 @@ namespace App\Models;
 
 use Carbon\Carbon;
 use Filament\Models\Contracts\FilamentUser;
+use Filament\Models\Contracts\HasName;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -23,7 +24,7 @@ use Yebor974\Filament\RenewPassword\Contracts\RenewPasswordContract;
 use Yebor974\Filament\RenewPassword\RenewPasswordPlugin;
 use Yebor974\Filament\RenewPassword\Traits\RenewPassword;
 
-class User extends Authenticatable implements FilamentUser, RenewPasswordContract
+class User extends Authenticatable implements FilamentUser, RenewPasswordContract, HasName
 {
     use Bannable, HasRoles, HasFactory, Notifiable, AuthenticationLoggable, SoftDeletes, HasTranslations, RenewPassword;
 
@@ -70,6 +71,11 @@ class User extends Authenticatable implements FilamentUser, RenewPasswordContrac
         // return str_ends_with($this->email, '@yourdomain.com') && $this->hasVerifiedEmail();
     }
 
+    public function getFilamentName(): string
+    {
+        return "{$this->name}";
+    }
+
     // renew password
     public function needRenewPassword(): bool
 {
@@ -103,17 +109,30 @@ class User extends Authenticatable implements FilamentUser, RenewPasswordContrac
     protected function supervisor(): Attribute
     {
         return Attribute::make(
-            get: function(){
-                
-                $contract = $this->employee->contracts()->where('is_active', true)->first();
-                if(empty($contract->supervisor)){
-                    return $contract->department->supervisor ?? null;
-                }
-                return $contract->supervisor;
+            get: function(){                
+                $contract = $this->employee->contracts()->where('is_active', true)->first();                
+                return $contract->supervisor ?? null;
+            },
+        );
+    }
+
+    protected function departmentSupervisor(): Attribute
+    {
+        return Attribute::make(
+            get: function(){                
+                $contract = $this->employee->contracts()->where('is_active', true)->first();                
+                return $contract->department->supervisor ?? null;
             },
         );
     }
     
+    protected function name(): Attribute
+    {
+        return Attribute::make(
+            get: fn ($value) => $this->employee()->nickname ?? $value,
+        );
+    }
+
     protected function workDays(): Attribute
     {
         return Attribute::make(

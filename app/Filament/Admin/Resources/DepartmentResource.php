@@ -47,13 +47,7 @@ class DepartmentResource extends Resource
                     ->label(__('field.name'))
                     ->required()
                     ->unique(ignoreRecord: true)
-                    ->maxLength(255)
-                    ->columnSpanFull(), 
-                Forms\Components\Select::make('parent_id')
-                    ->label(__('field.parent'))
-                    ->relationship('parent', 'name')
-                    ->preload()
-                    ->searchable(),
+                    ->maxLength(255), 
                 Forms\Components\Select::make('supperior_id')
                     ->label(__('field.supervisor'))
                     ->relationship('supervisor', 'name', fn(Builder $query) => $query->whereHas('employee', fn(Builder $query) => $query->whereNull('resign_date')->orWhereDate('resign_date', '>=', now())))
@@ -68,10 +62,7 @@ class DepartmentResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('name')
                     ->label(__('field.name'))
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('parent.name')
-                    ->label(__('field.parent'))
-                    ->searchable(),
+                    ->searchable(),                
                 Tables\Columns\TextColumn::make('supervisor.name')
                     ->label(__('field.supervisor'))
                     ->searchable(),

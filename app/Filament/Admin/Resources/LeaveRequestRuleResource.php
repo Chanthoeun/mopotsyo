@@ -15,6 +15,8 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Spatie\Permission\Models\Role;
+use Illuminate\Support\Str;
 
 class LeaveRequestRuleResource extends Resource
 {
@@ -93,8 +95,14 @@ class LeaveRequestRuleResource extends Resource
                         Forms\Components\CheckboxList::make('contract_types')
                             ->label(__('model.contract_types'))                                                    
                             ->required()
-                            ->options(fn () => \App\Models\ContractType::where('allow_leave_request', true)->orderBy('id')->get()->pluck('name', 'id')->toArray())                            
-                            ->columnSpanFull(),
+                            ->options(fn () => \App\Models\ContractType::where('allow_leave_request', true)->orderBy('id')->get()->pluck('name', 'id')->toArray()),
+                        Forms\Components\Select::make('role_id')
+                            ->label(__('field.approval_role'))
+                            ->required()
+                            ->relationship('role', 'name', fn(Builder $query) => $query->whereNot('id', 1)->orderBy('id', 'asc'))
+                            ->getOptionLabelFromRecordUsing(fn (Role $record) => ucwords(Str::of($record->name)->replace('_', ' ')))
+                            ->preload()
+                            ->searchable()
                     ]),
             ]);
     }
@@ -114,22 +122,43 @@ class LeaveRequestRuleResource extends Resource
                     ->listWithLineBreaks()
                     ->bulleted()
                     ->limitList(1)
-                    ->formatStateUsing(fn (string $state): string => ContractType::find($state)->name),                
+                    ->formatStateUsing(fn (string $state): string => ContractType::find($state)->name)
+                    ->toggleable(isToggledHiddenByDefault: true),                
                 Tables\Columns\TextColumn::make('from_amount')
                     ->label(__('field.from_amount'))
                     ->numeric()
                     ->alignCenter()
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('to_amount')
                     ->label(__('field.to_amount'))
                     ->numeric()
                     ->alignCenter()
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('day_in_advance')
                     ->label(__('field.day_in_advance'))
                     ->numeric()
                     ->alignCenter()
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(),
+                Tables\Columns\IconColumn::make('reason')
+                    ->label(__('field.reason'))
+                    ->boolean()
+                    ->alignCenter()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\IconColumn::make('attachment')
+                    ->label(__('field.attachment'))
+                    ->boolean()
+                    ->alignCenter()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('role.name')
+                    ->label(__('field.approval_role'))
+                    ->numeric()
+                    ->alignCenter()
+                    ->sortable()
+                    ->formatStateUsing(fn (string $state): string => ucwords(Str::of($state)->replace('_', ' ')))
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('user.name')
                     ->label(__('field.created_by'))
                     ->numeric()
@@ -182,11 +211,11 @@ class LeaveRequestRuleResource extends Resource
         ];
     }
 
-    public static function getEloquentQuery(): Builder
-    {
-        return parent::getEloquentQuery()
-            ->withoutGlobalScopes([
-                SoftDeletingScope::class,
-            ]);
-    }
+    // public static function getEloquentQuery(): Builder
+    // {
+    //     return parent::getEloquentQuery()
+    //         ->withoutGlobalScopes([
+    //             SoftDeletingScope::class,
+    //         ]);
+    // }
 }
