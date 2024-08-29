@@ -15,6 +15,10 @@ class LeaveEntitlementPolicy
      */
     public function viewAny(User $user): bool
     {
+        if($user->hasRole('super_admin')) return true;        
+
+        return $user->has_entitlement;
+
         return $user->can('view_any_leave::entitlement');
     }
 
@@ -23,6 +27,10 @@ class LeaveEntitlementPolicy
      */
     public function view(User $user, LeaveEntitlement $leaveEntitlement): bool
     {
+        if($user->hasRole('super_admin')) return true;        
+
+        return $user->has_entitlement;
+
         return $user->can('view_leave::entitlement');
     }
 
@@ -30,7 +38,8 @@ class LeaveEntitlementPolicy
      * Determine whether the user can create models.
      */
     public function create(User $user): bool
-    {
+    {        
+
         return $user->can('create_leave::entitlement');
     }
 
@@ -38,7 +47,7 @@ class LeaveEntitlementPolicy
      * Determine whether the user can update the model.
      */
     public function update(User $user, LeaveEntitlement $leaveEntitlement): bool
-    {
+    {        
         return $user->can('update_leave::entitlement');
     }
 

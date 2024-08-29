@@ -7,13 +7,42 @@
 // use App\Models\User;
 
 use App\Enums\ActionStatusEnum;
+use App\Models\EmployeeContract;
 use App\Models\PublicHoliday;
 use App\Models\User;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 
 // use Illuminate\Support\Collection;
+
+if(!function_exists('getSubordinators')){
+    function getSubordinators(User $user){
+        $subordinators = collect();
+
+        // get direct supervisor
+        $dirctContracts = EmployeeContract::with('employee')->where('is_active', true)->where('supervisor_id', $user->id)->get();        
+        foreach($dirctContracts as $contract){            
+            $subordinators->push($contract->employee->user_id);
+        }
+
+        // get from department supervisor
+        $departmentUsers = User::whereNot('id', $user->id)->whereHas('employee', function(Builder $query) use ($user) {
+            $query->whereHas('contracts', function(Builder $query) use ($user) {
+                $query->whereIn('department_id', $user->departments->pluck('id'));
+                $query->where('is_active', true);
+            });
+        })->get();
+
+        foreach($departmentUsers as $user){
+            $subordinators->push($user->id);
+        }        
+
+        return $subordinators->unique();
+    }                
+}
+
 
 if(!function_exists('getAcronym')){
     function getAcronym($string){        

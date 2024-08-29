@@ -27,7 +27,7 @@ return [
     'hours'         => 'Hour|Hours',
     'hour'          => 'Hour',
     'leave_request_form' => 'Leave Request Form',
-    'leave_request_info' => 'Leave Request Info',
+    'leave_request_info' => 'Leave Request Info',    
 
     'photo'    => 'Photo',
     'name'      => 'Name',
@@ -110,7 +110,7 @@ return [
     'working_days_per_week' => 'Working Days Per Week',
     'working_day'   => 'Working Day',
     'total'         => 'Total',
-    'approval_role' => 'Approval Role',
+    'approval_roles' => 'Approval Roles',
     'requested_days' => 'Requested Days',
 
 
@@ -145,5 +145,6 @@ return [
     // label
     'label' => [
         'total' => 'Total :label:',
+        'my'    => 'My :label',
     ]
 ];

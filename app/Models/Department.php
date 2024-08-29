@@ -36,18 +36,9 @@ class Department extends Model
         'is_active' => 'boolean',
     ];
 
+
     public function supervisor(): BelongsTo
     {
         return $this->belongsTo(User::class);
-    }
-
-    public function parent(): BelongsTo
-    {
-        return $this->belongsTo(self::class, 'parent_id');
-    }
-
-    public function children(): HasMany
-    {
-        return $this->hasMany(self::class, 'parent_id');
-    }
+    }    
 }

@@ -13,6 +13,7 @@ return [
     'export' => 'Export',
     'request' => 'Request',
     'generate' => 'Generate',
+    'approve' => 'Approve',
 
     // Button title
     'label' => [
@@ -27,6 +28,7 @@ return [
         'export'    => 'Export :label',
         'request'   => 'Request :label',
         'generate'  => 'Generate :label',
+        'approve'   => 'Approve :label',
     ],
 
     // Button message
@@ -42,5 +44,6 @@ return [
         'export'    => 'Would you like to export :name?',
         'request'   => 'Would you like to request :name?',
         'generate'  => 'Would you like to generate :name?',
+        'approve'   => 'Would you like to approve :name?',
     ]
 ];

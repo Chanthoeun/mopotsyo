@@ -90,19 +90,15 @@ class LeaveRequestRuleResource extends Resource
                             ->required()
                             ->boolean()
                             ->inline()
-                            ->grouped(),
-                                                                
+                            ->grouped(),                                                                
                         Forms\Components\CheckboxList::make('contract_types')
                             ->label(__('model.contract_types'))                                                    
                             ->required()
                             ->options(fn () => \App\Models\ContractType::where('allow_leave_request', true)->orderBy('id')->get()->pluck('name', 'id')->toArray()),
-                        Forms\Components\Select::make('role_id')
-                            ->label(__('field.approval_role'))
+                        Forms\Components\CheckboxList::make('roles')
+                            ->label(__('field.approval_roles'))                                                    
                             ->required()
-                            ->relationship('role', 'name', fn(Builder $query) => $query->whereNot('id', 1)->orderBy('id', 'asc'))
-                            ->getOptionLabelFromRecordUsing(fn (Role $record) => ucwords(Str::of($record->name)->replace('_', ' ')))
-                            ->preload()
-                            ->searchable()
+                            ->options(fn () => Role::whereNot('id', 1)->orderBy('id', 'asc')->get()->pluck('name', 'id')->map(fn ($item) => ucwords(Str::of($item)->replace('_', ' ')))->toArray()),                       
                     ]),
             ]);
     }
@@ -152,12 +148,12 @@ class LeaveRequestRuleResource extends Resource
                     ->boolean()
                     ->alignCenter()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('role.name')
-                    ->label(__('field.approval_role'))
-                    ->numeric()
-                    ->alignCenter()
+                Tables\Columns\TextColumn::make('roles')
+                    ->label(__('field.approval_roles'))
+                    ->listWithLineBreaks()
+                    ->bulleted()
                     ->sortable()
-                    ->formatStateUsing(fn (string $state): string => ucwords(Str::of($state)->replace('_', ' ')))
+                    ->formatStateUsing(fn (string $state): string => ucwords(Str::of(Role::find($state)->name)->replace('_', ' ')))
                     ->toggleable(),
                 Tables\Columns\TextColumn::make('user.name')
                     ->label(__('field.created_by'))

@@ -3,6 +3,7 @@
 namespace App\Filament\Admin\Resources\LeaveEntitlementResource\Pages;
 
 use App\Filament\Admin\Resources\LeaveEntitlementResource;
+use App\Models\LeaveEntitlement;
 use App\Models\LeaveType;
 use App\Models\User;
 use Carbon\Carbon;
@@ -11,10 +12,11 @@ use Filament\Notifications\Notification;
 use Filament\Resources\Components\Tab;
 use Filament\Resources\Pages\ListRecords;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Auth;
 
 class ListLeaveEntitlements extends ListRecords
 {
-    protected static string $resource = LeaveEntitlementResource::class;
+    protected static string $resource = LeaveEntitlementResource::class;    
 
     protected function getHeaderActions(): array
     {
@@ -31,6 +33,7 @@ class ListLeaveEntitlements extends ListRecords
                 ->modalHeading(__('btn.label.generate', ['label' => __('model.entitlement')]))
                 ->modalDescription(__('btn.msg.generate', ['name' => __('field.all') .' '. __('model.employees')]))
                 ->modalIcon('fas-rotate')
+                ->visible(fn () => Auth::user()->can('create', LeaveEntitlement::class))
                 ->action(function(){
                     $users = User::with(['employee.contracts.contractType', 'entitlements'])->whereHas('employee', function(Builder $q) {
                         $q->whereNull('resign_date');

@@ -26,9 +26,8 @@ class LeaveRequestFactory extends Factory
             'leave_type_id' => LeaveType::factory(),
             'from_date' => $this->faker->date(),
             'to_date' => $this->faker->date(),
-            'reason' => $this->faker->text(),
-            'status' => $this->faker->randomDigitNotNull(),
-            'user_id' => User::factory(),
+            'reason' => $this->faker->text(),  
+            'is_completed' => $this->faker->boolean(),        
         ];
     }
 }

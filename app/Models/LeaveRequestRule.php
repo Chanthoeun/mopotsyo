@@ -30,7 +30,7 @@ class LeaveRequestRule extends Model
         'reason',
         'attachment',
         'contract_types',
-        'role_id',
+        'roles',        
         'user_id',
     ];
 
@@ -47,19 +47,14 @@ class LeaveRequestRule extends Model
         'reason' => 'boolean',
         'attachment' => 'boolean',
         'contract_types' => 'array',
-        'role_id' => 'integer',
+        'roles' => 'array',
         'user_id' => 'integer',
     ];
 
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
-    }
-
-    public function role(): BelongsTo
-    {
-        return $this->belongsTo(Role::class);
-    }
+    }    
 
     public function leaveType(): BelongsTo
     {

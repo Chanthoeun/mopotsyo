@@ -78,18 +78,23 @@ class User extends Authenticatable implements FilamentUser, RenewPasswordContrac
 
     // renew password
     public function needRenewPassword(): bool
-{
-    $plugin = RenewPasswordPlugin::get();
- 
-    return
-        (
-            !is_null($plugin->getPasswordExpiresIn())
-            && Carbon::parse($this->{$plugin->getTimestampColumn()})->addDays($plugin->getPasswordExpiresIn()) < now()
-        ) || (
-            $plugin->getForceRenewPassword()
-            && $this->{$plugin->getForceRenewColumn()}
-        );
-}
+    {
+        $plugin = RenewPasswordPlugin::get();
+    
+        return
+            (
+                !is_null($plugin->getPasswordExpiresIn())
+                && Carbon::parse($this->{$plugin->getTimestampColumn()})->addDays($plugin->getPasswordExpiresIn()) < now()
+            ) || (
+                $plugin->getForceRenewPassword()
+                && $this->{$plugin->getForceRenewColumn()}
+            );
+    }
+
+    public function departments(): HasMany
+    {
+        return $this->hasMany(Department::class, 'supervisor_id');
+    }
 
     public function employee(): HasOne
     {
@@ -101,17 +106,33 @@ class User extends Authenticatable implements FilamentUser, RenewPasswordContrac
         return $this->hasMany(LeaveEntitlement::class);
     }
 
+    public function carryForwards(): HasMany
+    {
+        return $this->hasMany(LeaveCarryForward::class);
+    }
+
     public function leaveRequests(): HasMany
     {
         return $this->hasMany(LeaveRequest::class);
+    }
+
+
+    protected function contract(): Attribute
+    {
+        return Attribute::make(
+            get: function () {
+                if(empty($this->employee)) return null;
+
+                return $this->employee->contracts()->where('is_active', true)->first();
+            },
+        );
     }
     
     protected function supervisor(): Attribute
     {
         return Attribute::make(
-            get: function(){                
-                $contract = $this->employee->contracts()->where('is_active', true)->first();                
-                return $contract->supervisor ?? null;
+            get: function(){   
+                return $this->contract->supervisor ?? null;                
             },
         );
     }
@@ -119,17 +140,45 @@ class User extends Authenticatable implements FilamentUser, RenewPasswordContrac
     protected function departmentSupervisor(): Attribute
     {
         return Attribute::make(
-            get: function(){                
-                $contract = $this->employee->contracts()->where('is_active', true)->first();                
-                return $contract->department->supervisor ?? null;
+            get: function(){                                           
+                return $this->contract->department->supervisor ?? null;
+            },
+        );
+    }    
+
+    protected function hasEntitlement(): Attribute
+    {
+        return Attribute::make(
+            get: function() {
+                if($this->entitlements()->count() > 0) return true;
+
+                return false;
             },
         );
     }
-    
+
+    protected function hasCarryForward(): Attribute
+    {
+        return Attribute::make(
+            get: function() {
+                if($this->carryForwards()->count() > 0) return true;
+
+                return false;
+            },
+        );
+    }
+
     protected function name(): Attribute
     {
         return Attribute::make(
-            get: fn ($value) => $this->employee()->nickname ?? $value,
+            get: fn ($value) => $this->employee->nickname ?? $value,
+        );
+    }
+
+    protected function fullName(): Attribute
+    {
+        return Attribute::make(
+            get: fn ($value) => $this->employee->name ?? $value,
         );
     }
 
@@ -137,6 +186,15 @@ class User extends Authenticatable implements FilamentUser, RenewPasswordContrac
     {
         return Attribute::make(
             get: fn () => $this->employee->workDays->where('is_active', true),
+        );
+    }
+
+    protected function subordinators(): Attribute
+    {
+        return Attribute::make(
+            get: function() {
+                return $this->employee->contracts;
+            },
         );
     }
 }

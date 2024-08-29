@@ -30,8 +30,7 @@ class LeaveRequest extends ApprovableModel
         'to_date',
         'reason',
         'attachment',
-        'status',
-        'user_id',
+        'is_completed'
     ];
 
     /**
@@ -44,14 +43,8 @@ class LeaveRequest extends ApprovableModel
         'leave_type_id' => 'integer',
         'from_date' => 'date',
         'to_date' => 'date',
-        'status' => ApprovalStatuEnum::class,
-        'user_id' => 'integer',
+        'is_completed' => 'boolean',
     ];
-
-    public function user(): BelongsTo
-    {
-        return $this->belongsTo(User::class);
-    }
 
     public function leaveType(): BelongsTo
     {
@@ -67,9 +60,8 @@ class LeaveRequest extends ApprovableModel
     {
         return $this->morphTo();
     }
-    
 
-    protected function requestedBy(): Attribute
+    protected function requested(): Attribute
     {
         return Attribute::make(
             get: fn () => $this->createdBy()->name ?? null,

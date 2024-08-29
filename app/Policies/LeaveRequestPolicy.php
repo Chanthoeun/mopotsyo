@@ -8,13 +8,19 @@ use Illuminate\Auth\Access\HandlesAuthorization;
 
 class LeaveRequestPolicy
 {
-    use HandlesAuthorization;
+    use HandlesAuthorization;    
 
     /**
      * Determine whether the user can view any models.
      */
     public function viewAny(User $user): bool
     {
+        if($user->hasRole('super_admin')) return true;
+
+        if(empty($user->contract)) return false;
+
+        if(empty($user->contract->contractType->allow_leave_request)) return false;
+
         return $user->can('view_any_leave::request');
     }
 
@@ -23,6 +29,12 @@ class LeaveRequestPolicy
      */
     public function view(User $user, LeaveRequest $leaveRequest): bool
     {
+        if($user->hasRole('super_admin')) return true;
+
+        if(empty($user->contract)) return false;
+
+        if(empty($user->contract->contractType->allow_leave_request)) return false;
+
         return $user->can('view_leave::request');
     }
 
@@ -31,6 +43,12 @@ class LeaveRequestPolicy
      */
     public function create(User $user): bool
     {
+        if(empty($user->supervisor)) return false;
+
+        if(empty($user->contract)) return false;
+
+        if(empty($user->contract->contractType->allow_leave_request)) return false;
+
         return $user->can('create_leave::request');
     }
 
@@ -39,6 +57,12 @@ class LeaveRequestPolicy
      */
     public function update(User $user, LeaveRequest $leaveRequest): bool
     {
+        if(empty($user->supervisor)) return false;
+
+        if(empty($user->contract)) return false;
+
+        if(empty($user->contract->contractType->allow_leave_request)) return false;
+        
         return $user->can('update_leave::request');
     }
 
@@ -47,6 +71,14 @@ class LeaveRequestPolicy
      */
     public function delete(User $user, LeaveRequest $leaveRequest): bool
     {
+        if($user->hasRole('super_admin')) return true;
+
+        if(empty($user->supervisor)) return false;
+
+        if(empty($user->contract)) return false;
+
+        if(empty($user->contract->contractType->allow_leave_request)) return false;
+
         return $user->can('delete_leave::request');
     }
 
@@ -55,6 +87,14 @@ class LeaveRequestPolicy
      */
     public function deleteAny(User $user): bool
     {
+        if($user->hasRole('super_admin')) return true;
+
+        if(empty($user->supervisor)) return false;
+
+        if(empty($user->contract)) return false;
+
+        if(empty($user->contract->contractType->allow_leave_request)) return false;
+
         return $user->can('delete_any_leave::request');
     }
 
@@ -63,6 +103,14 @@ class LeaveRequestPolicy
      */
     public function forceDelete(User $user, LeaveRequest $leaveRequest): bool
     {
+        if($user->hasRole('super_admin')) return true;
+
+        if(empty($user->supervisor)) return false;
+
+        if(empty($user->contract)) return false;
+
+        if(empty($user->contract->contractType->allow_leave_request)) return false;
+
         return $user->can('force_delete_leave::request');
     }
 
@@ -71,6 +119,14 @@ class LeaveRequestPolicy
      */
     public function forceDeleteAny(User $user): bool
     {
+        if($user->hasRole('super_admin')) return true;
+
+        if(empty($user->supervisor)) return false;
+
+        if(empty($user->contract)) return false;
+
+        if(empty($user->contract->contractType->allow_leave_request)) return false;
+        
         return $user->can('force_delete_any_leave::request');
     }
 
@@ -79,6 +135,8 @@ class LeaveRequestPolicy
      */
     public function restore(User $user, LeaveRequest $leaveRequest): bool
     {
+        if($user->hasRole('super_admin')) return true;
+
         return $user->can('restore_leave::request');
     }
 
@@ -87,6 +145,8 @@ class LeaveRequestPolicy
      */
     public function restoreAny(User $user): bool
     {
+        if($user->hasRole('super_admin')) return true;
+
         return $user->can('restore_any_leave::request');
     }
 
@@ -95,6 +155,8 @@ class LeaveRequestPolicy
      */
     public function replicate(User $user, LeaveRequest $leaveRequest): bool
     {
+        if($user->hasRole('super_admin')) return true;
+
         return $user->can('replicate_leave::request');
     }
 
@@ -103,20 +165,8 @@ class LeaveRequestPolicy
      */
     public function reorder(User $user): bool
     {
-        return $user->can('reorder_leave::request');
-    }
-
-    /**
-     * Determine whether the user can reorder.
-     */
-    public function approve(User $user, LeaveRequest $leaveRequest): bool
-    {
-        dd($leaveRequest->getNextApprovers());
-        if($user->id == $leaveRequest->user->superviser->id || $user->id == $leaveRequest->user->department_superviser->id)
-        {
-            return true;
-        }
-
+        if($user->hasRole('super_admin')) return true;
+        
         return $user->can('reorder_leave::request');
     }
 }

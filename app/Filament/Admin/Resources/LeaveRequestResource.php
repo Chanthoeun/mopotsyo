@@ -60,28 +60,12 @@ class LeaveRequestResource extends Resource
                 Forms\Components\Section::make(__('field.leave_request_form'))
                     ->columnSpan(['lg' => 7])
                     ->columns(2)
-                    ->schema([
-                        Forms\Components\Select::make('user_id')
-                            ->label(__('model.employee'))
-                            ->relationship('user', 'name', function(Builder $query) {
-                                $query->whereHas('employee', function(Builder $query) {
-                                    $query->whereNull('resign_date');
-                                    $query->whereHas('contracts', function(Builder $query) {
-                                        $query->where('is_active', true);
-                                        $query->whereHas('contractType', function(Builder $query) {
-                                            $query->where('allow_leave_request', true);
-                                        });
-                                    });
-                                });
-                            })
-                            ->required()
-                            ->live()
-                            ->columnSpanFull(),
+                    ->schema([                        
                         Forms\Components\ToggleButtons::make('leave_type_id')
                             ->label(__('model.leave_type'))
                             ->options(function(Get $get) {
                                 if($get('user_id')){
-                                    $user = User::with(['employee.contracts.contractType', 'entitlements'])->find($get('user_id'));
+                                    $user = User::with(['employee.contracts.contractType', 'entitlements'])->find(Auth::id());
                                     $contract = $user->employee->contracts->where('is_active', true)->first();                                            
                                     $leaveTypes = LeaveType::whereIn('id', $contract->contractType->leave_types)->where($user->employee->gender->value, true)->where('balance', '>', 0)->orderBy('id', 'asc')->get();
                                     
@@ -126,7 +110,7 @@ class LeaveRequestResource extends Resource
                                             // leave day request
                                             $requestDays = floatval($requestDays / app(SettingWorkingHours::class)->day);     
                                             
-                                            $entitlement = LeaveEntitlement::where('user_id', $get('user_id'))->where('leave_type_id', $get('leave_type_id'))->where('is_active', true)->first();
+                                            $entitlement = LeaveEntitlement::where('user_id', Auth::id())->where('leave_type_id', $get('leave_type_id'))->where('is_active', true)->first();
                                             if($requestDays > $entitlement->remaining){
                                                 $fail(__('msg.balance_is_not_enough'));
                                             }
@@ -191,8 +175,8 @@ class LeaveRequestResource extends Resource
                             ->live()
                             ->afterStateUpdated(function($state, Get $get, Set $set, string $operation, ?Model $record){
                                 $set("requestDates", []);
-                                if($get('user_id') && $get('leave_type_id') && $get('from_date')){
-                                    $user = User::find($get('user_id'));
+                                if($get('leave_type_id') && $get('from_date')){
+                                    $user = Auth::user();
                                     
                                     // add date to request dates list
                                     foreach(getDateRangeBetweenTwoDates($get('from_date'), $state) as $key => $date){                                          
@@ -204,50 +188,6 @@ class LeaveRequestResource extends Resource
                                             $set("requestDates.{$key}.hours", getHoursBetweenTwoTimes($workDay->start_time, $workDay->end_time, $workDay->break_time));
                                         }                                     
                                     }
-
-                                    // if($operation == 'edit'){
-                                    //     $user = User::with(['employee.contracts', 'leaveRequests' => function($query) use($record){
-                                    //         return $query->whereNot('id', $record->id)->whereIn('status', [ApprovalStatuEnum::SUBMITTED, ApprovalStatuEnum::APPROVED]);
-                                    //     }])->find($get('user_id'));
-                                    // }else{
-                                    //     $user = User::with(['leaveRequests' => function($query){
-                                    //         return $query->whereIn('status', [ApprovalStatuEnum::SUBMITTED, ApprovalStatuEnum::APPROVED]);
-                                    //     }])->find($get('user_id'));
-                                    // }
-                                    
-                                    // $contract = $user->employee->contracts->where('is_active', true)->first();
-                                    // $dates = getDateRangeBetweenTwoDates($get('from_date'), $state);
-                                    // //$key = 0;
-                                    // foreach($dates as $key => $date){
-                                    //     if(isWeekend($date) == false && isPublicHoliday($date) == false){
-                                    //         $requestDate = checkDuplicatedLeaveRequest($user, $date);                                                    
-                                    //         if($requestDate == false){
-                                    //             $set("requestDates.{$key}.date", $date->toDateString());    
-                                    //             $set("requestDates.{$key}.start_time", '08:00');
-                                    //             $set("requestDates.{$key}.end_time", '17:00');
-                                    //             $set("requestDates.{$key}.hours", round(getHoursBetweenTwoTimes($get('start_time'), $state), 1));
-                                    //             $key++;  
-                                    //         }else if($requestDate->hours < $contract->shift->work_hours){
-                                    //             if($requestDate->end_time == '12:00:00'){
-                                    //                 $startTime = '13:00:00';
-                                    //             }else{
-                                    //                 $startTime = $requestDate->end_time;
-                                    //             }
-                                    //             $set("requestDates.{$key}.date", $date->toDateString());   
-                                    //             $set("requestDates.{$key}.start_time", $startTime);
-                                    //             $set("requestDates.{$key}.end_time", '17:00');                                                     
-                                    //             $set("requestDates.{$key}.hours", round(getHoursBetweenTwoTimes($get('start_time'), $state), 1));
-                                    //             $key++;  
-                                    //         }                                    
-                                    //     }                                                
-                                    // }
-
-                                    // // adjust from and to date base requestDates
-                                    // $repeaters = $get('requestDates');
-                                    // if(count($repeaters) > 0){
-                                    //     $set('from_date', $repeaters[0]['date']);
-                                    //     $set('to_date', $repeaters[count($repeaters) - 1]['date']);
-                                    // }
                                 }
                             }),
                         Forms\Components\Textarea::make('reason')
@@ -379,7 +319,7 @@ class LeaveRequestResource extends Resource
                     ]),
                 Forms\Components\Section::make(__('field.leave_request_info'))
                     ->columnSpan(['lg' => 5])
-                    ->visible(fn(Get $get): bool => $get('user_id') && $get('leave_type_id') ? true : false)
+                    ->visible(fn(Get $get): bool => $get('leave_type_id') ? true : false)
                     ->schema([
                         Forms\Components\Section::make(fn(Get $get): string => !empty($get('leave_type_id')) ? LeaveType::find($get('leave_type_id'))->name : __('model.entitlement'))                                                        
                             ->columns(4)
@@ -388,8 +328,7 @@ class LeaveRequestResource extends Resource
                                     ->label(__('field.balance'))
                                     ->content(function (Get $get) {
                                         if(!empty($get('leave_type_id'))){                                            
-                                            $user = User::find($get('user_id'));
-                                            return $user->entitlements->where('is_active', true)->where('leave_type_id', $get('leave_type_id'))->first()->balance ?? 0;                                            
+                                            return Auth::user()->entitlements->where('is_active', true)->where('leave_type_id', $get('leave_type_id'))->first()->balance ?? 0;                                            
                                         }
                                     } ),
                                 Forms\Components\Placeholder::make('accrued')
@@ -402,25 +341,22 @@ class LeaveRequestResource extends Resource
                                         return false;
                                     })                                 
                                     ->content(function (Get $get) {
-                                        if(!empty($get('leave_type_id'))){  
-                                            $user = User::find($get('user_id'));                                          
-                                            return  $user->entitlements->where('is_active', true)->where('leave_type_id', $get('leave_type_id'))->first()->accrued ?? 0;                                                                                                                                                         
+                                        if(!empty($get('leave_type_id'))){                                       
+                                            return  Auth::user()->entitlements->where('is_active', true)->where('leave_type_id', $get('leave_type_id'))->first()->accrued ?? 0;                                                                                                                                                         
                                         }
                                     } ),
                                 Forms\Components\Placeholder::make('taken')
                                     ->label(__('field.taken'))
                                     ->content(function (Get $get) {
                                         if(!empty($get('leave_type_id'))){
-                                            $user = User::find($get('user_id'));
-                                            return $user->entitlements->where('is_active', true)->where('leave_type_id', $get('leave_type_id'))->first()->taken ?? 0;                                            
+                                            return Auth::user()->entitlements->where('is_active', true)->where('leave_type_id', $get('leave_type_id'))->first()->taken ?? 0;                                            
                                         }
                                     } ),
                                 Forms\Components\Placeholder::make('remaining')
                                     ->label(__('field.remaining'))
                                     ->content(function (Get $get) {
                                         if(!empty($get('leave_type_id'))){
-                                            $user = User::find($get('user_id'));
-                                            return $user->entitlements->where('is_active', true)->where('leave_type_id', $get('leave_type_id'))->first()->remaining ?? 0;                                            
+                                            return Auth::user()->entitlements->where('is_active', true)->where('leave_type_id', $get('leave_type_id'))->first()->remaining ?? 0;                                            
                                         }
                                     } ),
                                 ]),
@@ -450,8 +386,8 @@ class LeaveRequestResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('requested_by')
-                    ->label(__('field.requested_by'))
+                Tables\Columns\TextColumn::make('requested')
+                    ->label(__('field.created_by'))
                     ->numeric()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('leaveType.name')
@@ -466,13 +402,12 @@ class LeaveRequestResource extends Resource
                     ->label(__('field.to_date'))
                     ->date()
                     ->sortable(),
-
                 Tables\Columns\TextColumn::make('days')
                     ->label(__('field.requested_days'))                    
                     ->formatStateUsing(fn($state) => trans_choice('field.days_with_count', $state, ['count' => $state]))
                     ->alignCenter(),
-                ApprovalStatusColumn::make("approvalStatus.status"),
-                
+                ApprovalStatusColumn::make("approvalStatus.status")
+                    ->label(__('field.status')),                
                 Tables\Columns\TextColumn::make('created_at')
                     ->label(__('field.created_at'))
                     ->dateTime()
@@ -520,6 +455,7 @@ class LeaveRequestResource extends Resource
         return [
             'index' => Pages\ListLeaveRequests::route('/'),
             'create' => Pages\CreateLeaveRequest::route('/create'),
+            'view' => Pages\ViewLeaveRequest::route('/{record}'),
             'edit' => Pages\EditLeaveRequest::route('/{record}/edit'),
         ];
     }

@@ -6,12 +6,15 @@ use App\Enums\DayOfWeekEnum;
 use App\Settings\SettingWorkingHours;
 use Awcodes\TableRepeater\Components\TableRepeater;
 use Awcodes\TableRepeater\Header;
+use BezhanSalleh\FilamentShield\Traits\HasPageShield;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Pages\SettingsPage;
 
 class WorkingHours extends SettingsPage
 {
+    use HasPageShield;
+    
     protected static ?string $navigationIcon = 'heroicon-o-cog-6-tooth';
 
     protected static string $settings = SettingWorkingHours::class;

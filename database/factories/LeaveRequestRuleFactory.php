@@ -30,6 +30,7 @@ class LeaveRequestRuleFactory extends Factory
             'to_amount' => $this->faker->randomDigitNotNull(),
             'day_in_advance' => $this->faker->randomDigitNotNull(),
             'contract_types' => '{}',
+            'roles' => '{}',
             'user_id' => User::factory(),
         ];
     }

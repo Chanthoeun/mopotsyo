@@ -17,6 +17,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Support\Facades\Auth;
 
 class LeaveEntitlementResource extends Resource
 {
@@ -222,11 +223,14 @@ class LeaveEntitlementResource extends Resource
         ];
     }
 
-    // public static function getEloquentQuery(): Builder
-    // {
-    //     return parent::getEloquentQuery()
-    //         ->withoutGlobalScopes([
-    //             SoftDeletingScope::class,
-    //         ]);
-    // }
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+        if(Auth::user()->hasRole(['super_admin', 'human_resource'])) {
+            return $query; 
+        }
+
+        return parent::getEloquentQuery()
+                ->where('user_id', Auth::id());
+    }
 }

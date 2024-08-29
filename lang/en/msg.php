@@ -37,5 +37,6 @@ return [
         'in_progress'         => 'We are :name :count records. we will notify you when it is done.',
         'success'             => ':name was :action successfully.',
         'in_advance'          => 'Your request must be submitted :days days in advance.',
+        'submit_leave_request' => ':name would like to request :days of :leave_type from :from to :to. Would you like to approve this request?',
     ]
 ];
