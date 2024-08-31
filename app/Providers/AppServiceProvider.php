@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Listeners\ApprovalLeaveRequestNotificationListener;
 use App\Listeners\SubmittedLeaveRequestNotificationListener;
 use App\Models\LeaveCarryForward;
 use App\Models\LeaveEntitlement;
@@ -19,6 +20,7 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Rappasoft\LaravelAuthenticationLog\Models\AuthenticationLog;
+use RingleSoft\LaravelProcessApproval\Events\ApprovalNotificationEvent;
 use RingleSoft\LaravelProcessApproval\Events\ProcessSubmittedEvent;
 use RingleSoft\LaravelProcessApproval\Models\ProcessApprovalFlow;
 use Spatie\Activitylog\Models\Activity;
@@ -56,6 +58,6 @@ class AppServiceProvider extends ServiceProvider
 
 
         // Events
-        // Event::listen(ProcessSubmittedEvent::class, SubmittedLeaveRequestNotificationListener::class);
+        // Event::listen(ApprovalNotificationEvent::class, ApprovalLeaveRequestNotificationListener::class);
     }
 }

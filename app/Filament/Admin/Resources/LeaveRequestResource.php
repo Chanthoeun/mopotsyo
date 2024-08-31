@@ -2,6 +2,7 @@
 
 namespace App\Filament\Admin\Resources;
 
+use App\Actions\ApprovalActions;
 use App\Filament\Admin\Resources\LeaveRequestResource\Pages;
 use App\Filament\Admin\Resources\LeaveRequestResource\RelationManagers;
 use App\Models\LeaveEntitlement;
@@ -13,7 +14,7 @@ use App\Settings\SettingWorkingHours;
 use Awcodes\TableRepeater\Components\TableRepeater;
 use Awcodes\TableRepeater\Header;
 use Closure;
-use EightyNine\Approvals\Tables\Actions\ApprovalActions;
+
 use EightyNine\Approvals\Tables\Columns\ApprovalStatusColumn;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -403,7 +404,7 @@ class LeaveRequestResource extends Resource
                     ->date()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('days')
-                    ->label(__('field.requested_days'))                    
+                    ->label(__('field.requested_days'))                     
                     ->formatStateUsing(fn($state) => trans_choice('field.days_with_count', $state, ['count' => $state]))
                     ->alignCenter(),
                 ApprovalStatusColumn::make("approvalStatus.status")

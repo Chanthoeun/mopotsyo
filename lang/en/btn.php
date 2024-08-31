@@ -14,6 +14,10 @@ return [
     'request' => 'Request',
     'generate' => 'Generate',
     'approve' => 'Approve',
+    'reject' => 'Reject',
+    'discard' => 'Discard',
+    'submit' => 'Submit',
+    'view' => 'View',
 
     // Button title
     'label' => [
@@ -29,6 +33,10 @@ return [
         'request'   => 'Request :label',
         'generate'  => 'Generate :label',
         'approve'   => 'Approve :label',
+        'reject'    => 'Reject :label',
+        'discard'   => 'Discard :label',
+        'submit'    => 'Submit :label',
+        'view'      => 'View :label',
     ],
 
     // Button message
@@ -45,5 +53,9 @@ return [
         'request'   => 'Would you like to request :name?',
         'generate'  => 'Would you like to generate :name?',
         'approve'   => 'Would you like to approve :name?',
-    ]
+        'reject'    => 'Would you like to reject :name?',
+        'discard'   => 'Would you like to discard :name?',
+        'submit'    => 'Would you like to submit :name?',
+        'view'      => 'Would you like to view :name?',
+    ],
 ];

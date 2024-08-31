@@ -12,7 +12,10 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Spatie\Permission\Models\Role;
+use Illuminate\Support\Str;
 
 class DepartmentResource extends Resource
 {
@@ -42,7 +45,12 @@ class DepartmentResource extends Resource
     public static function form(Form $form): Form
     {
         return $form            
-            ->schema([                
+            ->schema([   
+                Forms\Components\Select::make('parent_id')
+                    ->label(__('field.parent'))
+                    ->relationship('parent', 'name')
+                    ->preload()
+                    ->searchable(),             
                 Forms\Components\TextInput::make('name')
                     ->label(__('field.name'))
                     ->required()
@@ -53,6 +61,12 @@ class DepartmentResource extends Resource
                     ->relationship('supervisor', 'name', fn(Builder $query) => $query->whereHas('employee', fn(Builder $query) => $query->whereNull('resign_date')->orWhereDate('resign_date', '>=', now())))
                     ->preload()
                     ->searchable(),               
+                Forms\Components\Select::make('role_id')
+                    ->label(__('model.role'))
+                    ->relationship('role', 'name', fn(Builder $query) => $query->whereNot('id', 1))
+                    ->preload()
+                    ->searchable()
+                    ->getOptionLabelFromRecordUsing(fn(Model $record) => ucwords(Str::of($record->name)->replace('_', ' '))),               
             ]);
     }
 
@@ -63,9 +77,16 @@ class DepartmentResource extends Resource
                 Tables\Columns\TextColumn::make('name')
                     ->label(__('field.name'))
                     ->searchable(),                
+                Tables\Columns\TextColumn::make('parent.name')
+                    ->label(__('field.parent'))
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('supervisor.name')
                     ->label(__('field.supervisor'))
                     ->searchable(),
+                Tables\Columns\TextColumn::make('role.name')
+                    ->label(__('model.role'))
+                    ->searchable()
+                    ->formatStateUsing(fn (string $state): string => ucwords(Str::of($state)->replace('_', ' '))),
                 Tables\Columns\ToggleColumn::make('is_active')
                     ->label(__('field.is_active')),
                 Tables\Columns\TextColumn::make('created_at')

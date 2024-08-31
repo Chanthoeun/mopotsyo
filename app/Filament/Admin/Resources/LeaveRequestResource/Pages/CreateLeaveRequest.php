@@ -3,11 +3,14 @@
 namespace App\Filament\Admin\Resources\LeaveRequestResource\Pages;
 
 use App\Filament\Admin\Resources\LeaveRequestResource;
+use App\Models\Department;
 use App\Models\LeaveRequestRule;
+use App\Models\ProcessApprover;
 use App\Models\User;
 use Filament\Actions;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 use RingleSoft\LaravelProcessApproval\Enums\ApprovalStatusEnum;
@@ -41,12 +44,50 @@ class CreateLeaveRequest extends CreateRecord
                 }           
             }       
     
+            
             $this->record->approvalStatus()->update([
                'steps' => $this->record->approvalFlowSteps()->whereIn('role_id', $roles)->map(function ($item) {
-                    return $item->toApprovalStatusArray();
+                    $data =$item->toApprovalStatusArray(); 
+                    $user = $this->record->approvalStatus->creator;  
+                    $userDepartment = $user->contract->department;
+
+                    if($user->supervisor->hasRole($item->role_id)){
+                        ProcessApprover::create([
+                            'step_id'           => $item->id,
+                            'leave_request_id'  => $this->record->id,
+                            'role_id'           => $item->role_id,
+                            'user_id'           => $user->supervisor->id
+                        ]);                        
+                    }else{
+                        if($item->role_id == $userDepartment->role_id){
+                            ProcessApprover::create([
+                                'step_id'           => $item->id,
+                                'leave_request_id'  => $this->record->id,
+                                'role_id'           => $item->role_id,
+                                'user_id'           => $userDepartment->supervisor->id
+                            ]);
+                            
+                        }else if(!empty($userDepartment->parent) && $item->role_id == $userDepartment->parent->role_id){
+                            ProcessApprover::create([
+                                'step_id'           => $item->id,
+                                'leave_request_id'  => $this->record->id,
+                                'role_id'           => $item->role_id,
+                                'user_id'           => $userDepartment->parent->supervisor->id
+                            ]);
+                            
+                        }else{
+                            ProcessApprover::create([
+                                'step_id'           => $item->id,
+                                'leave_request_id'  => $this->record->id,
+                                'role_id'           => $item->role_id
+                            ]);                            
+                        }
+                    }
+                       
+                    return $data;
                 })->toArray()
             ]);
-        }        
+        }               
     }
 
     protected function getCreatedNotification(): ?Notification

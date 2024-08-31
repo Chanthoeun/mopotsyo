@@ -74,4 +74,9 @@ class LeaveRequest extends ApprovableModel
             get: fn () => floatval($this->requestDates()->sum('hours') / app(SettingWorkingHours::class)->day),
         );
     }
+
+    // public function canBeApproved(User $user): bool
+    // {
+    //     return true;
+    // }
 }

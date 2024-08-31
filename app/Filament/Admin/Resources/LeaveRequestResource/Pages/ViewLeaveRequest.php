@@ -20,7 +20,7 @@ class ViewLeaveRequest extends ViewRecord
      * @throws Exception
      */
     protected function getOnCompletionAction()
-    {
+    {        
         return Action::make("Done")
             ->color("success")
             ->hidden();

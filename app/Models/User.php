@@ -140,7 +140,12 @@ class User extends Authenticatable implements FilamentUser, RenewPasswordContrac
     protected function departmentSupervisor(): Attribute
     {
         return Attribute::make(
-            get: function(){                                           
+            get: function(){           
+                if($this->id == $this->contract->department->supervisor->id)
+                {
+                    return $this->supervisor;
+                }   
+
                 return $this->contract->department->supervisor ?? null;
             },
         );
