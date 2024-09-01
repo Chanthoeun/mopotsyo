@@ -2,9 +2,13 @@
 
 namespace App\Filament\Admin\Resources;
 
+use App\Enums\Gender;
 use App\Filament\Admin\Resources\UserResource\Pages;
 use App\Filament\Admin\Resources\UserResource\RelationManagers;
+use App\Filament\Admin\Resources\UserResource\RelationManagers\ContractsRelationManager;
+use App\Filament\Admin\Resources\UserResource\RelationManagers\ProfileRelationManager;
 use App\Models\User;
+use BezhanSalleh\FilamentShield\Contracts\HasShieldPermissions;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Concerns\Translatable;
@@ -17,9 +21,10 @@ use Illuminate\Support\Facades\Hash;
 use Rawilk\FilamentPasswordInput\Password;
 use Tapp\FilamentAuthenticationLog\RelationManagers\AuthenticationLogsRelationManager;
 use Illuminate\Support\Str;
+use Livewire\Component;
 use Spatie\Permission\Contracts\Role;
 
-class UserResource extends Resource
+class UserResource extends Resource implements HasShieldPermissions
 {
     use Translatable; 
     
@@ -46,25 +51,29 @@ class UserResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make()
+                Forms\Components\Section::make()                    
                     ->columns(2)
                     ->schema([
                         Forms\Components\TextInput::make('name')
-                            ->label(__('field.name'))
+                            ->hiddenLabel()
+                            ->placeholder(__('field.name'))
                             ->required()
                             ->maxLength(50)
-                            ->columnSpanFull(),
+                            ->suffixIcon('fas-language'),
                         Forms\Components\TextInput::make('username')
-                            ->label(__('field.user.username'))
+                            ->hiddenLabel()
+                            ->placeholder(__('field.user.username'))
                             ->required()
                             ->maxLength(50),
                         Forms\Components\TextInput::make('email')
-                            ->label(__('field.email'))
+                            ->hiddenLabel()
+                            ->placeholder(__('field.email'))
                             ->email()
                             ->unique(ignoreRecord: true)
                             ->maxLength(50),
                         Password::make('password')
-                            ->label(__('field.user.password'))
+                            ->hiddenLabel()
+                            ->placeholder(__('field.user.password'))
                             ->autocomplete(false)
                             ->required(fn (string $context): bool => $context === 'create')
                             ->regeneratePassword(notify: false)
@@ -75,9 +84,10 @@ class UserResource extends Resource
                             ->copyMessage(__('field.copied', ['name' => __('field.user.password')]))
                             ->copyMessageDuration(3000)
                             ->dehydrateStateUsing(fn ($state) => Hash::make($state))
-                            ->dehydrated(fn ($state) => filled($state))
-                            ->columnSpanFull(),
+                            ->dehydrated(fn ($state) => filled($state)),
                         Forms\Components\Select::make('roles')
+                            ->hiddenLabel()
+                            ->placeholder(__('model.roles'))
                             ->multiple()
                             ->relationship('roles', 'name')
                             ->getOptionLabelFromRecordUsing(fn (Role $record) => ucwords(Str::of($record->name)->replace('_', ' ')))
@@ -88,7 +98,7 @@ class UserResource extends Resource
                                     ->required()
                                     ->dehydrateStateUsing(fn ($state) => Str::of($state)->lower()->replace(' ', '_'))
                             ])
-                            ->columnSpanFull(),
+                            ->columnSpanFull(), 
                     ])
             ]);
     }
@@ -97,6 +107,10 @@ class UserResource extends Resource
     {
         return $table
             ->columns([
+                Tables\Columns\ImageColumn::make('employee.photo')
+                    ->label(__('field.photo'))
+                    ->circular()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('name')
                     ->label(__('field.name'))
                     ->searchable(),
@@ -105,12 +119,13 @@ class UserResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('email')
                     ->label(__('field.email'))
-                    ->searchable(),
+                    ->searchable(),                
                 Tables\Columns\TextColumn::make('roles.name')
                     ->label(__('model.roles'))
                     ->badge()
                     ->formatStateUsing(fn (string $state): string => ucwords(Str::of($state)->replace('_', ' ')))
-                    ->searchable(),
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\IconColumn::make('status')
                     ->label(__('field.status'))
                     ->alignCenter()
@@ -123,7 +138,7 @@ class UserResource extends Resource
                     ->alignCenter()
                     ->dateTime()
                     ->sortable()
-                    ->toggleable(),
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('updated_at')
                     ->label(__('field.updated_at'))
                     ->alignCenter()
@@ -143,7 +158,7 @@ class UserResource extends Resource
             ->actions([
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\Action::make('ban')
-                    ->visible(fn(User $record) => $record->hasRole('super_admin'))
+                    ->visible(fn() => auth()->user()->can('ban_user'))
                     ->label(fn(User $record) => $record->isNotBanned() ? __('btn.ban') : __('btn.unban') )
                     ->icon(fn(User $record) => $record->isNotBanned() ? 'fas-user-lock' : 'fas-user-check')
                     ->color(fn(User $record) => $record->isNotBanned() ? 'danger' : 'success')                        
@@ -175,7 +190,7 @@ class UserResource extends Resource
     public static function getRelations(): array
     {
         return [
-            AuthenticationLogsRelationManager::class
+            AuthenticationLogsRelationManager::class,
         ];
     }
 
@@ -185,6 +200,25 @@ class UserResource extends Resource
             'index' => Pages\ListUsers::route('/'),
             'create' => Pages\CreateUser::route('/create'),
             'edit' => Pages\EditUser::route('/{record}/edit'),
+        ];
+    }
+
+    public static function getPermissionPrefixes(): array
+    {
+        return [
+            'view',
+            'view_any',
+            'create',
+            'update',
+            'restore',
+            'restore_any',
+            'replicate',
+            'reorder',
+            'delete',
+            'delete_any',
+            'force_delete',
+            'force_delete_any',
+            'ban'
         ];
     }
 }

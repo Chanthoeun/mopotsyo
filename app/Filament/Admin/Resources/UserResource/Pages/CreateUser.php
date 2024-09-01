@@ -20,7 +20,7 @@ class CreateUser extends CreateRecord
     protected function getHeaderActions(): array
     {
         return [
-            Actions\LocaleSwitcher::make(),            
+            // Actions\LocaleSwitcher::make(),            
         ];
     }
 }
