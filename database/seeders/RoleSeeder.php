@@ -18,23 +18,19 @@ class RoleSeeder extends Seeder
             'guard_name' => 'web',
         ]);
         Role::create([
-            'name' => 'staff',
+            'name' => 'employee',
             'guard_name' => 'web',
         ]);
         Role::create([
-            'name' => 'patient',
+            'name' => 'supervisor',
             'guard_name' => 'web',
         ]);
         Role::create([
-            'name' => 'doctor',
+            'name' => 'head_of_department',
             'guard_name' => 'web',
         ]);
         Role::create([
-            'name' => 'partner',
-            'guard_name' => 'web',
-        ]);
-        Role::create([
-            'name' => 'peer',
+            'name' => 'acting_director',
             'guard_name' => 'web',
         ]);
     }

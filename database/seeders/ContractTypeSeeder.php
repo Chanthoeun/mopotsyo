@@ -22,10 +22,10 @@ class ContractTypeSeeder extends Seeder
         ]);
         ContractType::create([
            'name' => [
-                'en' => 'Fixed Duration Contract',
+                'en' => 'Specified Duration Contract',
                 'km' => 'កិច្ចសន្យាមានថេរវេលាកំណត់'
            ],
-           'abbr' => 'FDC',   
+           'abbr' => 'SDC',   
         ]);
         ContractType::create([
            'name' => [
