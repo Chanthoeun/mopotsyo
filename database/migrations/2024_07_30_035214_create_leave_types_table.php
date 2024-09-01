@@ -28,6 +28,7 @@ return new class extends Migration
             $table->boolean('allow_advance')->default(0);
             $table->unsignedTinyInteger('advance_limit')->default(0)->nullable();
             $table->boolean('allow_accrual')->default(0);
+            $table->boolean('visible')->default(1);
             $table->timestamps();
             $table->softDeletes();
         });

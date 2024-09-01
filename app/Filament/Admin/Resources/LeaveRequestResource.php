@@ -64,23 +64,19 @@ class LeaveRequestResource extends Resource
                     ->schema([                        
                         Forms\Components\ToggleButtons::make('leave_type_id')
                             ->label(__('model.leave_type'))
-                            ->options(function(Get $get) {
-                                if($get('user_id')){
-                                    $user = User::with(['employee.contracts.contractType', 'entitlements'])->find(Auth::id());
-                                    $contract = $user->employee->contracts->where('is_active', true)->first();                                            
-                                    $leaveTypes = LeaveType::whereIn('id', $contract->contractType->leave_types)->where($user->employee->gender->value, true)->where('balance', '>', 0)->orderBy('id', 'asc')->get();
-                                    
-                                    // remvoe leave type if balance is 0
-                                    $ids = collect();
-                                    foreach($user->entitlements as $entitlement){
-                                        if($entitlement->remaining > 0){
-                                            $ids->push($entitlement->leave_type_id);
-                                        }
+                            ->options(function() {
+                                $user = Auth::user();
+                                $userLeaveTypes = $user->contract->contractType->leave_types;
+                                                          
+                                $ids = collect();
+                                foreach($userLeaveTypes as $leaveTypeId){
+                                    $entitlement = $user->entitlements()->where('leave_type_id', $leaveTypeId)->where('is_active', true)->whereDate('end_date', '>=', now())->first();
+                                    if($entitlement && $entitlement->remaining > 0){
+                                        $ids->push($entitlement->leave_type_id);
                                     }
-                                        
-                                    return $leaveTypes->whereIn('id', $ids)->pluck('abbr', 'id');
                                 }
-                                return LeaveType::where('balance', '>', 0)->orderBy('id', 'asc')->get()->pluck('abbr', 'id');
+                                    
+                                return LeaveType::whereIn('id', $userLeaveTypes)->where($user->employee->gender->value, true)->where('visible', true)->whereHas('rules')->orderBy('id', 'asc')->pluck('abbr', 'id');
                             })
                             ->required()                                    
                             ->inline()
@@ -111,11 +107,25 @@ class LeaveRequestResource extends Resource
                                             // leave day request
                                             $requestDays = floatval($requestDays / app(SettingWorkingHours::class)->day);     
                                             
-                                            $entitlement = LeaveEntitlement::where('user_id', Auth::id())->where('leave_type_id', $get('leave_type_id'))->where('is_active', true)->first();
-                                            if($requestDays > $entitlement->remaining){
-                                                $fail(__('msg.balance_is_not_enough'));
-                                            }
                                             
+                                            // allow accruing leave days if no rule
+                                            $leaveType = LeaveType::where('id', $get('leave_type_id'))->first();
+                                            
+                                            if($leaveType){
+                                                $entitlement = Auth::user()->entitlements()->where('leave_type_id', $get('leave_type_id'))->where('is_active', true)->whereDate('end_date', '>=', now())->first();
+                                                if($leaveType->balance > 0 && $leaveType->allow_accrual == true){
+                                                    if($entitlement && $requestDays > $entitlement->accrued){
+                                                        $fail(__('msg.body.request_over_accrued_amount', ['amount' => $entitlement->accrued]));   
+                                                    }
+                                                }
+
+                                                // check balance
+                                                if($leaveType->balance > 0){
+                                                    if($requestDays > $entitlement->remaining){
+                                                        $fail(__('msg.balance_is_not_enough'));
+                                                    }
+                                                }
+                                            }
                                         }                                                                               
                                     };
                                 },
@@ -152,16 +162,16 @@ class LeaveRequestResource extends Resource
                                                 $leaveRequestRules = LeaveRequestRule::where('leave_type_id', $get('leave_type_id'))->get();
                                                 foreach($leaveRequestRules as $rule){
                                                     if(empty($rule->to_amount)){
-                                                        if($requestDays > $rule->from_amount && $inAdvance < $rule->day_in_advance){
+                                                        if($requestDays > $rule->from_amount && !empty($rule->day_in_advance) && $inAdvance < $rule->day_in_advance){
                                                             $fail(__('msg.body.in_advance', ['days' => $rule->day_in_advance]));
                                                         }
                                                     }else{
-                                                        if($requestDays >= $rule->from_amount && $requestDays <= $rule->to_amount && $inAdvance < $rule->day_in_advance){
+                                                        if($requestDays >= $rule->from_amount && $requestDays <= $rule->to_amount && !empty($rule->day_in_advance) && $inAdvance < $rule->day_in_advance){
                                                             $fail(__('msg.body.in_advance', ['days' => $rule->day_in_advance]));
                                                         }
                                                     }                                                    
                                                 }
-                                                
+
                                             }
                                         }                                                                                
                                     };
@@ -183,10 +193,12 @@ class LeaveRequestResource extends Resource
                                     foreach(getDateRangeBetweenTwoDates($get('from_date'), $state) as $key => $date){                                          
                                         $workDay = $user->workDays->where('day_name.value', $date->dayOfWeek())->first();
                                         if($workDay){
-                                            $set("requestDates.{$key}.date", $date->toDateString()); 
-                                            $set("requestDates.{$key}.start_time", $workDay->start_time);
-                                            $set("requestDates.{$key}.end_time", $workDay->end_time);
-                                            $set("requestDates.{$key}.hours", getHoursBetweenTwoTimes($workDay->start_time, $workDay->end_time, $workDay->break_time));
+                                            if(checkDuplicatedLeaveRequest($user, $date)){
+                                                $set("requestDates.{$key}.date", $date->toDateString()); 
+                                                $set("requestDates.{$key}.start_time", $workDay->start_time);
+                                                $set("requestDates.{$key}.end_time", $workDay->end_time);
+                                                $set("requestDates.{$key}.hours", getHoursBetweenTwoTimes($workDay->start_time, $workDay->end_time, $workDay->break_time));
+                                            }
                                         }                                     
                                     }
                                 }
@@ -343,7 +355,7 @@ class LeaveRequestResource extends Resource
                                     })                                 
                                     ->content(function (Get $get) {
                                         if(!empty($get('leave_type_id'))){                                       
-                                            return  Auth::user()->entitlements->where('is_active', true)->where('leave_type_id', $get('leave_type_id'))->first()->accrued ?? 0;                                                                                                                                                         
+                                            return  Auth::user()->entitlements()->where('is_active', true)->where('leave_type_id', $get('leave_type_id'))->whereDate('end_date', '>=', now())->first()->accrued ?? 0;                                                                                                                                                         
                                         }
                                     } ),
                                 Forms\Components\Placeholder::make('taken')

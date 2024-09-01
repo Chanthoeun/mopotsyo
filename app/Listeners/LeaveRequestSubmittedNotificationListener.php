@@ -34,7 +34,7 @@ class LeaveRequestSubmittedNotificationListener
         
 
         // send notification to approver
-        if($getApprover->user){
+        if($getApprover && $getApprover->user){
             $approvers = collect()->push($getApprover->user);
         }else{
             $approvers = User::whereHas('employee', fn(Builder $q) => $q->whereNull('resign_date')->orWhereDate('resign_date', '>=', now()))->role($getApprover->role_id)->get();

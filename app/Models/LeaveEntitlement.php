@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Settings\SettingWorkingHours;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -10,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use RingleSoft\LaravelProcessApproval\Enums\ApprovalActionEnum;
 
 class LeaveEntitlement extends Model
 {
@@ -68,7 +70,18 @@ class LeaveEntitlement extends Model
     protected function taken(): Attribute
     {
         return Attribute::make(
-            get: fn () => 0,
+            get: function () {
+                $user = $this->user;
+                $leaveRequests = $this->leaveRequests()->with('requestDates')->whereHas('approvalStatus', static function ($q) use ($user) {
+                    return $q->where('creator_id', $user->id)->where('status', ApprovalActionEnum::APPROVED->value);
+                })->get();
+
+                $taken = 0;
+                foreach ($leaveRequests as $leaveRequest) {
+                    $taken += floatval($leaveRequest->requestDates->sum('hours') / app(SettingWorkingHours::class)->day);
+                }
+                return $taken;
+            } 
         );
     }
 
@@ -84,7 +97,7 @@ class LeaveEntitlement extends Model
         return Attribute::make(
             get: function(){
                 if($this->leaveType->allow_accrual){
-                    return calculateAccrud($this->balance, $this->start_date, now());
+                    return floatval(calculateAccrud($this->balance, $this->start_date, now()) - $this->taken);
                 }
                 return 0;
             },

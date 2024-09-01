@@ -27,15 +27,19 @@ class CreateLeaveRequest extends CreateRecord
     protected function handleRecordCreation(array $data): Model
     {
         $user = Auth::user();
-        $entitlement = $user->entitlements->where('leave_type_id', $data['leave_type_id'])->first();        
-        return $entitlement->leaveRequests()->create($data);
+        $entitlement = $user->entitlements()->where('leave_type_id', $data['leave_type_id'])->where('is_active', true)->whereDate('end_date', '>=', now())->first();   
+        if($entitlement){
+            return $entitlement->leaveRequests()->create($data);
+        }     
+
+        return static::getModel()::create($data);
     }
 
 
     protected function afterCreate(): void
     {
         $rules = LeaveRequestRule::where('leave_type_id', $this->record->leave_type_id)->get();
-        if($rules){
+        if(count($rules) > 0){
             foreach($rules as $rule){
                 if($this->record->days >= $rule->from_amount && $this->record->days <= $rule->to_amount){
                     $roles = $rule->roles;
@@ -44,7 +48,6 @@ class CreateLeaveRequest extends CreateRecord
                 }           
             }       
     
-            
             $this->record->approvalStatus()->update([
                'steps' => $this->record->approvalFlowSteps()->whereIn('role_id', $roles)->map(function ($item) {
                     $data =$item->toApprovalStatusArray(); 

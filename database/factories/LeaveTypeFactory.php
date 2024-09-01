@@ -36,6 +36,7 @@ class LeaveTypeFactory extends Factory
             'allow_advance' => $this->faker->boolean(),
             'advance_limit' => $this->faker->randomDigitNotNull(),
             'allow_accrual' => $this->faker->boolean(),
+            'visible' => $this->faker->boolean(),
         ];
     }
 }

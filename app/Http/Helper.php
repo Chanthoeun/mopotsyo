@@ -8,12 +8,14 @@
 
 use App\Enums\ActionStatusEnum;
 use App\Models\EmployeeContract;
+use App\Models\LeaveRequest;
 use App\Models\PublicHoliday;
 use App\Models\User;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use RingleSoft\LaravelProcessApproval\Enums\ApprovalActionEnum;
 
 // use Illuminate\Support\Collection;
 
@@ -184,15 +186,19 @@ if(! function_exists('getDateRangeBetweenTwoDates')){
 
 if(!function_exists('checkDuplicatedLeaveRequest')){
     function checkDuplicatedLeaveRequest($user, $date){
-        foreach($user->leaveRequests as $leaveRequest){
+        $leaveRequests = LeaveRequest::whereHas('approvalStatus', static function ($q) use ($user) {
+            return $q->where('creator_id', $user->id)->where('status', ApprovalActionEnum::APPROVED->value)->orWhere('status', ApprovalActionEnum::SUBMITTED->value)->orWhere('status', ApprovalActionEnum::CREATED->value);
+        })->get();
+
+        foreach($leaveRequests as $leaveRequest){
             foreach($leaveRequest->requestDates as $requestDate)
             {
                 if($requestDate->date == $date){
-                    return $requestDate;
+                    return false;
                 }
             }           
         }
-        return false;
+        return true;
     }
 }
 

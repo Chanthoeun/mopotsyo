@@ -20,7 +20,7 @@ return new class extends Migration
             $table->date('to_date');
             $table->text('reason')->nullable();
             $table->string('attachment')->nullable();            
-            $table->morphs('leaverequestable');
+            $table->nullableMorphs('leaverequestable');
             $table->boolean('is_completed')->default(0);
             $table->timestamps();
             $table->softDeletes();

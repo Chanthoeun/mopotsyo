@@ -176,7 +176,12 @@ class LeaveRequestPolicy
      */
     public function approve(User $user, LeaveRequest $leaveRequest): bool
     {        
-        // dd($leaveRequest->nextApprovalStep()->role_id);
+        if(empty($leaveRequest->leaveType->rules->count())){
+            if($leaveRequest->canBeApprovedBy($user) && $leaveRequest->isSubmitted() &&
+                    !$leaveRequest->isApprovalCompleted() &&
+                    !$leaveRequest->isDiscarded()) return true;
+        }
+
         $nextStep = $leaveRequest->nextApprovalStep();
         if($nextStep){
             $getApprover = ProcessApprover::where('leave_request_id', $leaveRequest->id)->where('step_id', $nextStep->id)->where('role_id', $nextStep->role_id)->first();
@@ -200,8 +205,15 @@ class LeaveRequestPolicy
      * Determine whether the user can reject.
      */
     public function reject(User $user, LeaveRequest $leaveRequest): bool
-    {        
-        // dd($leaveRequest->nextApprovalStep()->role_id);
+    {      
+        if(empty($leaveRequest->leaveType->rules->count())){
+            if($leaveRequest->canBeApprovedBy($user) && $leaveRequest->isSubmitted() &&
+                !$leaveRequest->isApprovalCompleted() &&
+                !$leaveRequest->isRejected() &&
+                !$leaveRequest->isDiscarded()) return true;
+        }  
+
+        
         $nextStep = $leaveRequest->nextApprovalStep();
         if($nextStep){
             $getApprover = ProcessApprover::where('leave_request_id', $leaveRequest->id)->where('step_id', $nextStep->id)->where('role_id', $nextStep->role_id)->first();
@@ -234,7 +246,10 @@ class LeaveRequestPolicy
      * Determine whether the user can discard.
      */
     public function discard(User $user, LeaveRequest $leaveRequest): bool
-    {        
+    {       
+        if(empty($leaveRequest->leaveType->rules->count())){
+            if($leaveRequest->canBeApprovedBy($user) && $leaveRequest->isRejected()) return true;
+        } 
         // dd($leaveRequest->nextApprovalStep()->role_id);
         $nextStep = $leaveRequest->nextApprovalStep();
         if($nextStep){

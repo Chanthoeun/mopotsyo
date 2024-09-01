@@ -51,5 +51,6 @@ return [
         'rejected'             => 'Your :request for :days of :leave_type from :from to :to was rejected by :name.',
         'discarded'            => 'Your :request for :days of :leave_type from :from to :to was discarded by :name.',
         'completed_leave_request'   => 'Your :request for :days of :leave_type from :from to :to was approved and completed.',
+        'request_over_accrued_amount'      => 'Your request date is over accrued amount. Your current accured amount is :amount.',
     ]
 ];

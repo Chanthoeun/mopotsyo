@@ -36,6 +36,7 @@ class LeaveType extends Model
         'allow_advance',
         'advance_limit',
         'allow_accrual',
+        'visible',
     ];
 
     /**
@@ -55,6 +56,7 @@ class LeaveType extends Model
         'allow_advance' => 'boolean',
         'advance_limit' => 'integer',
         'allow_accrual' => 'boolean',
+        'visible' => 'boolean',
     ];
 
     public function entitlements(): HasMany

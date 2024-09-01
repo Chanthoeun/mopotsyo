@@ -145,13 +145,23 @@ class LeaveTypeResource extends Resource
                                     ]),
                             ]), 
                         Forms\Components\Group::make()
-                            ->columnSpanFull()
+                            ->columns(1)
                             ->schema([
                                 Forms\Components\Section::make(__('field.accrual'))
                                     ->description(__('desc.accrued'))
                                     ->schema([
                                         Forms\Components\Toggle::make('allow_accrual')
                                             ->label(__('field.allow_accrual')),
+                                    ]),
+                            ]),                  
+                        Forms\Components\Group::make()
+                            ->columns(1)
+                            ->schema([
+                                Forms\Components\Section::make(__('field.visability'))
+                                    ->description(__('desc.visible'))
+                                    ->schema([
+                                        Forms\Components\Toggle::make('visible')
+                                            ->label(__('field.visible')),
                                     ]),
                             ]),                  
                     ])                
@@ -225,6 +235,10 @@ class LeaveTypeResource extends Resource
                     ->label(__('field.allow_accrual'))
                     ->alignCenter()
                     ->boolean(),
+                Tables\Columns\IconColumn::make('visible')
+                    ->label(__('field.visibility'))
+                    ->alignCenter()
+                    ->boolean(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label(__('field.created_at'))
                     ->dateTime()
@@ -245,7 +259,6 @@ class LeaveTypeResource extends Resource
                 Tables\Filters\TrashedFilter::make(),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
             ])
             ->bulkActions([

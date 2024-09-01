@@ -81,7 +81,7 @@ class LeaveRequestApprovedNotificationListener
             $message = collect([
                 'subject' => __('mail.subject', ['name' => __('msg.label.completed', ['label' => __('model.leave_request')])]),
                 'greeting' => __('mail.greeting', ['name' => $receiver->name]),
-                'body' => __('msg.body.discarded', [
+                'body' => __('msg.body.completed_leave_request', [
                     'request'  => strtolower(__('model.leave_request')), 
                     'days'  => strtolower(trans_choice('field.days_with_count', $leaveRequest->days, ['count' => $leaveRequest->days])),
                     'leave_type' => strtolower($leaveRequest->leaveType->name),

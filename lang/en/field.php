@@ -112,6 +112,8 @@ return [
     'total'         => 'Total',
     'approval_roles' => 'Approval Roles',
     'requested_days' => 'Requested Days',
+    'visibility' => 'Visibility',
+    'visible' => 'Visible',
 
 
     // day
