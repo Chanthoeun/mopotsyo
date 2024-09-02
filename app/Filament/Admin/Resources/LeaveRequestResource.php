@@ -10,16 +10,20 @@ use App\Models\LeaveRequest;
 use App\Models\LeaveRequestRule;
 use App\Models\LeaveType;
 use App\Models\User;
+use App\Notifications\SendLeaveRequestNotification;
 use App\Settings\SettingWorkingHours;
 use Awcodes\TableRepeater\Components\TableRepeater;
 use Awcodes\TableRepeater\Header;
 use Closure;
-
+use EightyNine\Approvals\Tables\Actions\RejectAction;
 use EightyNine\Approvals\Tables\Columns\ApprovalStatusColumn;
 use Filament\Forms;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
 use Filament\Forms\Set;
+use Filament\Notifications\Actions\Action as ActionsAction;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Actions\Action;
@@ -29,6 +33,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\HtmlString;
+use RingleSoft\LaravelProcessApproval\Enums\ApprovalStatusEnum;
+use RingleSoft\LaravelProcessApproval\Models\ProcessApproval;
 
 class LeaveRequestResource extends Resource
 {
@@ -193,7 +199,7 @@ class LeaveRequestResource extends Resource
                                     foreach(getDateRangeBetweenTwoDates($get('from_date'), $state) as $key => $date){                                          
                                         $workDay = $user->workDays->where('day_name.value', $date->dayOfWeek())->first();
                                         if($workDay){
-                                            if(checkDuplicatedLeaveRequest($user, $date)){
+                                            if(dateIsNotDuplicated($user, $date) && !publicHoliday($date)){
                                                 $set("requestDates.{$key}.date", $date->toDateString()); 
                                                 $set("requestDates.{$key}.start_time", $workDay->start_time);
                                                 $set("requestDates.{$key}.end_time", $workDay->end_time);
@@ -443,7 +449,83 @@ class LeaveRequestResource extends Resource
             ->actions(
                 ApprovalActions::make(
                     [                        
-                        Tables\Actions\ViewAction::make()
+                        Tables\Actions\ViewAction::make(),                        
+                        Tables\Actions\Action::make('discard') 
+                            ->label(__('filament-approvals::approvals.actions.discard'))                           
+                            ->visible(fn (Model $record) => (Auth::id() == $record->approvalStatus->creator->id && $record->isApprovalCompleted() && $record->isApproved()))                                                      
+                            ->hidden(fn(Model $record) => (Auth::id() != $record->approvalStatus->creator->id || $record->isDiscarded()))                            
+                            ->form([
+                                Textarea::make('reason')
+                                    ->label(__('field.reason'))
+                                    ->required()
+                            ])
+                            ->icon('heroicon-m-archive-box-x-mark')
+                            ->color('danger')
+                            ->requiresConfirmation()
+                            ->modalIcon('heroicon-m-archive-box-x-mark')
+                            ->action(function (array $data, Model $record) {
+                                // update status  
+                                $record->approvalStatus()->update(['status' => ApprovalStatusEnum::DISCARDED->value]);
+
+                                // update approval status
+                                ProcessApproval::query()->create([
+                                    'approvable_type' => $record::getApprovableType(),
+                                    'approvable_id' => $record->id,
+                                    'process_approval_flow_step_id' => null,
+                                    'approval_action' => ApprovalStatusEnum::DISCARDED,
+                                    'comment' => $data['reason'],
+                                    'user_id' => Auth::id(),
+                                    'approver_name' => Auth::user()->full_name1
+                                ]);
+
+                                // notification
+                                Notification::make()
+                                    ->success()
+                                    ->icon('fas-user-clock')
+                                    ->iconColor('success')
+                                    ->title(__('msg.label.discarded', ['label' => __('model.leave_request')]))
+                                    ->send();
+
+                                // notification to approver
+                                foreach($record->approvers->pluck('email')->unique() as $approver){
+                                    $sender = User::where('email', $approver)->first();
+                                    $message = collect([
+                                        'subject' => __('mail.subject', ['name' => __('msg.label.discarded', ['label' => __('model.leave_request')])]),
+                                        'greeting' => __('mail.greeting', ['name' => $sender->name]),
+                                        'body' => __('msg.body.discarded', [
+                                            'request'  => strtolower(__('model.leave_request')), 
+                                            'days'  => strtolower(trans_choice('field.days_with_count', $record->days, ['count' => $record->days])),
+                                            'leave_type' => strtolower($record->leaveType->name),
+                                            'from'  => $record->from_date->toDateString(), 
+                                            'to' => $record->to_date->toDateString(),
+                                            'name'  => Auth::user()->full_name
+                                        ]),
+                                        'action'    => [
+                                            'name'  => __('btn.view'),
+                                            'url'   => LeaveRequestResource::getUrl('view', ['record' => $record])
+                                        ]
+                                    ]);
+
+                                    // send noti
+                                    Notification::make()
+                                        ->success()
+                                        ->icon('fas-user-clock')
+                                        ->iconColor('success')
+                                        ->title($message['subject'])
+                                        ->body($message['body'])
+                                        ->actions([               
+                                            ActionsAction::make('view')
+                                                ->label($message['action']['name'])
+                                                ->button()
+                                                ->url($message['action']['url']) 
+                                                ->icon('fas-eye')                   
+                                                ->markAsRead(),
+                                        ])
+                                        ->sendToDatabase($sender);
+                                    
+                                    $sender->notify(new SendLeaveRequestNotification($message, $data['reason']));
+                                }
+                            }),
                     ]
                 )
             )

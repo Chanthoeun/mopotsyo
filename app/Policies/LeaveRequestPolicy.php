@@ -213,7 +213,6 @@ class LeaveRequestPolicy
                 !$leaveRequest->isDiscarded()) return true;
         }  
 
-        
         $nextStep = $leaveRequest->nextApprovalStep();
         if($nextStep){
             $getApprover = ProcessApprover::where('leave_request_id', $leaveRequest->id)->where('step_id', $nextStep->id)->where('role_id', $nextStep->role_id)->first();
@@ -237,19 +236,17 @@ class LeaveRequestPolicy
                 !$leaveRequest->isDiscarded()) return true;
         }
         
-
-        // dump($nextStep);
-        
         return false;
     }
     /**
      * Determine whether the user can discard.
      */
     public function discard(User $user, LeaveRequest $leaveRequest): bool
-    {       
+    {                           
         if(empty($leaveRequest->leaveType->rules->count())){
             if($leaveRequest->canBeApprovedBy($user) && $leaveRequest->isRejected()) return true;
         } 
+
         // dd($leaveRequest->nextApprovalStep()->role_id);
         $nextStep = $leaveRequest->nextApprovalStep();
         if($nextStep){
@@ -264,8 +261,9 @@ class LeaveRequestPolicy
         }else{
             if($leaveRequest->canBeApprovedBy($user) && $leaveRequest->isRejected()) return true;
         }   
-        // dump($nextStep);
+                
         
         return false;
     }
+    
 }
