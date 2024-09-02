@@ -6,6 +6,8 @@ use App\Filament\Admin\Resources\LeaveRequestResource;
 use Filament\Actions;
 use Filament\Actions\Action;
 use Filament\Resources\Pages\ViewRecord;
+use Illuminate\Support\Facades\Auth;
+use RingleSoft\LaravelProcessApproval\Enums\ApprovalStatusEnum;
 
 class ViewLeaveRequest extends ViewRecord
 {
@@ -21,11 +23,14 @@ class ViewLeaveRequest extends ViewRecord
      */
     protected function getOnCompletionAction()
     {        
-        return Action::make("Done")
-            ->color("success")
-            ->hidden();
-            // Do not use the visible method, since it is being used internally to show this action if the approval flow has been completed.
-            // Using the hidden method add your condition to prevent the action from being performed more than once
-            // ->hidden(fn(ApprovableModel $record)=> $record->shouldBeHidden());
+        return Action::make("discard")
+            ->label(__('filament-approvals::approvals.actions.discard'))                                       
+            ->hidden(fn() => Auth::id() != $this->record->approvalStatus->creator->id || $this->record->isDiscarded())   
+            ->icon('heroicon-m-archive-box-x-mark')
+            ->color('danger')
+            ->requiresConfirmation()
+            ->modalIcon('heroicon-m-archive-box-x-mark')
+            ->action(fn () => $this->record->approvalStatus()->update(['status' => ApprovalStatusEnum::DISCARDED->value]));
+            
     }
 }

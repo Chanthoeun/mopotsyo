@@ -48,8 +48,8 @@ return [
         'in_advance'          => 'Your request must be submitted :days days in advance.',
         'submit_leave_request' => ':name would like to request :days of :leave_type from :from to :to. Would you like to approve this request?',
         'approved_leave_request' => ':name just requested :days of :leave_type from :from to :to so it needs your approval to process next step. Would you like to approve this request?',
-        'rejected'             => 'Your :request for :days of :leave_type from :from to :to was rejected by :name.',
-        'discarded'            => 'Your :request for :days of :leave_type from :from to :to was discarded by :name.',
+        'rejected'             => 'The :request for :days of :leave_type from :from to :to was rejected by :name.',
+        'discarded'            => 'The :request for :days of :leave_type from :from to :to was discarded by :name.',
         'completed_leave_request'   => 'Your :request for :days of :leave_type from :from to :to was approved and completed.',
         'request_over_accrued_amount'      => 'Your request date is over accrued amount. Your current accured amount is :amount.',
     ]

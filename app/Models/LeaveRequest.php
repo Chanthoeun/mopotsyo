@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -61,6 +62,11 @@ class LeaveRequest extends ApprovableModel
         return $this->morphTo();
     }
 
+    public function processApprovers(): HasMany
+    {
+        return $this->hasMany(ProcessApprover::class);
+    }
+
     protected function requested(): Attribute
     {
         return Attribute::make(
@@ -75,6 +81,25 @@ class LeaveRequest extends ApprovableModel
         );
     }
 
+    protected function approvers(): Attribute
+    {
+        return Attribute::make(
+            get: function() {
+                $approvers = collect();
+                foreach($this->processApprovers as $approver){
+                    if($approver->user_id){
+                        $approvers->push($approver->user);
+                    }else{
+                        foreach(User::role($approver->role_id)->get() as $user){
+                            $approvers->push($user);
+                        }
+                    }
+                }
+
+                return $approvers;
+            },
+        );
+    }
     // public function canBeApproved(User $user): bool
     // {
     //     return true;

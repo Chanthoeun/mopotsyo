@@ -139,8 +139,8 @@ if(!function_exists('isWorkHour')){
     }
 }
 
-if(!function_exists('isWeekend')){
-    function isWeekend($date): bool{
+if(!function_exists('weekend')){
+    function weekend($date): bool{
         if(Carbon::parse($date)->isWeekend()){
             return true;
         }
@@ -149,16 +149,10 @@ if(!function_exists('isWeekend')){
 }
 
 
-if(!function_exists('isPublicHoliday')){
-    function isPublicHoliday($date): bool{
+if(!function_exists('publicHoliday')){
+    function publicHoliday($date): bool{
         $publicHoliday = PublicHoliday::whereDate('date', $date)->first();
         return $publicHoliday ? true : false;
-        return $user->profile->law->publicHolidays->map(function($holiday){
-            return [
-                'date'  => Carbon::parse($holiday->date)->toDateString(),
-                'name'  => $holiday->name
-            ];
-        })->contains('date', '=', Carbon::parse($date)->toDateString());
     }
 }
 
@@ -184,8 +178,8 @@ if(! function_exists('getDateRangeBetweenTwoDates')){
     }
 }
 
-if(!function_exists('checkDuplicatedLeaveRequest')){
-    function checkDuplicatedLeaveRequest($user, $date){
+if(!function_exists('dateIsNotDuplicated')){
+    function dateIsNotDuplicated($user, $date){
         $leaveRequests = LeaveRequest::whereHas('approvalStatus', static function ($q) use ($user) {
             return $q->where('creator_id', $user->id)->where('status', ApprovalActionEnum::APPROVED->value)->orWhere('status', ApprovalActionEnum::SUBMITTED->value)->orWhere('status', ApprovalActionEnum::CREATED->value);
         })->get();
@@ -288,6 +282,7 @@ if(!function_exists('getQuoteId')){
         return 'QID-'.sprintf('%06d',$quote->id);
     }
 }
+
 
 // if(!function_exists('isSupervisor')){
 //     function isSupervisor($user){
