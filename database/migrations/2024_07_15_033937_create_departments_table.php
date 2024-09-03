@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string('name')->unique();
             $table->boolean('is_active')->default(true);
             $table->foreignId('supervisor_id')->nullable()->constrained('users')->onDelete('restrict')->cascadeOnUpdate();
-            $table->foreignId('role_id')->nullable()->constrained('users')->onDelete('restrict')->cascadeOnUpdate();
+            $table->foreignId('role_id')->nullable()->constrained('roles')->onDelete('restrict')->cascadeOnUpdate();
             $table->timestamps();
             $table->softDeletes();
         });

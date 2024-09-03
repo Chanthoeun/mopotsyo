@@ -5,6 +5,8 @@ return [
     'page'              => [
         'working_hour'  => 'Working Hour',
         'working_hours' => 'Working Hours',
+        'options'       => 'Options',
+        'option'        => 'Option',
     ],
     
     // Model

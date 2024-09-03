@@ -22,6 +22,7 @@ return new class extends Migration
             $table->boolean('married')->default(0);
             $table->date('date_of_birth')->nullable();
             $table->string('nationality', 3)->nullable();
+            $table->string('identity_card_number', 20)->nullable();            
             $table->string('email')->unique();
             $table->string('telephone')->nullable();
             $table->string('address')->nullable();
