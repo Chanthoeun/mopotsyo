@@ -101,25 +101,24 @@ class EmployeeResource extends Resource
                         PhoneInput::make('telephone')
                             ->label(__('field.telephone'))
                             ->prefixIcon('fas-phone'),
-                        Forms\Components\Grid::make(3)
-                            ->schema([
-                                Forms\Components\DatePicker::make('date_of_birth')
-                                    ->label(__('field.date_of_birth'))
-                                    ->placeholder(__('field.select_date'))
-                                    ->native(false)
-                                    ->suffixIcon('fas-calendar'),
-                                Forms\Components\DatePicker::make('join_date')
-                                    ->label(__('field.join_date'))
-                                    ->placeholder(__('field.select_date'))
-                                    ->native(false)
-                                    ->suffixIcon('fas-calendar'),
-                                Country::make('nationality')
-                                    ->label(__('field.nationality'))
-                                    ->required()
-                                    ->searchable()
-                                    ->default('KH'),
-                            ]),
-                        
+                        Forms\Components\DatePicker::make('date_of_birth')
+                            ->label(__('field.date_of_birth'))
+                            ->placeholder(__('field.select_date'))
+                            ->native(false)
+                            ->suffixIcon('fas-calendar'),
+                        Forms\Components\DatePicker::make('join_date')
+                            ->label(__('field.join_date'))
+                            ->placeholder(__('field.select_date'))
+                            ->native(false)
+                            ->suffixIcon('fas-calendar'),
+                        Country::make('nationality')
+                            ->label(__('field.nationality'))
+                            ->required()
+                            ->searchable()
+                            ->default('KH'),
+                        Forms\Components\TextInput::make('identity_card_number')
+                            ->label(__('field.identity_card_number'))
+                            ->hint(__('hint.identity_card_number')),
                         Forms\Components\TextInput::make('address')
                             ->label(__('field.address'))
                             ->maxLength(255)
@@ -313,17 +312,15 @@ class EmployeeResource extends Resource
                             $record->update([
                                 'user_id'   => $user->id
                             ]); 
-                            
-                            // send email notification
-                            $user->notify(new WelcomeNotification($password));
 
                             // send notification
                             Notification::make()
                                 ->title(__('msg.added', ['name' => __('field.account')]))
                                 ->success()
                                 ->send();
-
-                            // Send Email to Employee
+                            
+                            // send email notification to user
+                            $user->notify(new WelcomeNotification($password));
                         }),
                     Tables\Actions\Action::make('photo')
                         ->label(__('btn.label.update', ['label' => __('field.photo')]))

@@ -5,6 +5,7 @@ namespace App\Filament\Admin\Resources\EmployeeResource\Pages;
 use App\Filament\Admin\Resources\EmployeeResource;
 use App\Models\User;
 use App\Notifications\WelcomeNotification;
+use App\Settings\SettingOptions;
 use Filament\Actions;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Support\Str;
@@ -24,24 +25,26 @@ class CreateEmployee extends CreateRecord
     
     protected function afterCreate(): void
     {
-        $password = Str::password(12); // generate a default password with length of 12 caracters
-        // create user account
-        $user =User::updateOrCreate([
-            'email' => $this->record->email
-        ],[
-            'name'      => $this->record->getTranslations('name'),
-            'username'  => $this->record->employee_id,
-            'email'     => $this->record->email, 
-            'password'  => $password,
-            'email_verified_at' => now(),
-            'force_renew_password' => true
-        ])->assignRole('employee');
+        if(app(SettingOptions::class)->allow_add_user == true){
+            $password = Str::password(12); // generate a default password with length of 12 caracters
+            // create user account
+            $user =User::updateOrCreate([
+                'email' => $this->record->email
+            ],[
+                'name'      => $this->record->getTranslations('name'),
+                'username'  => $this->record->employee_id,
+                'email'     => $this->record->email, 
+                'password'  => $password,
+                'email_verified_at' => now(),
+                'force_renew_password' => true
+            ])->assignRole('employee');
 
-        // update employee
-        $this->record->update([
-            'user_id'   => $user->id,
-        ]);
+            // update employee
+            $this->record->update([
+                'user_id'   => $user->id,
+            ]);
 
-        $user->notify(new WelcomeNotification($password));
+            $user->notify(new WelcomeNotification($password));
+        }        
     }
 }

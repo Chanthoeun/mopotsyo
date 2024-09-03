@@ -157,7 +157,7 @@ class LeaveTypeResource extends Resource
                         Forms\Components\Group::make()
                             ->columns(1)
                             ->schema([
-                                Forms\Components\Section::make(__('field.visability'))
+                                Forms\Components\Section::make(__('field.visibility'))
                                     ->description(__('desc.visible'))
                                     ->schema([
                                         Forms\Components\Toggle::make('visible')

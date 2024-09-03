@@ -29,6 +29,7 @@ class Employee extends Model
         'married',
         'date_of_birth',
         'nationality',
+        'identity_card_number',
         'email',
         'telephone',
         'address',

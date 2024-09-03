@@ -92,6 +92,7 @@ return [
     'end_date'      => 'End Date',
     'nickname'      => 'Nickname',
     'nationality'   => 'Nationality',
+    'identity_card_number'      => 'Identity Card No',
     'account'       => 'Account',
     'contract_no'   => 'Contract No',
     'attachment'    => 'Attachment',
@@ -144,9 +145,18 @@ return [
         'returned'      => 'Returned',
     ],
 
+    // Options
+    'options' => [
+        'allow_add_user' => 'Allow add user while create employee',
+        'allow_work_from_home'  => 'Allow work from home for employee',
+        'allow_switch_day_work' => 'Allow switch working day for employee',
+    ],
+
     // label
     'label' => [
         'total' => 'Total :label:',
         'my'    => 'My :label',
-    ]
+    ], 
+
+
 ];

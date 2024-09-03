@@ -29,6 +29,7 @@ class EmployeeFactory extends Factory
             'gender' => $this->faker->regexify('[A-Za-z0-9]{6}'),
             'date_of_birth' => $this->faker->date(),
             'nationality' => $this->faker->regexify('[A-Za-z0-9]{3}'),
+            'identity_card_number' => $this->faker->regexify('[A-Za-z0-9]{10}'),
             'email' => $this->faker->safeEmail(),
             'telephone' => $this->faker->word(),
             'address' => $this->faker->word(),
