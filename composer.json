@@ -24,6 +24,7 @@
         "phpoffice/phpspreadsheet": "^1.29",
         "pxlrbt/filament-excel": "^2.3",
         "rawilk/filament-password-input": "^2.0",
+        "saade/filament-fullcalendar": "^3.2",
         "spatie/laravel-settings": "^3.3",
         "tapp/filament-authentication-log": "^3.1",
         "torann/geoip": "^3.0",

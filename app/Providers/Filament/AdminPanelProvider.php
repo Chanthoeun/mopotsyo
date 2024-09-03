@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Admin\Resources\LeaveRequestResource\Widgets\CalendarWidget;
 use App\Filament\Auth\CustomLogin;
 use Filament\FontProviders\GoogleFontProvider;
 use Filament\Http\Middleware\Authenticate;
@@ -21,11 +22,13 @@ use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\AuthenticateSession;
 use Illuminate\Session\Middleware\StartSession;
+use Illuminate\Support\Facades\App;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Kenepa\TranslationManager\TranslationManagerPlugin;
 use Mchev\Banhammer\Middleware\AuthBanned;
 use Mchev\Banhammer\Middleware\LogoutBanned;
 use Njxqlus\FilamentProgressbar\FilamentProgressbarPlugin;
+use Saade\FilamentFullCalendar\FilamentFullCalendarPlugin;
 use Tapp\FilamentAuthenticationLog\FilamentAuthenticationLogPlugin;
 use Yebor974\Filament\RenewPassword\RenewPasswordPlugin;
 
@@ -50,6 +53,7 @@ class AdminPanelProvider extends PanelProvider
             ->widgets([
                 // Widgets\AccountWidget::class,
                 // Widgets\FilamentInfoWidget::class,
+                CalendarWidget::class,
             ])
             ->resources([
                 config('filament-logger.activity_resource')
@@ -82,7 +86,10 @@ class AdminPanelProvider extends PanelProvider
                 SpatieLaravelTranslatablePlugin::make()->defaultLocales(['en', 'km']),
                 TranslationManagerPlugin::make(),
                 RenewPasswordPlugin::make()->forceRenewPassword(),
-                \EightyNine\Approvals\ApprovalPlugin::make()
+                \EightyNine\Approvals\ApprovalPlugin::make(),
+                FilamentFullCalendarPlugin::make()
+                    ->selectable()
+                    ->timezone(config('app.timezone')),
             ])
             ->unsavedChangesAlerts()
             ->navigationGroups([

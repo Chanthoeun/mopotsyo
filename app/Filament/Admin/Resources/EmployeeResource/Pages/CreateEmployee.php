@@ -44,7 +44,7 @@ class CreateEmployee extends CreateRecord
                 'user_id'   => $user->id,
             ]);
 
-            $user->notify(new WelcomeNotification($password));
+            // $user->notify(new WelcomeNotification($password));
         }        
     }
 }
