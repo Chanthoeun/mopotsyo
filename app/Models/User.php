@@ -12,12 +12,14 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Mchev\Banhammer\Traits\Bannable;
 use PhpOffice\PhpSpreadsheet\Calculation\DateTimeExcel\WorkDay;
 use Rappasoft\LaravelAuthenticationLog\Traits\AuthenticationLoggable;
+use Spatie\Activitylog\Models\Activity;
 use Spatie\Permission\Traits\HasRoles;
 use Spatie\Translatable\HasTranslations;
 use Yebor974\Filament\RenewPassword\Contracts\RenewPasswordContract;
@@ -116,6 +118,10 @@ class User extends Authenticatable implements FilamentUser, RenewPasswordContrac
         return $this->hasMany(LeaveRequest::class);
     }
 
+    public function activityLogs(): MorphMany
+    {
+        return $this->morphMany(Activity::class, 'causer');
+    }
 
     protected function contract(): Attribute
     {
