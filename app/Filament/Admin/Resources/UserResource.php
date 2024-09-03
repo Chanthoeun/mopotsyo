@@ -5,6 +5,7 @@ namespace App\Filament\Admin\Resources;
 use App\Enums\Gender;
 use App\Filament\Admin\Resources\UserResource\Pages;
 use App\Filament\Admin\Resources\UserResource\RelationManagers;
+use App\Filament\Admin\Resources\UserResource\RelationManagers\ActivityLogsRelationManager;
 use App\Filament\Admin\Resources\UserResource\RelationManagers\ContractsRelationManager;
 use App\Filament\Admin\Resources\UserResource\RelationManagers\ProfileRelationManager;
 use App\Models\User;
@@ -191,6 +192,7 @@ class UserResource extends Resource implements HasShieldPermissions
     {
         return [
             AuthenticationLogsRelationManager::class,
+            ActivityLogsRelationManager::class,
         ];
     }
 
