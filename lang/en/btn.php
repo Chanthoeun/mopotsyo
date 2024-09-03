@@ -18,6 +18,7 @@ return [
     'discard' => 'Discard',
     'submit' => 'Submit',
     'view' => 'View',
+    'send' => 'Send',
 
     // Button title
     'label' => [
@@ -37,6 +38,7 @@ return [
         'discard'   => 'Discard :label',
         'submit'    => 'Submit :label',
         'view'      => 'View :label',
+        'send'      => 'Send :label',
     ],
 
     // Button message
@@ -57,5 +59,6 @@ return [
         'discard'   => 'Would you like to discard :name?',
         'submit'    => 'Would you like to submit :name?',
         'view'      => 'Would you like to view :name?',
+        'send'      => 'Would you like to send :name?',
     ],
 ];

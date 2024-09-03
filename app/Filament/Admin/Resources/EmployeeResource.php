@@ -318,9 +318,27 @@ class EmployeeResource extends Resource
                                 ->title(__('msg.added', ['name' => __('field.account')]))
                                 ->success()
                                 ->send();
+                        }),
+                    Tables\Actions\Action::make('login_detail')
+                        ->label(__('btn.label.send', ['label' => __('field.login_detail')]))
+                        ->icon('fas-paper-plane')
+                        ->color('info')
+                        ->requiresConfirmation()
+                        ->modalIcon('fas-paper-plane')
+                        ->visible(fn(Model $record) => !empty($record->user))                                                
+                        ->action(function (Employee $record) {
+                            $password = Str::password(12); // generate a default password with length of 12 caracters
+                            
+                            $record->user()->update(['password' => $password]);
+                            
+                            // send notification
+                            Notification::make()
+                                ->title(__('msg.sent', ['name' => __('field.login_detail')]))
+                                ->success()
+                                ->send();
                             
                             // send email notification to user
-                            $user->notify(new WelcomeNotification($password));
+                            $record->user->notify(new WelcomeNotification($password));
                         }),
                     Tables\Actions\Action::make('photo')
                         ->label(__('btn.label.update', ['label' => __('field.photo')]))

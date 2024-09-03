@@ -115,6 +115,7 @@ return [
     'requested_days' => 'Requested Days',
     'visibility' => 'Visibility',
     'visible' => 'Visible',
+    'login_detail' => 'Login Detail',
 
 
     // day

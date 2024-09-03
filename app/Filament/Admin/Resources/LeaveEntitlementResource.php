@@ -117,8 +117,7 @@ class LeaveEntitlementResource extends Resource
                                     ->suffixIcon('fas-calendar'),
                                 Forms\Components\TextInput::make('balance')
                                     ->label(__('field.balance'))
-                                    ->numeric()
-                                    ->readOnly(fn(String $operation) => $operation == 'create'), 
+                                    ->numeric(), 
                             ])  
                     ])               
             ]);

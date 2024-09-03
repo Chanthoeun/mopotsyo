@@ -18,6 +18,7 @@ return [
     'discarded'         => 'Discarded',
     'submitted'         => 'Submitted',
     'completed'         => 'Completed',
+    'sent'              => 'Sent',
 
     // label
     'label' => [
@@ -32,6 +33,7 @@ return [
         'discarded'     => ':label Discarded',
         'submitted'     => ':label Submitted',
         'completed'     => ':label Completed',
+        'sent'          => ':label Sent',
     ],
 
     // message
@@ -41,6 +43,7 @@ return [
         'created'             => ':name was created.',
         'updated'             => ':name has been updated.',
         'resigned'            => ':name is set.',
+        'sent'                => ':name has been sent successfully.',
         'imported'            => ':name was imported successfully with :count records!',
         'failed'              => ':name was :action failed, please try again!',
         'in_progress'         => 'We are :name :count records. we will notify you when it is done.',
