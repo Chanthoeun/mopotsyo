@@ -27,7 +27,9 @@ return [
     'hours'         => 'Hour|Hours',
     'hour'          => 'Hour',
     'leave_request_form' => 'Leave Request Form',
-    'leave_request_info' => 'Leave Request Info',    
+    'leave_request_info' => 'Leave Request Info',   
+    'organization'  => 'Organization',
+    'logo'          => 'Logo',
 
     'photo'    => 'Photo',
     'name'      => 'Name',
@@ -37,6 +39,7 @@ return [
     'gender'    => 'Gender',
     'date_of_birth' => 'Date Of Birth',
     'email'     => 'Email',
+    'website'   => 'Website',
     'abbr'      => 'Abbr',
     'address'   => 'Address',
     'village'   => 'Village',
@@ -85,6 +88,7 @@ return [
     'position'      => 'Position',
     'employee_id'   => 'Employee ID',
     'supervisor'    => 'Supervisor',
+    'department_head'   => 'Department Head',
     'telephone'     => 'Telephone',
     'file'          => 'File',
     'files'         => 'Files',
@@ -151,6 +155,9 @@ return [
         'allow_add_user' => 'Allow add user while create employee',
         'allow_work_from_home'  => 'Allow work from home for employee',
         'allow_switch_day_work' => 'Allow switch working day for employee',
+        'cc_email'  => 'CC Email',
+        'feature'   => 'Feature',
+        'accounts'  => 'Accounts',
     ],
 
     // label

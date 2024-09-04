@@ -89,10 +89,14 @@ class ContractsRelationManager extends RelationManager
                             Forms\Components\Select::make('supervisor_id')
                                 ->label(__('field.supervisor'))
                                 ->relationship('supervisor', 'name', fn(Builder $query) => $query->whereHas('employee', fn(Builder $query) => $query->whereNull('resign_date')->orWhereDate('resign_date', '>=', now()))->orderBy('id', 'asc')),
+                            Forms\Components\Select::make('department_head_id')
+                                ->label(__('field.department_head'))
+                                ->relationship('departmentHead', 'name', fn(Builder $query) => $query->whereHas('employee', fn(Builder $query) => $query->whereNull('resign_date')->orWhereDate('resign_date', '>=', now()))->orderBy('id', 'asc')),
                             Forms\Components\TextInput::make('contract_no')
                                 ->label(__('field.contract_no'))
                                 ->unique(ignoreRecord: true)
-                                ->maxLength(255),
+                                ->maxLength(255)
+                                ->columnSpanFull(),
                             Forms\Components\FileUpload::make('file')
                                 ->hiddenLabel()
                                 ->placeholder(__('field.attachment'))
@@ -187,13 +191,17 @@ class ContractsRelationManager extends RelationManager
                 Tables\Columns\TextColumn::make('department.name')
                     ->label(__('model.department')),
                 Tables\Columns\TextColumn::make('shift.name')
-                    ->label(__('model.shift')),
+                    ->label(__('model.shift'))
+                    ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('supervisor.name')
+                    ->label(__('field.supervisor')),
+                Tables\Columns\TextColumn::make('departmentHead.name')
+                    ->label(__('field.department_head')),
                 Tables\Columns\TextColumn::make('contract_no')
                     ->label(__('field.contract_no'))
                     ->toggleable(isToggledHiddenByDefault: true),                
                 Tables\Columns\ToggleColumn::make('is_active')
                     ->label(__('field.is_active')),                
-                
             ])
             ->headerActions([
                 Tables\Actions\CreateAction::make()

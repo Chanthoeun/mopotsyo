@@ -13,14 +13,16 @@ class SendLeaveRequestNotification extends Notification implements ShouldQueue
 
     public $message;
     public $comment; 
+    public $cc;
 
     /**
      * Create a new notification instance.
      */
-    public function __construct($message, ?string $comment = null)
+    public function __construct($message, ?string $comment = null, ?array $cc = null)
     {
         $this->message = $message;
         $this->comment = $comment;
+        $this->cc = $cc;
     }
 
     /**
@@ -38,7 +40,18 @@ class SendLeaveRequestNotification extends Notification implements ShouldQueue
      */
     public function toMail(object $notifiable): MailMessage
     {
+        if(empty($this->cc)) {
+            return (new MailMessage)
+                    ->subject($this->message['subject'])
+                    ->greeting($this->message['greeting'])
+                    ->line($this->message['body'])
+                    ->line($this->comment)
+                    ->action($this->message['action']['name'], $this->message['action']['url'])
+                    ->line(__('mail.thanks'));
+        }
+
         return (new MailMessage)
+                    ->cc($this->cc)
                     ->subject($this->message['subject'])
                     ->greeting($this->message['greeting'])
                     ->line($this->message['body'])

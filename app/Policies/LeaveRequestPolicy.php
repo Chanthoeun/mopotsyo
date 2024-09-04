@@ -5,6 +5,7 @@ namespace App\Policies;
 use App\Models\User;
 use App\Models\LeaveRequest;
 use App\Models\ProcessApprover;
+use App\Settings\SettingOptions;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
 class LeaveRequestPolicy
@@ -175,7 +176,7 @@ class LeaveRequestPolicy
      * Determine whether the user can approve.
      */
     public function approve(User $user, LeaveRequest $leaveRequest): bool
-    {        
+    {
         if(empty($leaveRequest->leaveType->rules->count())){
             if($leaveRequest->canBeApprovedBy($user) && $leaveRequest->isSubmitted() &&
                     !$leaveRequest->isApprovalCompleted() &&

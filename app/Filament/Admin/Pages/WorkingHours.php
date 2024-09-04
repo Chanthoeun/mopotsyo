@@ -19,7 +19,7 @@ class WorkingHours extends SettingsPage
 
     protected static string $settings = SettingWorkingHours::class;
 
-    protected static ?int $navigationSort = 1;
+    protected static ?int $navigationSort = 2;
 
     public static function getModelLabel(): string
     {

@@ -143,6 +143,15 @@ class User extends Authenticatable implements FilamentUser, RenewPasswordContrac
         );
     }
 
+    protected function departmentHead(): Attribute
+    {
+        return Attribute::make(
+            get: function(){   
+                return $this->contract->departmentHead ?? null;                
+            },
+        );
+    }
+
     protected function departmentSupervisor(): Attribute
     {
         return Attribute::make(

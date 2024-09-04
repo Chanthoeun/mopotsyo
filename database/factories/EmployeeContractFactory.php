@@ -9,6 +9,7 @@ use App\Models\Department;
 use App\Models\Employee;
 use App\Models\EmployeeContract;
 use App\Models\Shift;
+use App\Models\User;
 
 class EmployeeContractFactory extends Factory
 {
@@ -31,7 +32,8 @@ class EmployeeContractFactory extends Factory
             'start_date' => $this->faker->date(),
             'end_date' => $this->faker->date(),
             'department_id' => Department::factory(),
-            'supervisor_id' => Employee::factory(),
+            'supervisor_id' => User::factory(),
+            'department_head_id' => User::factory(),
             'shift_id' => Shift::factory(),
             'contract_no' => $this->faker->word(),
             'file' => $this->faker->word(),
