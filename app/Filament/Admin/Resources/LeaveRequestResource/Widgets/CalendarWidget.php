@@ -18,17 +18,22 @@ class CalendarWidget extends FullCalendarWidget
         // This method should return an array of event-like objects. See: https://github.com/saade/filament-fullcalendar/blob/3.x/#returning-events
         // You can also return an array of EventData objects. See: https://github.com/saade/filament-fullcalendar/blob/3.x/#the-eventdata-class
         $events = array();
-        $events = LeaveRequest::approved()->get()->map(fn($leaveRequest) => EventData::make()
+        $leaveRequests = LeaveRequest::approved()->get()->map(fn($leaveRequest) => EventData::make()
             ->id($leaveRequest->id)
-            ->title($leaveRequest->leaveType->abbr .' - '. $leaveRequest->user->name .' - '. trans_choice('field.days_with_count', $leaveRequest->days, ['count' => $leaveRequest->days]))
-            ->start($leaveRequest->start_date)
-            ->end($leaveRequest->end_date)
+            ->title($leaveRequest->leaveType->abbr .' - '. $leaveRequest->approvalStatus->creator->name .' - '. trans_choice('field.days_with_count', $leaveRequest->days, ['count' => $leaveRequest->days]))
+            ->start($leaveRequest->from_date)
+            ->end($leaveRequest->to_date)
             ->allDay(true)
             ->backgroundColor($leaveRequest->leaveType->color)
-            ->url(LeaveRequestResource::getUrl('view', ['record' => $leaveRequest]))
-        );
+            ->url(LeaveRequestResource::getUrl('view', ['record' => $leaveRequest]), true)
+        )->toArray();
 
-        $events = PublicHoliday::all()->map(fn($holiday) => EventData::make()
+        foreach($leaveRequests as $leaveRequest){
+            $events[] = $leaveRequest;
+        }
+        
+        
+        $publicHolidays = PublicHoliday::all()->map(fn($holiday) => EventData::make()
             ->id($holiday->id)
             ->title($holiday->name)
             ->start($holiday->date)
@@ -36,7 +41,11 @@ class CalendarWidget extends FullCalendarWidget
             ->allDay(true)
             ->backgroundColor('red')
         )->toArray();
-        
+
+        foreach($publicHolidays as $publicHoliday){
+            $events[] = $publicHoliday;
+        }
+               
         return $events;
     }
 
