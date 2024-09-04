@@ -8,6 +8,6 @@ return new class extends SettingsMigration
     {
         $this->migrator->add('option.allow_add_user', true);
         $this->migrator->add('option.allow_work_from_home', true);
-        $this->migrator->add('option.allow_switch_day_work', true);
+        $this->migrator->add('option.allow_switch_day_work', true);        
     }
 };

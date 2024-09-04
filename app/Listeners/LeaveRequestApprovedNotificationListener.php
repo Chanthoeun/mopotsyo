@@ -6,6 +6,7 @@ use App\Filament\Admin\Resources\LeaveRequestResource;
 use App\Models\ProcessApprover;
 use App\Models\User;
 use App\Notifications\SendLeaveRequestNotification;
+use App\Settings\SettingOptions;
 use Filament\Notifications\Actions\Action;
 use Filament\Notifications\Notification;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -33,8 +34,9 @@ class LeaveRequestApprovedNotificationListener
         if(!$approvable->isApprovalCompleted()){
             $getApprover = ProcessApprover::where('leave_request_id', $approvable->id)->where('step_id', $nextApproval->process_approval_flow_step_id)->first();
             // send notification to approver
+            $approvers = collect();
             if($getApprover->user){
-                $approvers = collect()->push($getApprover->user);
+                $approvers->push($getApprover->user);
             }else{
                 $approvers = User::whereHas('employee', fn(Builder $q) => $q->whereNull('resign_date')->orWhereDate('resign_date', '>=', now()))->role($getApprover->role_id)->get();
             }
@@ -93,7 +95,19 @@ class LeaveRequestApprovedNotificationListener
                     'url'   => LeaveRequestResource::getUrl('view', ['record' => $leaveRequest])
                 ]
             ]);
+
+            // cc approver
+            $ccEmails = [];
+            $ccs = collect(app(SettingOptions::class)->cc_emails)->where('model_type', $leaveRequest::getApprovableType())->first();
+            if($ccs){
+                $ccEmails = User::whereIn('id', $ccs['accounts'])->get()->pluck('email')->toArray();
+            }
     
+            // cc department head
+            if($receiver->department_head){
+                $ccEmails = array_merge($ccEmails, [$receiver->department_head->email]);
+            }
+
             // send noti
             Notification::make()
                 ->success()
@@ -111,7 +125,7 @@ class LeaveRequestApprovedNotificationListener
                 ])
                 ->sendToDatabase($receiver);
             
-            $receiver->notify(new SendLeaveRequestNotification($message));
+            $receiver->notify(new SendLeaveRequestNotification($message, cc:$ccEmails));
         }        
     }
 }

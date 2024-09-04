@@ -100,7 +100,8 @@ class EmployeeResource extends Resource
                             ->maxLength(255),
                         PhoneInput::make('telephone')
                             ->label(__('field.telephone'))
-                            ->prefixIcon('fas-phone'),
+                            ->prefixIcon('fas-phone')
+                            ->defaultCountry('kh'),
                         Forms\Components\DatePicker::make('date_of_birth')
                             ->label(__('field.date_of_birth'))
                             ->placeholder(__('field.select_date'))

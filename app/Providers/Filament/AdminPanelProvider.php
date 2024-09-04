@@ -4,6 +4,7 @@ namespace App\Providers\Filament;
 
 use App\Filament\Admin\Resources\LeaveRequestResource\Widgets\CalendarWidget;
 use App\Filament\Auth\CustomLogin;
+use App\Settings\SettingGeneral;
 use Filament\FontProviders\GoogleFontProvider;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -41,6 +42,9 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login(CustomLogin::class)
+            ->brandLogo(fn(): ?string => asset('storage/'.app(SettingGeneral::class)->logo) ?? null)
+            ->brandLogoHeight('5rem')
+            ->favicon(fn(): ?string => asset('storage/'.app(SettingGeneral::class)->logo) ?? null)
             ->colors([
                 'primary' => Color::Amber,
             ])

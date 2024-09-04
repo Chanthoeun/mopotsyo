@@ -2,11 +2,16 @@
 
 namespace App\Filament\Admin\Pages;
 
+use App\Models\User;
 use App\Settings\SettingOptions;
+use Awcodes\TableRepeater\Components\TableRepeater;
+use Awcodes\TableRepeater\Header;
 use BezhanSalleh\FilamentShield\Traits\HasPageShield;
+use EightyNine\Approvals\Services\ModelScannerService;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Pages\SettingsPage;
+use Illuminate\Database\Eloquent\Builder;
 
 class Options extends SettingsPage
 {
@@ -16,7 +21,7 @@ class Options extends SettingsPage
 
     protected static string $settings = SettingOptions::class;
 
-    protected static ?int $navigationSort = 2;
+    protected static ?int $navigationSort = 3;
 
     public static function getModelLabel(): string
     {
@@ -35,6 +40,7 @@ class Options extends SettingsPage
 
     public function form(Form $form): Form
     {
+        $models = (new ModelScannerService())->getApprovableModels();
         return $form
             ->schema([
                 Forms\Components\Section::make()
@@ -45,6 +51,33 @@ class Options extends SettingsPage
                             ->label(__('field.options.allow_work_from_home')),
                         Forms\Components\Toggle::make('allow_switch_day_work')
                             ->label(__('field.options.allow_switch_day_work')),
+                        TableRepeater::make('cc_emails')
+                            ->label(__('field.options.cc_email'))                            
+                            ->addActionLabel(__('btn.add'))                            
+                            ->defaultItems(1)
+                            ->headers([
+                                Header::make(__('field.options.feature')),
+                                Header::make(__('field.options.accounts')),
+                            ]) 
+                            ->schema([
+                                Forms\Components\Select::make('model_type')
+                                    ->label(__('field.options.feature'))
+                                    ->options(function() use ($models) {
+                                        // remove 'App\Models\' from the value of models
+                                        $models = array_map(function($model) {
+                                            return str_replace('App\Models\\', '', $model);
+                                        }, $models);
+                                        return $models;
+                                    })
+                                    ->required(),
+                                Forms\Components\Select::make('accounts')
+                                    ->label(__('field.options.accounts'))
+                                    ->multiple()
+                                    ->options(function() {
+                                        return User::whereHas('employee', fn(Builder $q) => $q->whereNull('resign_date')->orWhereDate('resign_date', '>', now()))->get()->pluck('name', 'id');
+                                    })
+                                    ->required(),
+                            ])
                     ])
             ]);
     }

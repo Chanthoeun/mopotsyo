@@ -22,6 +22,7 @@ return new class extends Migration
             $table->date('end_date')->nullable();
             $table->foreignId('department_id')->constrained()->onDelete('restrict')->cascadeOnUpdate();
             $table->foreignId('supervisor_id')->nullable()->constrained('users')->onDelete('restrict')->cascadeOnUpdate();
+            $table->foreignId('department_head_id')->nullable()->constrained('users')->onDelete('restrict')->cascadeOnUpdate();
             $table->foreignId('shift_id')->constrained()->onDelete('restrict')->cascadeOnUpdate();
             $table->string('contract_no')->nullable();
             $table->string('file')->nullable();

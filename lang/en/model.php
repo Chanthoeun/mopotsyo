@@ -7,6 +7,8 @@ return [
         'working_hours' => 'Working Hours',
         'options'       => 'Options',
         'option'        => 'Option',
+        'general'       => 'General',
+        'generals'      => 'Generals',
     ],
     
     // Model

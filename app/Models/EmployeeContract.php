@@ -28,6 +28,7 @@ class EmployeeContract extends Model
         'end_date',
         'department_id',
         'supervisor_id',
+        'department_head_id',
         'shift_id',
         'contract_no',
         'file',
@@ -47,6 +48,7 @@ class EmployeeContract extends Model
         'end_date' => 'date',
         'department_id' => 'integer',
         'supervisor_id' => 'integer',
+        'department_head_id' => 'integer',
         'shift_id' => 'integer',
         'is_active' => 'boolean',
     ];
@@ -72,6 +74,11 @@ class EmployeeContract extends Model
     }
 
     public function supervisor(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function departmentHead(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
