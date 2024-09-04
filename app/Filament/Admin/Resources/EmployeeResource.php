@@ -329,7 +329,7 @@ class EmployeeResource extends Resource
                         ->action(function (Employee $record) {
                             $password = Str::password(12); // generate a default password with length of 12 caracters
                             
-                            $record->user()->update(['password' => $password]);
+                            $record->user()->update(['password' => bcrypt($password)]);
                             
                             // send notification
                             Notification::make()
