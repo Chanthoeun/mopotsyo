@@ -185,12 +185,12 @@ class LeaveRequestPolicy
 
         $nextStep = $leaveRequest->nextApprovalStep();
         if($nextStep){
-            $getApprover = ProcessApprover::where('leave_request_id', $leaveRequest->id)->where('step_id', $nextStep->id)->where('role_id', $nextStep->role_id)->first();
+            $getApprover = $leaveRequest->processApprovers()->where('step_id', $nextStep->id)->where('role_id', $nextStep->role_id)->first();
             if($getApprover){
                 if($getApprover->user){
                     if($leaveRequest->isSubmitted() &&
                     !$leaveRequest->isApprovalCompleted() &&
-                    !$leaveRequest->isDiscarded() && $user->id == $getApprover->user->id) return true;
+                    !$leaveRequest->isDiscarded() && $user->id == $getApprover->approver->id) return true;
                 }else{
                     if($leaveRequest->canBeApprovedBy($user) && $leaveRequest->isSubmitted() &&
                     !$leaveRequest->isApprovalCompleted() &&
@@ -216,13 +216,13 @@ class LeaveRequestPolicy
 
         $nextStep = $leaveRequest->nextApprovalStep();
         if($nextStep){
-            $getApprover = ProcessApprover::where('leave_request_id', $leaveRequest->id)->where('step_id', $nextStep->id)->where('role_id', $nextStep->role_id)->first();
+            $getApprover = $leaveRequest->processApprovers()->where('step_id', $nextStep->id)->where('role_id', $nextStep->role_id)->first();
             if($getApprover){
                 if($getApprover->user){
                     if($leaveRequest->isSubmitted() &&
                     !$leaveRequest->isApprovalCompleted() &&
                     !$leaveRequest->isRejected() &&
-                    !$leaveRequest->isDiscarded() && $user->id == $getApprover->user->id) return true;
+                    !$leaveRequest->isDiscarded() && $user->id == $getApprover->approver->id) return true;
                 }else{
                     if($leaveRequest->canBeApprovedBy($user) && $leaveRequest->isSubmitted() &&
                     !$leaveRequest->isApprovalCompleted() &&
@@ -251,10 +251,10 @@ class LeaveRequestPolicy
         // dd($leaveRequest->nextApprovalStep()->role_id);
         $nextStep = $leaveRequest->nextApprovalStep();
         if($nextStep){
-            $getApprover = ProcessApprover::where('leave_request_id', $leaveRequest->id)->where('step_id', $nextStep->id)->where('role_id', $nextStep->role_id)->first();
+            $getApprover = $leaveRequest->processApprovers()->where('step_id', $nextStep->id)->where('role_id', $nextStep->role_id)->first();
             if($getApprover){
                 if($getApprover->user){
-                    if($leaveRequest->isRejected() && $user->id == $getApprover->user->id) return true;
+                    if($leaveRequest->isRejected() && $user->id == $getApprover->approver->id) return true;
                 }else{
                     if($leaveRequest->canBeApprovedBy($user) && $leaveRequest->isRejected()) return true;
                 }            

@@ -16,10 +16,11 @@ return new class extends Migration
         Schema::create('process_approvers', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('step_id');
-            $table->foreignId('leave_request_id')->constrained()->onDelete('restrict')->cascadeOnUpdate();
+            $table->string('modelable_type');
+            $table->unsignedBigInteger('modelable_id');            
             $table->foreignId('role_id')->nullable()->constrained()->onDelete('restrict')->cascadeOnUpdate();
-            $table->foreignId('user_id')->nullable()->constrained()->onDelete('restrict')->cascadeOnUpdate();
-            $table->unique(['step_id', 'leave_request_id']);
+            $table->foreignId('approver_id')->nullable()->constrained('users')->onDelete('restrict')->cascadeOnUpdate();
+            $table->unique(['step_id', 'modelable_type', 'modelable_id'], 'step_id_modelable_type_modelable_id_unique');
             $table->timestamps();
             $table->softDeletes();
         });

@@ -50,4 +50,6 @@ return [
     'leave_requests'    => 'Leave Requests',    
     'leave'             => 'Leave',
     'leaves'            => 'Leaves',    
+    'process_approval_rule'     => 'Approval Rule',
+    'process_approval_rules'    => 'Approval Rules',    
 ];

@@ -57,14 +57,14 @@ class LeaveRequest extends ApprovableModel
         return $this->morphMany(RequestDate::class, 'requestdateable');
     }
 
+    public function processApprovers(): MorphMany
+    {
+        return $this->morphMany(ProcessApprover::class, 'modelable');
+    }
+
     public function leaverequestable(): MorphTo
     {
         return $this->morphTo();
-    }
-
-    public function processApprovers(): HasMany
-    {
-        return $this->hasMany(ProcessApprover::class);
     }
 
     protected function requested(): Attribute

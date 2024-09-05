@@ -32,11 +32,11 @@ class LeaveRequestApprovedNotificationListener
         $nextApproval = $event->approval;    
         $approvable = $nextApproval->approvable; 
         if(!$approvable->isApprovalCompleted()){
-            $getApprover = ProcessApprover::where('leave_request_id', $approvable->id)->where('step_id', $nextApproval->process_approval_flow_step_id)->first();
+            $getApprover = ProcessApprover::where('modelable_type', get_class($approvable))->where('modelable_id', $approvable->id)->where('step_id', $nextApproval->process_approval_flow_step_id)->first();
             // send notification to approver
             $approvers = collect();
-            if($getApprover->user){
-                $approvers->push($getApprover->user);
+            if($getApprover && $getApprover->approver){
+                $approvers->push($getApprover->approver);
             }else{
                 $approvers = User::whereHas('employee', fn(Builder $q) => $q->whereNull('resign_date')->orWhereDate('resign_date', '>=', now()))->role($getApprover->role_id)->get();
             }

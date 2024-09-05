@@ -2,6 +2,7 @@
 
 return [
     // General
+    'id'            => 'ID',
     'all'           => 'All',
     'created_by'    => 'Created By',
     'updated_by'    => 'Updated By',
@@ -30,6 +31,7 @@ return [
     'leave_request_info' => 'Leave Request Info',   
     'organization'  => 'Organization',
     'logo'          => 'Logo',
+    'feature'       => 'Feature',
 
     'photo'    => 'Photo',
     'name'      => 'Name',
@@ -56,6 +58,13 @@ return [
     'taken'     => 'Taken',
     'remaining' => 'Remaining',
     'accrued'   => 'Accrued',
+    'min'       => 'Min',
+    'max'       => 'Max',
+    'request_in_advance' => 'Request In Advance',
+    'require_reason' => 'Require Reason',
+    'require_attachment' => 'Require Attachment',
+    'column_name' => 'Column Name',
+    'column_value' => 'Column Value',
     'minimum_request_days' => 'Minimum Request Days',
     'balance_increment_period' => 'Balance Increment Period',
     'balance_increment_amount' => 'Balance Increment Amount',
@@ -156,7 +165,6 @@ return [
         'allow_work_from_home'  => 'Allow work from home for employee',
         'allow_switch_day_work' => 'Allow switch working day for employee',
         'cc_email'  => 'CC Email',
-        'feature'   => 'Feature',
         'accounts'  => 'Accounts',
     ],
 
@@ -165,6 +173,4 @@ return [
         'total' => 'Total :label:',
         'my'    => 'My :label',
     ], 
-
-
 ];

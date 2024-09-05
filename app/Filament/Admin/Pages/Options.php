@@ -61,7 +61,7 @@ class Options extends SettingsPage
                             ]) 
                             ->schema([
                                 Forms\Components\Select::make('model_type')
-                                    ->label(__('field.options.feature'))
+                                    ->label(__('field.feature'))
                                     ->options(function() use ($models) {
                                         // remove 'App\Models\' from the value of models
                                         $models = array_map(function($model) {

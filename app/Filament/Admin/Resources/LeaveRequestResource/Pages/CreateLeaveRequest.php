@@ -57,31 +57,35 @@ class CreateLeaveRequest extends CreateRecord
                     if($user->supervisor->hasRole($item->role_id)){
                         ProcessApprover::create([
                             'step_id'           => $item->id,
-                            'leave_request_id'  => $this->record->id,
+                            'modelable_type'    => get_class($this->record),
+                            'modelable_id'      => $this->record->id,
                             'role_id'           => $item->role_id,
-                            'user_id'           => $user->supervisor->id
+                            'approver_id'       => $user->supervisor->id
                         ]);                        
                     }else{
                         if($item->role_id == $userDepartment->role_id){
                             ProcessApprover::create([
                                 'step_id'           => $item->id,
-                                'leave_request_id'  => $this->record->id,
+                                'modelable_type'    => get_class($this->record),
+                                'modelable_id'      => $this->record->id,
                                 'role_id'           => $item->role_id,
-                                'user_id'           => $userDepartment->supervisor->id
+                                'approver_id'       => $userDepartment->supervisor->id
                             ]);
                             
                         }else if(!empty($userDepartment->parent) && $item->role_id == $userDepartment->parent->role_id){
                             ProcessApprover::create([
                                 'step_id'           => $item->id,
-                                'leave_request_id'  => $this->record->id,
+                                'modelable_type'    => get_class($this->record),
+                                'modelable_id'      => $this->record->id,
                                 'role_id'           => $item->role_id,
-                                'user_id'           => $userDepartment->parent->supervisor->id
+                                'approver_id'           => $userDepartment->parent->supervisor->id
                             ]);
                             
                         }else{
                             ProcessApprover::create([
                                 'step_id'           => $item->id,
-                                'leave_request_id'  => $this->record->id,
+                                'modelable_type'    => get_class($this->record),
+                                'modelable_id'      => $this->record->id,
                                 'role_id'           => $item->role_id
                             ]);                            
                         }

@@ -6,6 +6,12 @@ return new class extends SettingsMigration
 {
     public function up(): void
     {
+        // delete if exists befor add
+        $this->migrator->deleteIfExists('workhour.day');
+        $this->migrator->deleteIfExists('workhour.week');
+        $this->migrator->deleteIfExists('workhour.work_days');
+
+
         $this->migrator->add('workhour.day', 8);
         $this->migrator->add('workhour.week', (8*5));
         $this->migrator->add('workhour.work_days', [
