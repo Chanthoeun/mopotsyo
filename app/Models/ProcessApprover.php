@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Permission\Models\Role;
 
@@ -19,9 +20,10 @@ class ProcessApprover extends Model
      */
     protected $fillable = [
         'step_id',
-        'leave_request_id',
+        'modelable_type',
+        'modelable_id',
         'role_id',
-        'user_id',
+        'approver_id',
     ];
 
     /**
@@ -32,14 +34,14 @@ class ProcessApprover extends Model
     protected $casts = [
         'id' => 'integer',
         'step_id' => 'integer',
-        'leave_request_id' => 'integer',
+        'modelable_id' => 'integer',
         'role_id' => 'integer',
-        'user_id' => 'integer',
+        'approver_id' => 'integer',
     ];
 
-    public function user(): BelongsTo
+    public function approver(): BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'approver_id');
     }
 
     public function role(): BelongsTo
@@ -47,8 +49,8 @@ class ProcessApprover extends Model
         return $this->belongsTo(Role::class);
     }
 
-    public function leaveRequest(): BelongsTo
+    public function modelable(): MorphTo
     {
-        return $this->belongsTo(LeaveRequest::class);
+        return $this->morphTo();
     }
 }

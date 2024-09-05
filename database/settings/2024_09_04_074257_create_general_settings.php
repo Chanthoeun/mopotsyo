@@ -6,6 +6,16 @@ return new class extends SettingsMigration
 {
     public function up(): void
     {
+        // delete if exists befor add
+        $this->migrator->deleteIfExists('general.organization');
+        $this->migrator->deleteIfExists('general.abbr');
+        $this->migrator->deleteIfExists('general.telephone');
+        $this->migrator->deleteIfExists('general.email');
+        $this->migrator->deleteIfExists('general.website');
+        $this->migrator->deleteIfExists('general.address');
+        $this->migrator->deleteIfExists('general.logo');
+
+        // add
         $this->migrator->add('general.organization', 'Patient Information Centre (MOPOTSYO)');
         $this->migrator->add('general.abbr', 'MOPOTSYO');
         $this->migrator->add('general.telephone', '+85517787992');

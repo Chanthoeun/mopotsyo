@@ -171,10 +171,12 @@ class LeaveTypeResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
-            ->columns([
+            ->columns([                
                 Tables\Columns\ColorColumn::make('color')
                     ->label(__('field.color'))
                     ->searchable(),
+                Tables\Columns\TextColumn::make('id')
+                    ->label(__('field.id')),
                 Tables\Columns\TextColumn::make('name')
                     ->label(__('field.name'))
                     ->searchable(),
