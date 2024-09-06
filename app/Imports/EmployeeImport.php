@@ -132,8 +132,8 @@ class EmployeeImport implements ToModel, WithHeadingRow, WithChunkReading, WithE
             AfterImport::class => function(AfterImport $event) use($user) {
                 $totalRows = collect($event->reader->getTotalRows())->first();                      
                 Notification::make()
-                    ->title(__('msg.label.imported', ['label' => __('model.location')]))
-                    ->body(__('msg.body.imported', ['name' => __('model.location'), 'count' => $totalRows]))
+                    ->title(__('msg.label.imported', ['label' => __('model.employee')]))
+                    ->body(__('msg.body.imported', ['name' => __('model.employee'), 'count' => $totalRows]))
                     ->success()
                     ->icon('fas-check-circle')
                     ->sendToDatabase($user);
@@ -142,7 +142,7 @@ class EmployeeImport implements ToModel, WithHeadingRow, WithChunkReading, WithE
             ImportFailed::class => function(ImportFailed $event) use($user){
                 Notification::make()
                     ->title(__('msg.label.failed', ['label' => __('btn.import')]))
-                    ->body(__('msg.body.failed', ['name' => __('model.location'), 'action' => __('action.importing')]))
+                    ->body(__('msg.body.failed', ['name' => __('model.employee'), 'action' => __('action.importing')]))
                     ->danger()
                     ->icon('fas-circle-xmark')
                     ->sendToDatabase($user);
