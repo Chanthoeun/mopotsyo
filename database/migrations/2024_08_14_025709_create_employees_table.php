@@ -24,7 +24,7 @@ return new class extends Migration
             $table->string('nationality', 3)->nullable();
             $table->string('identity_card_number', 20)->nullable();            
             $table->string('email')->unique();
-            $table->string('telephone')->nullable();
+            $table->json('telephones')->nullable();
             $table->string('address')->nullable();
             $table->foreignId('village_id')->nullable()->constrained('locations')->onDelete('restrict')->cascadeOnUpdate();
             $table->foreignId('commune_id')->nullable()->constrained('locations')->onDelete('restrict')->cascadeOnUpdate();

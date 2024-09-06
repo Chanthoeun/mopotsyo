@@ -2,11 +2,11 @@
 
 namespace App\Imports;
 
-use App\Models\PublicHoliday;
+use App\Models\ContractType;
 use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 
-class PublicHolidayImport implements ToModel, WithHeadingRow
+class ContractTypeImport implements ToModel, WithHeadingRow
 {
     /**
     * @param array $row
@@ -15,14 +15,15 @@ class PublicHolidayImport implements ToModel, WithHeadingRow
     */
     public function model(array $row)
     {
-        return PublicHoliday::updateOrCreate([
-            'date'  => $row['date'],
+        return ContractType::updateOrCreate([
+            'name->en'  => $row['name_en'],
         ],[
             'name' => [
                 'en' => $row['name_en'],
-                'km' => $row['name_km'],
+                'km' => $row['name_kh'],
             ],
-            'date' => $row['date'],
+            'abbr' => $row['abbr'],
+            'allow_leave_request' => strtolower($row['allow_leave_request']) == 'yes' ? true : false,
         ]);
     }
 }
