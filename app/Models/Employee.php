@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\GenderEnum;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -31,7 +32,7 @@ class Employee extends Model
         'nationality',
         'identity_card_number',
         'email',
-        'telephone',
+        'telephones',
         'address',
         'village_id',
         'commune_id',
@@ -53,6 +54,7 @@ class Employee extends Model
         'gender' => GenderEnum::class,
         'married' => 'boolean',
         'date_of_birth' => 'date',
+        'telephones' => 'array',
         'village_id' => 'integer',
         'commune_id' => 'integer',
         'district_id' => 'integer',
@@ -95,5 +97,14 @@ class Employee extends Model
     public function workDays(): HasMany
     {
         return $this->hasMany(EmployeeWorkDay::class);
+    }
+
+    protected function contract(): Attribute
+    {
+        return Attribute::make(
+            get: function () {
+                return $this->contracts()->where('is_active', true)->first();
+            },
+        );
     }
 }

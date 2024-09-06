@@ -98,10 +98,16 @@ class EmployeeResource extends Resource
                             ->unique(ignoreRecord: true)
                             ->prefixIcon('fas-envelope')
                             ->maxLength(255),
-                        PhoneInput::make('telephone')
+                        Forms\Components\Repeater::make('telephones')
                             ->label(__('field.telephone'))
-                            ->prefixIcon('fas-phone')
-                            ->defaultCountry('kh'),
+                            ->addActionLabel(__('btn.label.add',['label'=> __('field.telephone')]))
+                            ->simple(
+                                PhoneInput::make('telephones')
+                                    ->hiddenLabel()
+                                    ->placeholder(__('field.telephone'))
+                                    ->prefixIcon('fas-phone')
+                                    ->defaultCountry('kh'),
+                            ),
                         Forms\Components\DatePicker::make('date_of_birth')
                             ->label(__('field.date_of_birth'))
                             ->placeholder(__('field.select_date'))
@@ -217,7 +223,7 @@ class EmployeeResource extends Resource
                 Tables\Columns\TextColumn::make('email')
                     ->label(__('field.email'))
                     ->searchable(),
-                PhoneColumn::make('telephone')
+                PhoneColumn::make('telephones')
                     ->label(__('field.telephone'))
                     ->searchable()
                     ->toggleable(isToggledHiddenByDefault: true), 
