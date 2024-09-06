@@ -95,7 +95,7 @@ class EmployeeImport implements ToModel, WithHeadingRow, WithChunkReading, WithE
         $empolyee->workDays()->insert($workDays);
 
         // create user
-        User::updateOrCreate([
+        $user = User::updateOrCreate([
             'email' => $empolyee->email,
         ],[
             'name' => $empolyee->getTranslations('name'),
@@ -105,6 +105,11 @@ class EmployeeImport implements ToModel, WithHeadingRow, WithChunkReading, WithE
             'email_verified_at' => now(),
             'force_renew_password' => true
         ])->assignRole('employee');
+
+        // update employee
+        $empolyee->update([
+            'user_id'   => $user->id,
+        ]);
 
         return $empolyee;
     }
