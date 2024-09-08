@@ -56,7 +56,7 @@ class Options extends SettingsPage
                             ->addActionLabel(__('btn.add'))                            
                             ->defaultItems(1)
                             ->headers([
-                                Header::make(__('field.options.feature')),
+                                Header::make(__('field.feature')),
                                 Header::make(__('field.options.accounts')),
                             ]) 
                             ->schema([
