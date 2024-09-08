@@ -46,14 +46,12 @@ class CreateLeaveRequest extends CreateRecord
                 }else if($this->record->days >= $rule->from_amount && empty($rule->to_amount)){
                     $roles = $rule->roles;
                 }           
-            }       
-    
+            } 
+
             $this->record->approvalStatus()->update([
                'steps' => $this->record->approvalFlowSteps()->whereIn('role_id', $roles)->map(function ($item) {
-                    $data =$item->toApprovalStatusArray(); 
-                    $user = $this->record->approvalStatus->creator;  
-                    $userDepartment = $user->contract->department;
-
+                    $user = $this->record->approvalStatus->creator; 
+                    
                     if($user->supervisor->hasRole($item->role_id)){
                         ProcessApprover::create([
                             'step_id'           => $item->id,
@@ -63,24 +61,14 @@ class CreateLeaveRequest extends CreateRecord
                             'approver_id'       => $user->supervisor->id
                         ]);                        
                     }else{
-                        if($item->role_id == $userDepartment->role_id){
+                        if(!empty($user->department_head) && $user->department_head->hasRole($item->role_id)){
                             ProcessApprover::create([
                                 'step_id'           => $item->id,
                                 'modelable_type'    => get_class($this->record),
                                 'modelable_id'      => $this->record->id,
                                 'role_id'           => $item->role_id,
-                                'approver_id'       => $userDepartment->supervisor->id
-                            ]);
-                            
-                        }else if(!empty($userDepartment->parent) && $item->role_id == $userDepartment->parent->role_id){
-                            ProcessApprover::create([
-                                'step_id'           => $item->id,
-                                'modelable_type'    => get_class($this->record),
-                                'modelable_id'      => $this->record->id,
-                                'role_id'           => $item->role_id,
-                                'approver_id'           => $userDepartment->parent->supervisor->id
-                            ]);
-                            
+                                'approver_id'       => $user->department_head->id
+                            ]);                            
                         }else{
                             ProcessApprover::create([
                                 'step_id'           => $item->id,
@@ -91,7 +79,7 @@ class CreateLeaveRequest extends CreateRecord
                         }
                     }
                        
-                    return $data;
+                    return $item->toApprovalStatusArray();
                 })->toArray()
             ]);
         }               
