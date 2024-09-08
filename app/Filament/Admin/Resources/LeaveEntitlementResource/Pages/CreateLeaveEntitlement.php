@@ -69,6 +69,6 @@ class CreateLeaveEntitlement extends CreateRecord
             } 
         }
 
-        return $entitlement;
+        return $newEntitlement;
     }
 }
