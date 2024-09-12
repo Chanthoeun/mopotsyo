@@ -16,6 +16,7 @@ return [
     'approved'          => 'Approved',
     'rejected'          => 'Rejected',
     'discarded'         => 'Discarded',
+    'requested'         => 'Requested',
     'submitted'         => 'Submitted',
     'completed'         => 'Completed',
     'sent'              => 'Sent',
@@ -55,5 +56,11 @@ return [
         'discarded'            => 'The :request for :days of :leave_type from :from to :to was discarded by :name.',
         'completed_leave_request'   => 'Your :request for :days of :leave_type from :from to :to was approved and completed.',
         'request_over_accrued_amount'      => 'Your request date is over accrued amount. Your current accured amount is :amount.',
+        'is_working_hour'   => 'The request date and time is in working hour. Please choose another date and time.',
+        'overtime'          => ':name just :action an overtime for :amount on :date. please kindly check and approve in the below link.',
+        'completed_overtime'    => 'Your overtime request for :amount on :date was approved and completed.',
+        'rejected_overtime'     => 'Your overtime request for :amount on :date was rejected by :name.',
+        'discarded_overtime'    => 'The overtime request for :amount on :date was discarded by :name.',
+        'is_not_correct'    => 'The informationis not correct.',
     ]
 ];

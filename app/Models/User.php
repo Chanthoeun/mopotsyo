@@ -108,6 +108,7 @@ class User extends Authenticatable implements FilamentUser, RenewPasswordContrac
         return $this->hasMany(LeaveEntitlement::class);
     }
 
+
     public function carryForwards(): HasMany
     {
         return $this->hasMany(LeaveCarryForward::class);

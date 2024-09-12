@@ -2,6 +2,7 @@
 
 namespace App\Filament\Admin\Pages;
 
+use App\Models\LeaveType;
 use App\Models\User;
 use App\Settings\SettingOptions;
 use Awcodes\TableRepeater\Components\TableRepeater;
@@ -51,6 +52,21 @@ class Options extends SettingsPage
                             ->label(__('field.options.allow_work_from_home')),
                         Forms\Components\Toggle::make('allow_switch_day_work')
                             ->label(__('field.options.allow_switch_day_work')),
+                        Forms\Components\Section::make(__('model.overtime'))
+                            ->columns(3)
+                            ->schema([
+                                Forms\Components\Toggle::make('allow_overtime')
+                                    ->label(__('field.options.allow_overtime'))
+                                    ->inline(false),
+                                Forms\Components\TextInput::make('overtime_expiry')
+                                    ->label(__('field.options.overtime_expiry'))
+                                    ->required()
+                                    ->numeric()
+                                    ->suffix(__('field.day')),
+                                Forms\Components\Select::make('overtime_link')
+                                    ->label(__('field.options.overtime_link'))
+                                    ->options(LeaveType::pluck('name', 'id'))
+                            ]),
                         TableRepeater::make('cc_emails')
                             ->label(__('field.options.cc_email'))                            
                             ->addActionLabel(__('btn.add'))                            

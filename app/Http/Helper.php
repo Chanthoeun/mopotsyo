@@ -45,7 +45,6 @@ if(!function_exists('getSubordinators')){
     }                
 }
 
-
 if(!function_exists('getAcronym')){
     function getAcronym($string){        
         $words = explode(" ", $string);
@@ -87,15 +86,15 @@ if(!function_exists('decimalToTime')){
 }
 
 if(!function_exists('getHoursBetweenTwoTimes')){
-    function getHoursBetweenTwoTimes($stat_time, $end_time, $break_time = 0){
-        
+    function getHoursBetweenTwoTimes($stat_time, $end_time, $break_time = 0){        
         $startTime  = Carbon::parse($stat_time);
         $endTime    = Carbon::parse($end_time);        
         $hours = $startTime->floatDiffInHours($endTime);
         if(!empty($break_time) && $hours > 4){
-            return intval($hours - $break_time);
+            return floatval($hours - $break_time);
         }
-        return intval($hours);
+
+        return floatval($hours);
     }
 }
 
@@ -126,12 +125,14 @@ if(!function_exists('dayName')){
 }
 
 if(!function_exists('isWorkHour')){
-    function isWorkHour($user, $date, $request_time): bool{
-        foreach($user->profile->shift->workDays as $workDay){
-            $startWorkHour = Carbon::parse($workDay->from_time);
-            $endWorkHour = Carbon::parse($workDay->to_time);
-            $requestTime = Carbon::parse($request_time);                                  
-            if(strtolower($workDay->day) == strtolower(dayName($date)) && $requestTime->isBetween($startWorkHour, $endWorkHour, true)){
+    function isWorkHour($user, $date, $request_time): bool{        
+        foreach($user->workDays as $workDay){
+            $startWorkHour = Carbon::parse($workDay->start_time);
+            $endWorkHour = Carbon::parse($workDay->end_time);
+            $requestTime = Carbon::parse($request_time); 
+            $dayOfWeek = Carbon::parse($date)->dayOfWeek();   
+            
+            if($workDay->day_name->value == $dayOfWeek && $requestTime->isBetween($startWorkHour, $endWorkHour, true)){
                 return true;
             }
         }
@@ -147,7 +148,6 @@ if(!function_exists('weekend')){
         return false;        
     }
 }
-
 
 if(!function_exists('publicHoliday')){
     function publicHoliday($date): bool{
@@ -257,42 +257,6 @@ if(!function_exists('getDaysFromHours')){
         return round($hours / $user->profile->shift->work_hours, 1);
     }
 }
-
-if(!function_exists('getAddress')){
-    function getAddress($addresses){
-        $address = $addresses->where('is_primary', true)->first();
-        return "{$address->address_1} {$address->address_2}, {$address->city}, ".getState($address->state).", ". getCountry($address->country).", {$address->postcode}";
-    }
-}
-
-if(!function_exists('getCountry')){
-    function getCountry($country){
-        return CountryState::getCountryName($country);
-    }
-}
-
-if(!function_exists('getState')){
-    function getState($state){
-        return CountryState::getStateName($state);
-    }
-}
-
-if(!function_exists('getQuoteId')){
-    function getQuoteId($quote){
-        return 'QID-'.sprintf('%06d',$quote->id);
-    }
-}
-
-
-// if(!function_exists('isSupervisor')){
-//     function isSupervisor($user){
-//         if(Auth::user()->supervisor()->id == $user->id){
-//             return true;
-//         }
-//         return false;
-//     }
-// }
-
 
 
 

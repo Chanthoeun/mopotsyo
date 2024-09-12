@@ -52,4 +52,6 @@ return [
     'leaves'            => 'Leaves',    
     'process_approval_rule'     => 'Approval Rule',
     'process_approval_rules'    => 'Approval Rules',    
+    'overtime'     => 'Overtime',
+    'overtimes'    => 'Overtimes',    
 ];

@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Filament\Admin\Resources\LeaveRequestResource\Pages;
+namespace App\Filament\Admin\Resources\OverTimeResource\Pages;
 
-use App\Filament\Admin\Resources\LeaveRequestResource;
+use App\Filament\Admin\Resources\OverTimeResource;
 use Filament\Actions;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Textarea;
@@ -13,11 +13,11 @@ use RingleSoft\LaravelProcessApproval\Enums\ApprovalStatusEnum;
 use RingleSoft\LaravelProcessApproval\Events\ProcessDiscardedEvent;
 use RingleSoft\LaravelProcessApproval\Models\ProcessApproval;
 
-class ViewLeaveRequest extends ViewRecord
+class ViewOverTime extends ViewRecord
 {
     use  \EightyNine\Approvals\Traits\HasApprovalHeaderActions;
 
-    protected static string $resource = LeaveRequestResource::class;
+    protected static string $resource = OverTimeResource::class;
 
     /**
      * Get the completion action.
@@ -60,7 +60,7 @@ class ViewLeaveRequest extends ViewRecord
                     ->success()
                     ->icon('fas-user-clock')
                     ->iconColor('success')
-                    ->title(__('msg.label.discarded', ['label' => __('model.leave_request')]))
+                    ->title(__('msg.label.discarded', ['label' => __('model.overtime')]))
                     ->send();
             });
             
