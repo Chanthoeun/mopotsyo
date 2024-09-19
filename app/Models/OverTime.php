@@ -2,22 +2,16 @@
 
 namespace App\Models;
 
-use App\Enums\ApprovalStatuEnum;
 use App\Settings\SettingWorkingHours;
 use EightyNine\Approvals\Models\ApprovableModel;
-use Filament\Notifications\Notification;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
-use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use RingleSoft\LaravelProcessApproval\Enums\ApprovalStatusEnum;
 
-class LeaveRequest extends ApprovableModel
+class OverTime extends ApprovableModel
 {
     use HasFactory, SoftDeletes;
 
@@ -27,12 +21,9 @@ class LeaveRequest extends ApprovableModel
      * @var array
      */
     protected $fillable = [
-        'leave_type_id',
-        'from_date',
-        'to_date',
+        'expiry_date',
         'reason',
-        'attachment',
-        'is_completed',
+        'unused',
         'user_id'
     ];
 
@@ -43,20 +34,18 @@ class LeaveRequest extends ApprovableModel
      */
     protected $casts = [
         'id' => 'integer',
-        'leave_type_id' => 'integer',
-        'from_date' => 'date',
-        'to_date' => 'date',
-        'is_completed' => 'boolean',
+        'expiry_date' => 'date',
+        'unused' => 'boolean'
     ];
-
-    public function leaveType(): BelongsTo
-    {
-        return $this->belongsTo(LeaveType::class);
-    }
 
     public function requestDates(): MorphMany
     {
         return $this->morphMany(RequestDate::class, 'requestdateable');
+    }
+
+    public function leaveRequests(): BelongsToMany
+    {
+        return $this->belongsToMany(LeaveRequest::class);
     }
 
     public function processApprovers(): MorphMany
@@ -64,27 +53,24 @@ class LeaveRequest extends ApprovableModel
         return $this->morphMany(ProcessApprover::class, 'modelable');
     }
 
-    public function leaverequestable(): MorphTo
-    {
-        return $this->morphTo();
-    }
-
-    public function overTimes(): BelongsToMany
-    {
-        return $this->belongsToMany(OverTime::class, 'leave_request_over_time', 'leave_request_id', 'over_time_id');
-    }
-
-    protected function requested(): Attribute
+    protected function hours(): Attribute
     {
         return Attribute::make(
-            get: fn () => $this->createdBy()->full_name ?? null,
+            get: fn () => $this->requestDates()->sum('hours'),
         );
     }
 
     protected function days(): Attribute
     {
         return Attribute::make(
-            get: fn () => floatval($this->requestDates()->sum('hours') / app(SettingWorkingHours::class)->day),
+            get: fn () => floatval($this->hours / app(SettingWorkingHours::class)->day),
+        );
+    }
+
+    protected function requested(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->createdBy()->full_name ?? null,
         );
     }
 
@@ -107,8 +93,4 @@ class LeaveRequest extends ApprovableModel
             },
         );
     }
-    // public function canBeApproved(User $user): bool
-    // {
-    //     return true;
-    // }
 }

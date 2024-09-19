@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -20,8 +21,9 @@ return new class extends Migration
             $table->date('to_date');
             $table->text('reason')->nullable();
             $table->string('attachment')->nullable();            
-            $table->nullableMorphs('leaverequestable');
-            $table->boolean('is_completed')->default(0);
+            // $table->nullableMorphs('leaverequestable');
+            // $table->boolean('is_completed')->default(0);
+            $table->foreignId('user_id')->constrained()->onDelete('restrict')->cascadeOnUpdate();
             $table->timestamps();
             $table->softDeletes();
         });
@@ -34,6 +36,8 @@ return new class extends Migration
      */
     public function down(): void
     {
+        DB::statement('SET FOREIGN_KEY_CHECKS = 0');
         Schema::dropIfExists('leave_requests');
+        DB::statement('SET FOREIGN_KEY_CHECKS = 1');
     }
 };

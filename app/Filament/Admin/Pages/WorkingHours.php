@@ -51,6 +51,26 @@ class WorkingHours extends SettingsPage
                             ->label(__('field.working_hours_per_week'))
                             ->required()
                             ->numeric(),
+                        Forms\Components\Grid::make(3)
+                            ->schema([
+                                Forms\Components\TextInput::make('break_time')
+                                    ->label(__('field.break_time'))
+                                    ->required()
+                                    ->numeric()
+                                    ->live()
+                                    ->inputMode('decimal')
+                                    ->default(1),
+                                Forms\Components\TimePicker::make('break_from')
+                                    ->label(__('field.break_from'))
+                                    ->required()
+                                    ->seconds(false)
+                                    ->default('12:00:00'),
+                                Forms\Components\TimePicker::make('break_to')
+                                    ->label(__('field.break_to'))
+                                    ->required()
+                                    ->seconds(false)
+                                    ->default('13:00:00'),
+                            ]),
                         TableRepeater::make('work_days')
                             ->label(__('field.working_days_per_week'))                                                   
                             ->reorderable(true)
@@ -63,8 +83,8 @@ class WorkingHours extends SettingsPage
                                 Header::make(__('field.start_date')),
                                 Header::make(__('field.end_date')),
                                 Header::make(__('field.break_time'))->width('100px'),
-                                Header::make(__('field.from')),
-                                Header::make(__('field.to')),
+                                Header::make(__('field.break_from')),
+                                Header::make(__('field.break_to')),
                             ])                                             
                             ->columnSpan('full')                                
                             ->schema([                                
@@ -76,10 +96,12 @@ class WorkingHours extends SettingsPage
                                 Forms\Components\TimePicker::make('start_time') 
                                     ->hiddenLabel()                                       
                                     ->required()
+                                    ->seconds(false)
                                     ->default('08:00:00'),
                                 Forms\Components\TimePicker::make('end_time')
                                     ->hiddenLabel()
                                     ->required()
+                                    ->seconds(false)
                                     ->default('17:00:00'),
                                 Forms\Components\TextInput::make('break_time')
                                     ->hiddenLabel()
@@ -91,10 +113,12 @@ class WorkingHours extends SettingsPage
                                 Forms\Components\TimePicker::make('break_from')
                                     ->hiddenLabel()
                                     ->required()
+                                    ->seconds(false)
                                     ->default('12:00:00'),
                                 Forms\Components\TimePicker::make('break_to')
                                     ->hiddenLabel()
                                     ->required()
+                                    ->seconds(false)
                                     ->default('13:00:00'),
                             ]),
                     ])

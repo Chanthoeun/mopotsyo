@@ -23,14 +23,16 @@ return [
     'reference'     => 'Reference',
     'date'          => 'Date',
     'color'         => 'Color',
-    'days_with_count'          => ':count Days|:count Days',
+    'days_with_count'   => ':count Day|:count Days',
     'day'           => 'Day',
-    'hours'         => 'Hour|Hours',
+    'hours'         => 'Hours',
     'hour'          => 'Hour',
+    'hours_with_count'          => ':count Hour|:count Hours',
     'leave_request_form' => 'Leave Request Form',
     'leave_request_info' => 'Leave Request Info',   
     'organization'  => 'Organization',
     'logo'          => 'Logo',
+    'icon'          => 'icon',
     'feature'       => 'Feature',
 
     'photo'    => 'Photo',
@@ -129,6 +131,9 @@ return [
     'visibility' => 'Visibility',
     'visible' => 'Visible',
     'login_detail' => 'Login Detail',
+    'working_dates' => 'Working Dates',
+    'expiry_date' => 'Expiry Date',
+    'unused' => 'Unused',
 
 
     // day
@@ -164,6 +169,9 @@ return [
         'allow_add_user' => 'Allow add user while create employee',
         'allow_work_from_home'  => 'Allow work from home for employee',
         'allow_switch_day_work' => 'Allow switch working day for employee',
+        'allow_overtime'        => 'Allow overtime for employee',
+        'overtime_expiry'       => 'Overtime Expiry Day',
+        'overtime_link'         => 'Overtime Link',
         'cc_email'  => 'CC Email',
         'accounts'  => 'Accounts',
     ],

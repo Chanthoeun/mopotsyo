@@ -10,8 +10,8 @@ return new class extends SettingsMigration
         $this->migrator->deleteIfExists('workhour.day');
         $this->migrator->deleteIfExists('workhour.week');
         $this->migrator->deleteIfExists('workhour.work_days');
-
-
+        
+        
         $this->migrator->add('workhour.day', 8);
         $this->migrator->add('workhour.week', (8*5));
         $this->migrator->add('workhour.work_days', [
@@ -56,5 +56,13 @@ return new class extends SettingsMigration
                 'break_to' => '13:00:00',
             ]
         ]);
+
+        $this->migrator->deleteIfExists('workhour.break_time');
+        $this->migrator->deleteIfExists('workhour.break_from');
+        $this->migrator->deleteIfExists('workhour.break_to');
+        
+        $this->migrator->add('workhour.break_time', 1);
+        $this->migrator->add('workhour.break_from', '12:00:00');
+        $this->migrator->add('workhour.break_to', '13:00:00');
     }
 };

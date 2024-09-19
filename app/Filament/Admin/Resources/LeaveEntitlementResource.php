@@ -25,7 +25,7 @@ class LeaveEntitlementResource extends Resource
 
     protected static ?string $navigationIcon = 'fas-user-clock';
 
-    protected static ?int $navigationSort = 2;
+    protected static ?int $navigationSort = 4;
 
     public static function getModelLabel(): string
     {

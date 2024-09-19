@@ -30,7 +30,6 @@ class RequestDate extends Model
     protected $casts = [
         'id' => 'integer',
         'date' => 'date',
-        'hours' => 'integer',
     ];
 
     public function requestdateable(): MorphTo

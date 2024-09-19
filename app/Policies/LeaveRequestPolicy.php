@@ -176,29 +176,22 @@ class LeaveRequestPolicy
      * Determine whether the user can approve.
      */
     public function approve(User $user, LeaveRequest $leaveRequest): bool
-    {
-        if(empty($leaveRequest->leaveType->rules->count())){
-            if($leaveRequest->canBeApprovedBy($user) && $leaveRequest->isSubmitted() &&
-                    !$leaveRequest->isApprovalCompleted() &&
-                    !$leaveRequest->isDiscarded()) return true;
+    {                        
+        if($leaveRequest->isSubmitted() && !$leaveRequest->isApprovalCompleted() && !$leaveRequest->isDiscarded()){
+            if($leaveRequest->leaveType->rules){
+                $nextStep = $leaveRequest->nextApprovalStep();
+                if($nextStep){
+                    $processApprover = $leaveRequest->processApprovers->where('step_id', $nextStep->id)->where('role_id', $nextStep->role_id)->first();                    
+                    if($processApprover && !empty($processApprover->approver) && $processApprover->approver->id == $user->id){                        
+                        return true;
+                    }else if($processApprover && empty($processApprover->approver)){
+                        return $leaveRequest->canBeApprovedBy($user);
+                    }
+                }
+            }else{
+                return $leaveRequest->canBeApprovedBy($user);
+            }                  
         }
-
-        $nextStep = $leaveRequest->nextApprovalStep();
-        if($nextStep){
-            $getApprover = $leaveRequest->processApprovers()->where('step_id', $nextStep->id)->where('role_id', $nextStep->role_id)->first();
-            if($getApprover){
-                if($getApprover->user){
-                    if($leaveRequest->isSubmitted() &&
-                    !$leaveRequest->isApprovalCompleted() &&
-                    !$leaveRequest->isDiscarded() && $user->id == $getApprover->approver->id) return true;
-                }else{
-                    if($leaveRequest->canBeApprovedBy($user) && $leaveRequest->isSubmitted() &&
-                    !$leaveRequest->isApprovalCompleted() &&
-                    !$leaveRequest->isDiscarded()) return true;
-                }            
-            }
-        }    
-        // dump($nextStep);
         
         return false;
     }
@@ -206,35 +199,21 @@ class LeaveRequestPolicy
      * Determine whether the user can reject.
      */
     public function reject(User $user, LeaveRequest $leaveRequest): bool
-    {      
-        if(empty($leaveRequest->leaveType->rules->count())){
-            if($leaveRequest->canBeApprovedBy($user) && $leaveRequest->isSubmitted() &&
-                !$leaveRequest->isApprovalCompleted() &&
-                !$leaveRequest->isRejected() &&
-                !$leaveRequest->isDiscarded()) return true;
-        }  
-
-        $nextStep = $leaveRequest->nextApprovalStep();
-        if($nextStep){
-            $getApprover = $leaveRequest->processApprovers()->where('step_id', $nextStep->id)->where('role_id', $nextStep->role_id)->first();
-            if($getApprover){
-                if($getApprover->user){
-                    if($leaveRequest->isSubmitted() &&
-                    !$leaveRequest->isApprovalCompleted() &&
-                    !$leaveRequest->isRejected() &&
-                    !$leaveRequest->isDiscarded() && $user->id == $getApprover->approver->id) return true;
-                }else{
-                    if($leaveRequest->canBeApprovedBy($user) && $leaveRequest->isSubmitted() &&
-                    !$leaveRequest->isApprovalCompleted() &&
-                    !$leaveRequest->isRejected() &&
-                    !$leaveRequest->isDiscarded()) return true;
-                }            
-            }
-        }else{
-            if($leaveRequest->canBeApprovedBy($user) && $leaveRequest->isSubmitted() &&
-                !$leaveRequest->isApprovalCompleted() &&
-                !$leaveRequest->isRejected() &&
-                !$leaveRequest->isDiscarded()) return true;
+    {     
+        if($leaveRequest->isSubmitted() && !$leaveRequest->isApprovalCompleted() && !$leaveRequest->isRejected() && !$leaveRequest->isDiscarded()){
+            if($leaveRequest->leaveType->rules){
+                $nextStep = $leaveRequest->nextApprovalStep();
+                if($nextStep){
+                    $processApprover = $leaveRequest->processApprovers->where('step_id', $nextStep->id)->where('role_id', $nextStep->role_id)->first();
+                    if($processApprover && !empty($processApprover->approver) && $processApprover->approver->id == $user->id){
+                        return $leaveRequest->canBeApprovedBy($user);
+                    }else if($processApprover && empty($processApprover->approver)){
+                        return $leaveRequest->canBeApprovedBy($user);
+                    }
+                }
+            }else{
+                return $leaveRequest->canBeApprovedBy($user);
+            }                  
         }
         
         return false;
@@ -243,27 +222,23 @@ class LeaveRequestPolicy
      * Determine whether the user can discard.
      */
     public function discard(User $user, LeaveRequest $leaveRequest): bool
-    {                           
-        if(empty($leaveRequest->leaveType->rules->count())){
-            if($leaveRequest->canBeApprovedBy($user) && $leaveRequest->isRejected()) return true;
-        } 
+    {                 
+        if($leaveRequest->isRejected() && !$leaveRequest->isDiscarded()){
+            if($leaveRequest->leaveType->rules){
+                $nextStep = $leaveRequest->nextApprovalStep();
+                if($nextStep){
+                    $processApprover = $leaveRequest->processApprovers->where('step_id', $nextStep->id)->where('role_id', $nextStep->role_id)->first();
+                    if($processApprover && !empty($processApprover->approver) && $processApprover->approver->id == $user->id){
+                        return $leaveRequest->canBeApprovedBy($user);
+                    }else if($processApprover && empty($processApprover->approver)){
+                        return $leaveRequest->canBeApprovedBy($user);
+                    }
+                }
+            }else{
+                return $leaveRequest->canBeApprovedBy($user);
+            }                  
+        }       
 
-        // dd($leaveRequest->nextApprovalStep()->role_id);
-        $nextStep = $leaveRequest->nextApprovalStep();
-        if($nextStep){
-            $getApprover = $leaveRequest->processApprovers()->where('step_id', $nextStep->id)->where('role_id', $nextStep->role_id)->first();
-            if($getApprover){
-                if($getApprover->user){
-                    if($leaveRequest->isRejected() && $user->id == $getApprover->approver->id) return true;
-                }else{
-                    if($leaveRequest->canBeApprovedBy($user) && $leaveRequest->isRejected()) return true;
-                }            
-            }
-        }else{
-            if($leaveRequest->canBeApprovedBy($user) && $leaveRequest->isRejected()) return true;
-        }   
-                
-        
         return false;
     }
     

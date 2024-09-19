@@ -31,7 +31,7 @@ return [
         'resign'    => 'Resign :label',
         'import'    => 'Import :label',
         'export'    => 'Export :label',
-        'request'   => 'Request :label',
+        'request'   => ':label Request',
         'generate'  => 'Generate :label',
         'approve'   => 'Approve :label',
         'reject'    => 'Reject :label',

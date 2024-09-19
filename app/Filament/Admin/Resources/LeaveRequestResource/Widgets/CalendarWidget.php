@@ -22,7 +22,7 @@ class CalendarWidget extends FullCalendarWidget
             ->id($leaveRequest->id)
             ->title($leaveRequest->leaveType->abbr .' - '. $leaveRequest->approvalStatus->creator->name .' - '. trans_choice('field.days_with_count', $leaveRequest->days, ['count' => $leaveRequest->days]))
             ->start($leaveRequest->from_date)
-            ->end($leaveRequest->to_date)
+            ->end($leaveRequest->to_date->addDay())
             ->allDay(true)
             ->backgroundColor($leaveRequest->leaveType->color)
             ->url(LeaveRequestResource::getUrl('view', ['record' => $leaveRequest]), true)
