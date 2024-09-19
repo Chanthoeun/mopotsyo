@@ -49,7 +49,7 @@ return [
         'failed'              => ':name was :action failed, please try again!',
         'in_progress'         => 'We are :name :count records. we will notify you when it is done.',
         'success'             => ':name was :action successfully.',
-        'in_advance'          => 'Your request must be submitted :days days in advance.',
+        'in_advance'          => 'Your request must be submitted :days day in advance.|Your request must be submitted :days days in advance.',
         'submit_leave_request' => ':name would like to request :days of :leave_type from :from to :to. Would you like to approve this request?',
         'approved_leave_request' => ':name just requested :days of :leave_type from :from to :to so it needs your approval to process next step. Would you like to approve this request?',
         'rejected'             => 'The :request for :days of :leave_type from :from to :to was rejected by :name.',
@@ -62,5 +62,6 @@ return [
         'rejected_overtime'     => 'Your overtime request for :amount on :date was rejected by :name.',
         'discarded_overtime'    => 'The overtime request for :amount on :date was discarded by :name.',
         'is_not_correct'    => 'The informationis not correct.',
+        
     ]
 ];

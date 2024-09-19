@@ -13,6 +13,7 @@ class SettingGeneral extends Settings
     public ?string $website;
     public ?string $address;
     public ?string $logo;
+    public ?string $icon;
 
     public static function group(): string
     {

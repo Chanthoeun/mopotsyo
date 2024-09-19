@@ -27,16 +27,7 @@ class LeaveTypeFactory extends Factory
             'male' => $this->faker->boolean(),
             'female' => $this->faker->boolean(),
             'balance' => $this->faker->randomDigitNotNull(),
-            'minimum_request_days' => $this->faker->randomDigitNotNull(),
-            'balance_increment_period' => $this->faker->regexify('[A-Za-z0-9]{10}'),
-            'balance_increment_amount' => $this->faker->randomDigitNotNull(),
             'maximum_balance' => $this->faker->randomDigitNotNull(),
-            'allow_carry_forward' => $this->faker->boolean(),
-            'carry_forward_duration' => $this->faker->regexify('[A-Za-z0-9]{10}'),
-            'allow_advance' => $this->faker->boolean(),
-            'advance_limit' => $this->faker->randomDigitNotNull(),
-            'allow_accrual' => $this->faker->boolean(),
-            'visible' => $this->faker->boolean(),
         ];
     }
 }

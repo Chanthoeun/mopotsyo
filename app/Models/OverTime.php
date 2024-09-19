@@ -7,6 +7,7 @@ use EightyNine\Approvals\Models\ApprovableModel;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -22,7 +23,8 @@ class OverTime extends ApprovableModel
     protected $fillable = [
         'expiry_date',
         'reason',
-        'unused'
+        'unused',
+        'user_id'
     ];
 
     /**
@@ -39,6 +41,11 @@ class OverTime extends ApprovableModel
     public function requestDates(): MorphMany
     {
         return $this->morphMany(RequestDate::class, 'requestdateable');
+    }
+
+    public function leaveRequests(): BelongsToMany
+    {
+        return $this->belongsToMany(LeaveRequest::class);
     }
 
     public function processApprovers(): MorphMany

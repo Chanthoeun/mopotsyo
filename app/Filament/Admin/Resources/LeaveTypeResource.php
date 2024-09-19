@@ -15,6 +15,8 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Spatie\Permission\Models\Role;
+use Illuminate\Support\Str;
 
 class LeaveTypeResource extends Resource
 {
@@ -79,31 +81,32 @@ class LeaveTypeResource extends Resource
                                     ->helperText(__('helper.balance'))
                                     ->hint(__('hint.day'))
                                     ->placeholder(__('placeholder.balance')),
-                                Forms\Components\TextInput::make('minimum_request_days')
-                                    ->label(__('field.minimum_request_days'))                                    
-                                    ->numeric()
-                                    ->helperText(__('helper.minimum_request_day'))
-                                    ->hint(__('hint.day'))
-                                    ->placeholder(__('placeholder.minimum_request_day')),
+                                Forms\Components\TextInput::make('maximum_balance')
+                                            ->label(__('field.maximum_balance'))
+                                            ->numeric()
+                                            ->helperText(__('helper.maximum_balance'))
+                                            ->hint(__('hint.day')),                                
                                 Forms\Components\Grid::make(3)
                                     ->schema([
-                                        Forms\Components\TextInput::make('balance_increment_period')
+                                        Forms\Components\TextInput::make('option.minimum_request_days')
+                                            ->label(__('field.minimum_request_days'))                                    
+                                            ->numeric()
+                                            ->helperText(__('helper.minimum_request_day'))
+                                            ->hint(__('hint.day'))
+                                            ->placeholder(__('placeholder.minimum_request_day')),
+                                        Forms\Components\TextInput::make('option.balance_increment_period')
                                             ->label(__('field.balance_increment_period'))
                                             ->helperText(__('helper.balance_increment_period'))
                                             ->placeholder(__('placeholder.balance_increment_period'))
                                             ->hint(__('hint.duration'))
                                             ->live()
                                             ->maxLength(10),
-                                        Forms\Components\TextInput::make('balance_increment_amount')
+                                        Forms\Components\TextInput::make('option.balance_increment_amount')
                                             ->label(__('field.balance_increment_amount'))
                                             ->numeric()
                                             ->helperText(fn(Get $get) => __('helper.balance_increment_amount', ['period' => $get('balance_increment_period')]))                                            
                                             ->hint(__('hint.day')),
-                                        Forms\Components\TextInput::make('maximum_balance')
-                                            ->label(__('field.maximum_balance'))
-                                            ->numeric()
-                                            ->helperText(__('helper.maximum_balance'))
-                                            ->hint(__('hint.day')),
+                                        
                                     ])
                             ]),
                         Forms\Components\Group::make()
@@ -112,38 +115,19 @@ class LeaveTypeResource extends Resource
                                 Forms\Components\Section::make(__('field.carry_forward'))
                                     ->description(__('desc.carry_forward'))
                                     ->schema([
-                                        Forms\Components\Toggle::make('allow_carry_forward')
+                                        Forms\Components\Toggle::make('option.allow_carry_forward')
                                             ->label(__('field.allow_carry_forward'))
-                                            ->required()
                                             ->live(),
-                                        Forms\Components\TextInput::make('carry_forward_duration')
+                                        Forms\Components\TextInput::make('option.carry_forward_duration')
                                             ->label(__('field.carry_forward_duration'))
                                             ->helperText(__('helper.carry_period'))
                                             ->placeholder(__('placeholder.carry_period'))
                                             ->hint(__('hint.duration'))
                                             ->required()
                                             ->maxLength(10)
-                                            ->visible(fn(Get $get) => $get('allow_carry_forward') == true),
+                                            ->visible(fn(Get $get) => $get('option.allow_carry_forward') == true),
                                     ])
-                            ]),
-                        Forms\Components\Group::make()
-                            ->columns(1)
-                            ->schema([
-                                Forms\Components\Section::make(__('field.advance'))
-                                    ->description(__('desc.advance'))
-                                    ->schema([
-                                        Forms\Components\Toggle::make('allow_advance')
-                                            ->label(__('field.allow_advance'))
-                                            ->live(),
-                                        Forms\Components\TextInput::make('advance_limit')
-                                            ->label(__('field.advance_limit'))
-                                            ->helperText(__('helper.advance_days'))
-                                            ->placeholder(__('placeholder.advance_days'))
-                                            ->hint(__('hint.day'))
-                                            ->required()
-                                            ->visible(fn(Get $get) => $get('allow_advance') == true),
-                                    ]),
-                            ]), 
+                            ]),                        
                         Forms\Components\Group::make()
                             ->columns(1)
                             ->schema([
@@ -154,16 +138,63 @@ class LeaveTypeResource extends Resource
                                             ->label(__('field.allow_accrual')),
                                     ]),
                             ]),                  
-                        Forms\Components\Group::make()
-                            ->columns(1)
-                            ->schema([
-                                Forms\Components\Section::make(__('field.visibility'))
-                                    ->description(__('desc.visible'))
+                        
+                        Forms\Components\Repeater::make('rules')
+                            ->label(__('field.rules'))
+                            ->columns(2)
+                            ->columnSpanFull()
+                            ->collapsed(false)
+                            ->addActionLabel(__('btn.label.add', ['label' => __('field.rule')]))
+                            ->itemLabel(fn (array $state): ?string => $state['name'] ?? null)
+                            ->reorderable(false)
+                            ->schema([                                                                                    
+                                Forms\Components\TextInput::make('name')
+                                    ->label(__('field.name'))
+                                    ->required()
+                                    ->unique(ignoreRecord:true)
+                                    ->live(onBlur: true)
+                                    ->maxLength(255),
+                                Forms\Components\Select::make('roles')
+                                    ->label(__('field.approval_roles'))                                                    
+                                    ->required()
+                                    ->multiple()
+                                    ->options(fn () => Role::whereNot('id', 1)->orderBy('id', 'asc')->get()->pluck('name', 'id')->map(fn ($item) => ucwords(Str::of($item)->replace('_', ' ')))->toArray()),                       
+                                Forms\Components\Grid::make(3)
                                     ->schema([
-                                        Forms\Components\Toggle::make('visible')
-                                            ->label(__('field.visible')),
+                                        Forms\Components\TextInput::make('from_amount')
+                                            ->label(__('field.from_amount'))
+                                            ->required()
+                                            ->numeric()
+                                            ->suffix(__('field.day')),
+                                        Forms\Components\TextInput::make('to_amount')
+                                            ->label(__('field.to_amount'))
+                                            ->required()
+                                            ->numeric()
+                                            ->suffix(__('field.day')),
+                                        Forms\Components\TextInput::make('day_in_advance')
+                                            ->label(__('field.day_in_advance'))
+                                            ->required()
+                                            ->numeric()
+                                            ->suffix(__('field.day')),
                                     ]),
-                            ]),                  
+                                Forms\Components\ToggleButtons::make('reason')
+                                    ->label(__('field.reason'))
+                                    ->required()
+                                    ->boolean()
+                                    ->inline()
+                                    ->grouped()
+                                    ->default(false),
+                                Forms\Components\ToggleButtons::make('attachment')
+                                    ->label(__('field.attachment'))
+                                    ->required()
+                                    ->boolean()
+                                    ->inline()
+                                    ->default(false)
+                                    ->grouped(), 
+                                Forms\Components\Textarea::make('description')
+                                    ->label(__('field.desc'))
+                                    ->columnSpanFull(),                                                                                                                               
+                            ]),
                     ])                
             ]);
     }
@@ -187,7 +218,7 @@ class LeaveTypeResource extends Resource
                     ->label(__('field.balance'))
                     ->numeric()
                     ->alignCenter()
-                    ->sortable(),                
+                    ->sortable(),                                              
                 Tables\Columns\IconColumn::make('male')
                     ->label(__('field.male'))
                     ->boolean()
@@ -195,52 +226,7 @@ class LeaveTypeResource extends Resource
                 Tables\Columns\IconColumn::make('female')
                     ->label(__('field.female'))
                     ->boolean()
-                    ->alignCenter(),
-                Tables\Columns\TextColumn::make('minimum_request_days')
-                    ->label(__('field.minimum_request_days'))
-                    ->numeric()
-                    ->alignCenter()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('balance_increment_period')
-                    ->label(__('field.balance_increment_period'))
-                    ->alignCenter()
-                    ->searchable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('balance_increment_amount')
-                    ->label(__('field.balance_increment_amount'))
-                    ->numeric()
-                    ->alignCenter()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\IconColumn::make('allow_carry_forward')
-                    ->label(__('field.allow_carry_forward'))
-                    ->alignCenter()
-                    ->boolean(),
-                Tables\Columns\TextColumn::make('carry_forward_duration')
-                    ->label(__('field.carry_forward_duration'))
-                    ->numeric()
-                    ->alignCenter()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\IconColumn::make('allow_advance')
-                    ->label(__('field.allow_advance'))
-                    ->alignCenter()
-                    ->boolean(),
-                Tables\Columns\TextColumn::make('advance_limit')
-                    ->label(__('field.advance_limit'))
-                    ->numeric()
-                    ->alignCenter()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\IconColumn::make('allow_accrual')
-                    ->label(__('field.allow_accrual'))
-                    ->alignCenter()
-                    ->boolean(),
-                Tables\Columns\IconColumn::make('visible')
-                    ->label(__('field.visibility'))
-                    ->alignCenter()
-                    ->boolean(),
+                    ->alignCenter(),            
                 Tables\Columns\TextColumn::make('created_at')
                     ->label(__('field.created_at'))
                     ->dateTime()

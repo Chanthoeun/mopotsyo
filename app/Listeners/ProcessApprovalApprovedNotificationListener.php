@@ -44,9 +44,16 @@ class ProcessApprovalApprovedNotificationListener
     }
 
     protected function leaveRequestApprovedCompleted(LeaveRequest $leaveRequest){
+        // reset unused overtime
+        if(app(SettingOptions::class)->allow_overtime == true && app(SettingOptions::class)->overtime_link == $leaveRequest->leave_type_id && $leaveRequest->overTimes){
+            $leaveRequest->overTimes()->update([
+                'unused' => false
+            ]);
+        }
+
         $receiver = $leaveRequest->approvalStatus->creator;
         $message = collect([
-            'subject' => __('mail.subject', ['name' => __('msg.label.completed', ['label' => __('model.leave_request')])]),
+            'subject' => __('mail.subject', ['name' => __('btn.label.request', ['label' => $leaveRequest->leaveType->name])]),
             'greeting' => __('mail.greeting', ['name' => $receiver->name]),
             'body' => __('msg.body.completed_leave_request', [
                 'request'  => strtolower(__('model.leave_request')), 
@@ -77,20 +84,24 @@ class ProcessApprovalApprovedNotificationListener
     }
 
     protected function leaveRequestApproved(LeaveRequest $leaveRequest){
-        $nextApproval = $leaveRequest->nextApprovalStep();
-        $getApprover = $leaveRequest->processApprovers->where('step_id', $nextApproval->process_approval_flow_step_id)->first();
-        // send notification to approver
         $approvers = collect();
-        if($getApprover && $getApprover->approver){
-            $approvers->push($getApprover->approver);
+        $nextApproval = $leaveRequest->nextApprovalStep();
+        $getApprover = $leaveRequest->processApprovers->where('step_id', $nextApproval->process_approval_flow_step_id)->where('role_id', $nextApproval->role_id)->first();
+        // send notification to approver
+        if($getApprover){
+            if($getApprover->approver){
+                $approvers->push($getApprover->approver);
+            }else{
+                $approvers = User::whereHas('employee', fn(Builder $q) => $q->whereNull('resign_date')->orWhereDate('resign_date', '>=', now()))->role($getApprover->role_id)->get();
+            }
         }else{
-            $approvers = User::whereHas('employee', fn(Builder $q) => $q->whereNull('resign_date')->orWhereDate('resign_date', '>=', now()))->role($getApprover->role_id)->get();
+            $approvers = User::whereHas('employee', fn(Builder $q) => $q->whereNull('resign_date')->orWhereDate('resign_date', '>=', now()))->role($nextApproval->role_id)->get();
         }
-        
+                
         foreach($approvers as $approver){              
             if(Auth::id() != $approver->id){
                 $message = collect([
-                    'subject' => __('mail.subject', ['name' => __('model.leave_request')]),
+                    'subject' => __('mail.subject', ['name' => __('btn.label.request', ['label' => $leaveRequest->leaveType->name])]),
                     'greeting' => __('mail.greeting', ['name' => $approver->name]),
                     'body' => __('msg.body.approved_leave_request', [
                         'name'  => $leaveRequest->approvalStatus->creator->full_name, 
@@ -138,15 +149,18 @@ class ProcessApprovalApprovedNotificationListener
     }
 
     protected function overtimeApproved(OverTime $overtime){
+        $approvers = collect();
         $nextApproval = $overtime->nextApprovalStep();
         $getApprover = $overtime->processApprovers()->where('step_id', $nextApproval->id)->where('role_id', $nextApproval->role_id)->first();
         
-        // send notification to approver
-        $approvers = collect();
-        if($getApprover && $getApprover->approver){
-            $approvers->push($getApprover->approver);
+        if($getApprover){
+            if($getApprover->approver){
+                $approvers->push($getApprover->approver);
+            }else{
+                $approvers = User::whereHas('employee', fn(Builder $q) => $q->whereNull('resign_date')->orWhereDate('resign_date', '>=', now()))->role($getApprover->role_id)->get();
+            }
         }else{
-            $approvers = User::whereHas('employee', fn(Builder $q) => $q->whereNull('resign_date')->orWhereDate('resign_date', '>=', now()))->role($getApprover->role_id)->get();
+            $approvers = User::whereHas('employee', fn(Builder $q) => $q->whereNull('resign_date')->orWhereDate('resign_date', '>=', now()))->role($nextApproval->role_id)->get();
         }
         
         foreach($approvers as $approver){    

@@ -39,7 +39,7 @@ class ProcessApprovalRejectedNotificationListener
     protected function leaveRequestRejected(LeaveRequest $leaveRequest, $rejected){
         $receiver = $leaveRequest->approvalStatus->creator;
         $message = collect([
-            'subject' => __('mail.subject', ['name' => __('msg.label.rejected', ['label' => __('model.leave_request')])]),
+            'subject' => __('mail.subject', ['name' => __('msg.label.rejected', ['label' => $leaveRequest->leaveType->name])]),
             'greeting' => __('mail.greeting', ['name' => $receiver->name]),
             'body' => __('msg.body.rejected', [
                 'request'  => strtolower(__('model.leave_request')), 

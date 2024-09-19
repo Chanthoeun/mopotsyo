@@ -77,8 +77,16 @@ class General extends SettingsPage
                             ->imageEditorAspectRatios([
                                 null,                                                                
                                 '1:1',
-                            ])
-                            ->columnSpanFull(),
+                            ]),
+                        Forms\Components\FileUpload::make('icon')
+                            ->label(__('field.icon'))
+                            ->directory('settings')
+                            ->image()
+                            ->imageEditor()
+                            ->imageEditorAspectRatios([
+                                null,                                                                
+                                '1:1',
+                            ]),
                     ])
             ]);
     }

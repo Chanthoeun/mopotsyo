@@ -23,7 +23,7 @@ return [
     'reference'     => 'Reference',
     'date'          => 'Date',
     'color'         => 'Color',
-    'days_with_count'          => ':count Days|:count Days',
+    'days_with_count'   => ':count Day|:count Days',
     'day'           => 'Day',
     'hours'         => 'Hours',
     'hour'          => 'Hour',
@@ -32,6 +32,7 @@ return [
     'leave_request_info' => 'Leave Request Info',   
     'organization'  => 'Organization',
     'logo'          => 'Logo',
+    'icon'          => 'icon',
     'feature'       => 'Feature',
 
     'photo'    => 'Photo',

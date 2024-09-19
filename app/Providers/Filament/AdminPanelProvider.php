@@ -44,7 +44,7 @@ class AdminPanelProvider extends PanelProvider
             ->login(CustomLogin::class)
             ->brandLogo(fn(): ?string => asset('storage/'.app(SettingGeneral::class)->logo) ?? null)
             ->brandLogoHeight('5rem')
-            ->favicon(fn(): ?string => asset('storage/'.app(SettingGeneral::class)->logo) ?? null)
+            ->favicon(fn(): ?string => asset('storage/'.app(SettingGeneral::class)->icon) ?? null)
             ->colors([
                 'primary' => Color::Amber,
             ])

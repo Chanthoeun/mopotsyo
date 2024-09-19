@@ -43,7 +43,7 @@ class ProcessApprovalDiscardNotificationListener
         $creator = $leaveRequest->approvalStatus->creator;
         if(Auth::id() != $creator->id){
             $message = collect([
-                'subject' => __('mail.subject', ['name' => __('msg.label.discarded', ['label' => __('model.leave_request')])]),
+                'subject' => __('mail.subject', ['name' => __('msg.label.discarded', ['label' => $leaveRequest->leaveType->name])]),
                 'greeting' => __('mail.greeting', ['name' => $creator->name]),
                 'body' => __('msg.body.discarded', [
                     'request'  => strtolower(__('model.leave_request')), 

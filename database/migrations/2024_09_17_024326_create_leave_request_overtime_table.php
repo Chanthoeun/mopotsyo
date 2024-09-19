@@ -12,14 +12,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('over_times', function (Blueprint $table) {
-            $table->id();
-            $table->date('expiry_date');
-            $table->text('reason')->nullable();
-            $table->boolean('unused')->default(false);
-            $table->foreignId('user_id')->constrained()->onDelete('restrict');
-            $table->timestamps();
-            $table->softDeletes();
+        Schema::create('leave_request_over_time', function (Blueprint $table) {
+            $table->foreignId('leave_request_id')->constrained()->onDelete('cascade');
+            $table->foreignId('over_time_id')->constrained()->onDelete('cascade');
+            $table->primary(['leave_request_id', 'over_time_id']);
         });
     }
 
@@ -29,7 +25,7 @@ return new class extends Migration
     public function down(): void
     {
         DB::statement('SET FOREIGN_KEY_CHECKS = 0');
-        Schema::dropIfExists('over_times');
+        Schema::dropIfExists('leave_request_over_time');
         DB::statement('SET FOREIGN_KEY_CHECKS = 1');
     }
 };

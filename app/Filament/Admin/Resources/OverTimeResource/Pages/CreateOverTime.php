@@ -22,6 +22,7 @@ class CreateOverTime extends CreateRecord
     {
         $data['expiry_date'] = now()->addDays(app(SettingOptions::class)->overtime_expiry);
         $data['unused']      = true;   
+        $data['user_id']     = auth()->id();
     
         return $data;
     }

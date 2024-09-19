@@ -72,7 +72,7 @@ class Options extends SettingsPage
                             ->addActionLabel(__('btn.add'))                            
                             ->defaultItems(1)
                             ->headers([
-                                Header::make(__('field.feature')),
+                                Header::make(__('field.feature'))->width('40%'),
                                 Header::make(__('field.options.accounts')),
                             ]) 
                             ->schema([
@@ -90,7 +90,7 @@ class Options extends SettingsPage
                                     ->label(__('field.options.accounts'))
                                     ->multiple()
                                     ->options(function() {
-                                        return User::whereHas('employee', fn(Builder $q) => $q->whereNull('resign_date')->orWhereDate('resign_date', '>', now()))->get()->pluck('name', 'id');
+                                        return User::whereHas('employee', fn(Builder $q) => $q->whereNull('resign_date')->orWhereDate('resign_date', '>', now()))->get()->pluck('full_name', 'id');
                                     })
                                     ->required(),
                             ])

@@ -70,10 +70,9 @@ class LeaveEntitlement extends Model
     protected function taken(): Attribute
     {
         return Attribute::make(
-            get: function () {
-                $user = $this->user;
-                $leaveRequests = $this->leaveRequests()->with('requestDates')->whereHas('approvalStatus', static function ($q) use ($user) {
-                    return $q->where('creator_id', $user->id)->where('status', ApprovalActionEnum::APPROVED->value);
+            get: function () {               
+                $leaveRequests = $this->user->leaveRequests()->with('requestDates')->where('leave_type_id', $this->leave_type_id)->whereBetween('from_date', [$this->start_date, $this->end_date])->whereBetween('to_date', [$this->start_date, $this->end_date])->whereHas('approvalStatus', static function ($q) {
+                    return $q->where('status', ApprovalActionEnum::APPROVED->value);
                 })->get();
 
                 $taken = 0;
@@ -96,7 +95,7 @@ class LeaveEntitlement extends Model
     {
         return Attribute::make(
             get: function(){
-                if($this->leaveType->allow_accrual){
+                if($this->leaveType->option->allow_accrual){
                     return floatval(calculateAccrud($this->balance, $this->start_date, now()) - $this->taken);
                 }
                 return 0;

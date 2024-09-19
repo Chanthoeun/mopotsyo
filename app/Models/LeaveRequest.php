@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
@@ -31,7 +32,8 @@ class LeaveRequest extends ApprovableModel
         'to_date',
         'reason',
         'attachment',
-        'is_completed'
+        'is_completed',
+        'user_id'
     ];
 
     /**
@@ -67,10 +69,15 @@ class LeaveRequest extends ApprovableModel
         return $this->morphTo();
     }
 
+    public function overTimes(): BelongsToMany
+    {
+        return $this->belongsToMany(OverTime::class, 'leave_request_over_time', 'leave_request_id', 'over_time_id');
+    }
+
     protected function requested(): Attribute
     {
         return Attribute::make(
-            get: fn () => $this->createdBy()->name ?? null,
+            get: fn () => $this->createdBy()->full_name ?? null,
         );
     }
 

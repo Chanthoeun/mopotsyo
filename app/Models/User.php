@@ -119,6 +119,12 @@ class User extends Authenticatable implements FilamentUser, RenewPasswordContrac
         return $this->hasMany(LeaveRequest::class);
     }
 
+    public function overtimes(): HasMany
+    {
+        return $this->hasMany(OverTime::class);
+    }
+
+
     public function activityLogs(): MorphMany
     {
         return $this->morphMany(Activity::class, 'causer');

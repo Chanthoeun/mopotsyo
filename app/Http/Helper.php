@@ -11,6 +11,7 @@ use App\Models\EmployeeContract;
 use App\Models\LeaveRequest;
 use App\Models\PublicHoliday;
 use App\Models\User;
+use App\Settings\SettingWorkingHours;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
 use Illuminate\Database\Eloquent\Builder;
@@ -104,8 +105,8 @@ if(!function_exists('getEntitlementBalance')){
         $endDate  = Carbon::createFromDate(now()->year, $startDate->month, $startDate->day);
         $duration = intval($startDate->diffInYears($endDate));        
         $increment = 0;
-        if(!empty($leaveType->balance_increment_amount) && !empty($leaveType->balance_increment_period)){                                                                            
-            $increment =  intval($duration / floatval($leaveType->balance_increment_period));
+        if(!empty($leaveType->option) && !empty($leaveType->option->balance_increment_amount) && !empty($leaveType->option->balance_increment_period)){                                                                            
+            $increment =  intval($duration / floatval($leaveType->option->balance_increment_period));
         }
 
         $balance = intval($leaveType->balance + $increment);
@@ -255,6 +256,32 @@ if(!function_exists('getDaysFromHours')){
     function getDaysFromHours($user_id, $hours) : float {
         $user = User::with('profile.shift')->find($user_id);
         return round($hours / $user->profile->shift->work_hours, 1);
+    }
+}
+
+if(!function_exists('getRequestDays')){
+    function getRequestDays($requestDates){
+        $requestDays = 0;
+        foreach($requestDates as $requestDate){
+            $requestDays += $requestDate['hours'];
+        }
+        return floatval($requestDays / app(SettingWorkingHours::class)->day);
+    }
+}
+
+if(!function_exists('getOvertimeDays')){
+    function getOvertimeDays($user, array $overtimeIds = null){
+        if($overtimeIds == null){
+            $overtimes = $user->overtimes()->whereDate('expiry_date', '>=', now())->where('unused', true)->get();
+        }else{
+            $overtimes = $user->overtimes()->whereIn('id',$overtimeIds)->whereDate('expiry_date', '>=', now())->where('unused', true)->get();
+        }
+        
+        $overtimeHours = 0;
+        foreach($overtimes as $overtime){
+            $overtimeHours += $overtime->hours;
+        }
+        return floatval($overtimeHours / app(SettingWorkingHours::class)->day);
     }
 }
 
