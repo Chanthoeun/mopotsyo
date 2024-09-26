@@ -77,7 +77,7 @@ class ProcessApprovalSubmittedNotificationListener
             ]);
     
             // send notification
-            $this->sendNotification($approver, $message);
+            $this->sendNotification($approver, $message, comment: $leaveRequest->reason);
         }
     }
 
@@ -114,7 +114,7 @@ class ProcessApprovalSubmittedNotificationListener
             ]);
 
             // send notification
-            $this->sendNotification($approver, $message);
+            $this->sendNotification($approver, $message, comment: $overtime->reason);
         }
     }
 

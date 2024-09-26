@@ -32,7 +32,7 @@ class ProcessApprovalApprovedNotificationListener
      * Handle the event.
      */
     public function handle(ProcessApprovedEvent $event): void
-    {
+    {        
         $approvable = $event->approval->approvable;            
         if($approvable->isApprovalCompleted() && get_class($approvable) == LeaveRequest::class){
             $this->leaveRequestApprovedCompleted($approvable);
@@ -59,7 +59,7 @@ class ProcessApprovalApprovedNotificationListener
 
         $receiver = $leaveRequest->approvalStatus->creator;
         $message = collect([
-            'subject' => __('mail.subject', ['name' => __('btn.label.request', ['label' => $leaveRequest->leaveType->name])]),
+            'subject' => __('mail.subject', ['name' => __('msg.label.completed', ['label' => $leaveRequest->leaveType->name])]),
             'greeting' => __('mail.greeting', ['name' => $receiver->name]),
             'body' => __('msg.body.completed_leave_request', [
                 'request'  => strtolower(__('model.leave_request')), 
@@ -91,12 +91,12 @@ class ProcessApprovalApprovedNotificationListener
 
     protected function leaveRequestApproved(LeaveRequest $leaveRequest){
         $approvers = collect();
-        $nextApproval = $leaveRequest->nextApprovalStep();
-        $getApprover = $leaveRequest->processApprovers->where('step_id', $nextApproval->process_approval_flow_step_id)->where('role_id', $nextApproval->role_id)->first();
+        $nextApproval = $leaveRequest->nextApprovalStep();    
+        $getApprover = $leaveRequest->processApprovers()->where('step_id', $nextApproval->id)->where('role_id', $nextApproval->role_id)->first();
         // send notification to approver
         if($getApprover){
             if($getApprover->approver){
-                $approvers->push($getApprover->approver);
+                $approvers->push($getApprover->approver);            
             }else{
                 $approvers = User::whereHas('employee', fn(Builder $q) => $q->whereNull('resign_date')->orWhereDate('resign_date', '>=', now()))->role($getApprover->role_id)->get();
             }

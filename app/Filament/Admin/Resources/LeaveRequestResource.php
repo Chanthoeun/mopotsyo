@@ -170,6 +170,7 @@ class LeaveRequestResource extends Resource
                                     ->suffixIcon('fas-calendar')
                                     ->live()
                                     ->afterStateUpdated(function($state, Get $get, Set $set, string $operation, ?Model $record){
+                                        $set("to_date", $state);
                                         $set("requestDates", []);
                                         if($get('leave_type_id') && $get('to_date')){
                                             $user = Auth::user();
@@ -224,12 +225,15 @@ class LeaveRequestResource extends Resource
                                             $leaveType = LeaveType::find($get('leave_type_id'));
 
 
-                                            // check rule                                            
-                                            foreach($leaveType->rules as $rule){
-                                                if($requestDays >= $rule['from_amount'] && $rule['reason'] == true){
-                                                    return true;
+                                            // check rule     
+                                            if($leaveType->rules){
+                                                foreach($leaveType->rules as $rule){
+                                                    if($requestDays >= $rule['from_amount'] && $rule['reason'] == true){
+                                                        return true;
+                                                    }
                                                 }
-                                            }
+                                            }                                       
+                                            
                                             return false;
                                         }
                                     })
@@ -246,12 +250,15 @@ class LeaveRequestResource extends Resource
                                             $leaveType = LeaveType::find($get('leave_type_id'));
 
 
-                                            // check rule                                            
-                                            foreach($leaveType->rules as $rule){
-                                                if($requestDays >= $rule['from_amount'] && $rule['attachment'] == true){
-                                                    return true;
+                                            // check rule  
+                                            if($leaveType->rules){
+                                                foreach($leaveType->rules as $rule){
+                                                    if($requestDays >= $rule['from_amount'] && $rule['attachment'] == true){
+                                                        return true;
+                                                    }
                                                 }
-                                            }
+                                            }                                          
+                                            
                                             return false;
                                         }
                                     })

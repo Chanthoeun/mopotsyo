@@ -47,7 +47,7 @@ class CreateLeaveRequest extends CreateRecord
             $this->record->approvalStatus()->update([
                'steps' => $this->record->approvalFlowSteps()->whereIn('role_id', $roles)->map(function ($item) {                    
                     // create process approver
-                    createProcessApprover($this->record);
+                    createProcessApprover($this->record, $item);
                        
                     return $item->toApprovalStatusArray();
                 })->toArray()

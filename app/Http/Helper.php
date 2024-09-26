@@ -288,9 +288,9 @@ if(!function_exists('getOvertimeDays')){
 
 
 if(!function_exists('createProcessApprover')){   
-    function createProcessApprover(Model $model){
+    function createProcessApprover(Model $model, $step = null){
         $user = $model->approvalStatus->creator;         
-        foreach($model->approvalFlowSteps() as $step){
+        if($step != null){
             if($user->supervisor && $user->supervisor->hasRole($step->role_id)){
                 ProcessApprover::create([
                     'step_id'           => $step->id,
@@ -299,7 +299,7 @@ if(!function_exists('createProcessApprover')){
                     'role_id'           => $step->role_id,
                     'approver_id'       => $user->supervisor->id
                 ]);                        
-            }else if(!empty($user->department_head) && $user->department_head->hasRole($step->role_id)){
+            }else if($user->department_head && $user->department_head->hasRole($step->role_id)){
                 ProcessApprover::create([
                     'step_id'           => $step->id,
                     'modelable_type'    => get_class($model),
@@ -315,7 +315,35 @@ if(!function_exists('createProcessApprover')){
                     'role_id'           => $step->role_id
                 ]);                            
             } 
+        }else{
+            foreach($model->approvalFlowSteps() as $step){
+                if($user->supervisor && $user->supervisor->hasRole($step->role_id)){
+                    ProcessApprover::create([
+                        'step_id'           => $step->id,
+                        'modelable_type'    => get_class($model),
+                        'modelable_id'      => $model->id,
+                        'role_id'           => $step->role_id,
+                        'approver_id'       => $user->supervisor->id
+                    ]);                        
+                }else if($user->department_head && $user->department_head->hasRole($step->role_id)){
+                    ProcessApprover::create([
+                        'step_id'           => $step->id,
+                        'modelable_type'    => get_class($model),
+                        'modelable_id'      => $model->id,
+                        'role_id'           => $step->role_id,
+                        'approver_id'       => $user->department_head->id
+                    ]);                            
+                }else{
+                    ProcessApprover::create([
+                        'step_id'           => $step->id,
+                        'modelable_type'    => get_class($model),
+                        'modelable_id'      => $model->id,
+                        'role_id'           => $step->role_id
+                    ]);                            
+                } 
+            }
         }
+        
     }
 }
 
