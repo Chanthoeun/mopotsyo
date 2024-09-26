@@ -170,6 +170,7 @@ class LeaveRequestResource extends Resource
                                     ->suffixIcon('fas-calendar')
                                     ->live()
                                     ->afterStateUpdated(function($state, Get $get, Set $set, string $operation, ?Model $record){
+                                        $set("to_date", $state);
                                         $set("requestDates", []);
                                         if($get('leave_type_id') && $get('to_date')){
                                             $user = Auth::user();
@@ -224,12 +225,15 @@ class LeaveRequestResource extends Resource
                                             $leaveType = LeaveType::find($get('leave_type_id'));
 
 
-                                            // check rule                                            
-                                            foreach($leaveType->rules as $rule){
-                                                if($requestDays >= $rule['from_amount'] && $rule['reason'] == true){
-                                                    return true;
+                                            // check rule     
+                                            if($leaveType->rules){
+                                                foreach($leaveType->rules as $rule){
+                                                    if($requestDays >= $rule['from_amount'] && $rule['reason'] == true){
+                                                        return true;
+                                                    }
                                                 }
-                                            }
+                                            }                                       
+                                            
                                             return false;
                                         }
                                     })
@@ -246,12 +250,15 @@ class LeaveRequestResource extends Resource
                                             $leaveType = LeaveType::find($get('leave_type_id'));
 
 
-                                            // check rule                                            
-                                            foreach($leaveType->rules as $rule){
-                                                if($requestDays >= $rule['from_amount'] && $rule['attachment'] == true){
-                                                    return true;
+                                            // check rule  
+                                            if($leaveType->rules){
+                                                foreach($leaveType->rules as $rule){
+                                                    if($requestDays >= $rule['from_amount'] && $rule['attachment'] == true){
+                                                        return true;
+                                                    }
                                                 }
-                                            }
+                                            }                                          
+                                            
                                             return false;
                                         }
                                     })
@@ -389,7 +396,7 @@ class LeaveRequestResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('requested')
-                    ->label(__('field.created_by'))
+                    ->label(__('field.requested_by'))
                     ->numeric()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('leaveType.name')
@@ -426,10 +433,14 @@ class LeaveRequestResource extends Resource
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
+            ->defaultSort('created_at', 'desc')
             ->filters([
                 Tables\Filters\SelectFilter::make('leave_type_id')
                     ->label(__('model.leave_type'))
                     ->relationship('leaveType', 'name'),
+                Tables\Filters\SelectFilter::make('requested_by')
+                    ->label(__('field.requested_by'))
+                    ->relationship('user', 'name'),
                 Tables\Filters\TrashedFilter::make()
                     ->visible(fn() => Auth::user()->can('restore_leave::request')),
             ])

@@ -13,13 +13,12 @@ return new class extends Migration
     {
         Schema::disableForeignKeyConstraints();
 
-        Schema::create('process_approvers', function (Blueprint $table) {
+        Schema::create('switch_work_days', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('step_id');
-            $table->string('modelable_type');
-            $table->unsignedBigInteger('modelable_id');            
-            $table->foreignId('role_id')->nullable()->constrained()->onDelete('restrict')->cascadeOnUpdate();
-            $table->foreignId('approver_id')->nullable()->constrained('users')->onDelete('restrict')->cascadeOnUpdate();
+            $table->date('from_date');
+            $table->date('to_date');
+            $table->text('reason')->nullable();
+            $table->foreignId('user_id')->constrained()->onDelete('restrict')->cascadeOnUpdate();
             $table->timestamps();
             $table->softDeletes();
         });
@@ -32,6 +31,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('process_approvers');
+        Schema::dropIfExists('switch_work_days');
     }
 };

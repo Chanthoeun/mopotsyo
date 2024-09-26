@@ -1,26 +1,23 @@
 <?php
 
-namespace App\Filament\Admin\Resources\LeaveRequestResource\Pages;
+namespace App\Filament\Admin\Resources\SwitchWorkDayResource\Pages;
 
-use App\Filament\Admin\Resources\LeaveRequestResource;
-use App\Models\LeaveRequest;
+use App\Filament\Admin\Resources\SwitchWorkDayResource;
 use Filament\Actions;
 use Filament\Resources\Components\Tab;
 use Filament\Resources\Pages\ListRecords;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
-use RingleSoft\LaravelProcessApproval\Enums\ApprovalStatusEnum;
-use RingleSoft\LaravelProcessApproval\Models\ProcessApprovalStatus;
 
-class ListLeaveRequests extends ListRecords
+class ListSwitchWorkDays extends ListRecords
 {
-    protected static string $resource = LeaveRequestResource::class;
+    protected static string $resource = SwitchWorkDayResource::class;
 
     protected function getHeaderActions(): array
     {
         return [
             Actions\CreateAction::make()
-                ->label(__('btn.label.request', ['label' => __('model.leave')]))
+                ->label(__('btn.label.request', ['label' => __('model.switch_work_day')]))
                 ->color('primary')
                 ->icon('heroicon-o-plus'),
         ];
@@ -30,7 +27,7 @@ class ListLeaveRequests extends ListRecords
     // {   
     //     $tabs = array();        
 
-    //     $tabs['myrequests'] = Tab::make(strtoupper(__('field.label.my', ['label' => __('model.leaves')])))
+    //     $tabs['myrequests'] = Tab::make(strtoupper(__('field.label.my', ['label' => __('model.switch_work_days')])))
     //                             ->modifyQueryUsing(fn (Builder $query) => $query->whereHas('approvalStatus', fn (Builder $query) => $query->where('creator_id', Auth::id())));
 
     //     $tabs['all']    = Tab::make(strtoupper(__('field.all')))

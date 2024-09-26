@@ -23,16 +23,16 @@ class ListOverTimes extends ListRecords
         ];
     }
 
-    public function getTabs(): array
-    {   
-        $tabs = array();        
+    // public function getTabs(): array
+    // {   
+    //     $tabs = array();        
 
-        $tabs['myrequests'] = Tab::make(strtoupper(__('field.label.my', ['label' => __('model.overtimes')])))
-                                ->modifyQueryUsing(fn (Builder $query) => $query->whereHas('approvalStatus', fn (Builder $query) => $query->where('creator_id', Auth::id())));
+    //     $tabs['myrequests'] = Tab::make(strtoupper(__('field.label.my', ['label' => __('model.overtimes')])))
+    //                             ->modifyQueryUsing(fn (Builder $query) => $query->whereHas('approvalStatus', fn (Builder $query) => $query->where('creator_id', Auth::id())));
 
-        $tabs['all']    = Tab::make(strtoupper(__('field.all')))
-                            ->modifyQueryUsing(fn (Builder $query) => $query->whereHas('approvalStatus', fn (Builder $query) => $query->whereNot('creator_id', Auth::id())));
+    //     $tabs['all']    = Tab::make(strtoupper(__('field.all')))
+    //                         ->modifyQueryUsing(fn (Builder $query) => $query->whereHas('approvalStatus', fn (Builder $query) => $query->whereNot('creator_id', Auth::id())));
 
-        return $tabs;
-    }
+    //     return $tabs;
+    // }
 }

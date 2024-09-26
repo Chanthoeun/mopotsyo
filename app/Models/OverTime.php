@@ -7,6 +7,7 @@ use EightyNine\Approvals\Models\ApprovableModel;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -37,6 +38,11 @@ class OverTime extends ApprovableModel
         'expiry_date' => 'date',
         'unused' => 'boolean'
     ];
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
 
     public function requestDates(): MorphMany
     {
@@ -70,7 +76,7 @@ class OverTime extends ApprovableModel
     protected function requested(): Attribute
     {
         return Attribute::make(
-            get: fn () => $this->createdBy()->full_name ?? null,
+            get: fn () => $this->user ? $this->user->full_name : $this->createdBy()->full_name,
         );
     }
 

@@ -32,7 +32,7 @@ return [
     'leave_request_info' => 'Leave Request Info',   
     'organization'  => 'Organization',
     'logo'          => 'Logo',
-    'icon'          => 'icon',
+    'icon'          => 'Icon',
     'feature'       => 'Feature',
 
     'photo'    => 'Photo',

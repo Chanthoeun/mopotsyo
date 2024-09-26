@@ -4,8 +4,10 @@ namespace App\Listeners;
 
 use App\Filament\Admin\Resources\LeaveRequestResource;
 use App\Filament\Admin\Resources\OverTimeResource;
+use App\Filament\Admin\Resources\SwitchWorkDayResource;
 use App\Models\LeaveRequest;
 use App\Models\OverTime;
+use App\Models\SwitchWorkDay;
 use App\Traits\SendNotification;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
@@ -33,6 +35,8 @@ class ProcessApprovalRejectedNotificationListener
             $this->leaveRequestRejected($approvable, $rejected);
         }else if(get_class($approvable) == OverTime::class){
             $this->overtimeRejected($approvable, $rejected);
+        }else if(get_class($approvable) == SwitchWorkDay::class){
+            $this->switchWorkDayRejected($approvable, $rejected);
         }
     }
 
@@ -72,6 +76,26 @@ class ProcessApprovalRejectedNotificationListener
             'action'    => [
                 'name'  => __('btn.view'),
                 'url'   => OverTimeResource::getUrl('view', ['record' => $overtime])
+            ]
+        ]);
+
+        // send notification
+        $this->sendNotification($receiver, $message, comment: $rejected->comment);
+    }
+
+    protected function switchWorkDayRejected(SwitchWorkDay $switchWorkDay, $rejected){
+        $receiver = $switchWorkDay->approvalStatus->creator;
+        $message = collect([
+            'subject' => __('mail.subject', ['name' => __('msg.label.rejected', ['label' => __('model.switch_work_day')])]),
+            'greeting' => __('mail.greeting', ['name' => $receiver->name]),
+            'body' => __('msg.body.rejected_switch_working_day', [                            
+                'from'    => $switchWorkDay->from_date->toDateString(),
+                'to'      => $switchWorkDay->to_date->toDateString(), 
+                'name'    => $rejected->approver_name,     
+            ]),
+            'action'    => [
+                'name'  => __('btn.view'),
+                'url'   => SwitchWorkDayResource::getUrl('view', ['record' => $switchWorkDay])
             ]
         ]);
 

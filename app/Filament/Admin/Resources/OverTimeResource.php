@@ -135,7 +135,7 @@ class OverTimeResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('requested')
-                    ->label(__('field.created_by'))
+                    ->label(__('field.requested_by'))
                     ->numeric()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('requestDates.date')
@@ -182,8 +182,13 @@ class OverTimeResource extends Resource
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
+            ->defaultSort('created_at', 'desc')
             ->filters([
-                Tables\Filters\TrashedFilter::make(),
+                Tables\Filters\SelectFilter::make('requested_by')
+                    ->label(__('field.requested_by'))
+                    ->relationship('user', 'name'),
+                Tables\Filters\TrashedFilter::make()
+                    ->visible(fn() => Auth::user()->can('over_time::request')),
             ])
             ->actions(
                 ApprovalActions::make(

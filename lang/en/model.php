@@ -54,4 +54,6 @@ return [
     'process_approval_rules'    => 'Approval Rules',    
     'overtime'     => 'Overtime',
     'overtimes'    => 'Overtimes',    
+    'switch_work_day'     => 'Switch Work Day',
+    'switch_work_days'    => 'Switch Work Days',    
 ];

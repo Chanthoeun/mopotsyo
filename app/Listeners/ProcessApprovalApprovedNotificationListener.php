@@ -4,8 +4,10 @@ namespace App\Listeners;
 
 use App\Filament\Admin\Resources\LeaveRequestResource;
 use App\Filament\Admin\Resources\OverTimeResource;
+use App\Filament\Admin\Resources\SwitchWorkDayResource;
 use App\Models\LeaveRequest;
 use App\Models\OverTime;
+use App\Models\SwitchWorkDay;
 use App\Models\User;
 use App\Settings\SettingOptions;
 use App\Traits\SendNotification;
@@ -30,16 +32,20 @@ class ProcessApprovalApprovedNotificationListener
      * Handle the event.
      */
     public function handle(ProcessApprovedEvent $event): void
-    {
+    {        
         $approvable = $event->approval->approvable;            
         if($approvable->isApprovalCompleted() && get_class($approvable) == LeaveRequest::class){
             $this->leaveRequestApprovedCompleted($approvable);
         }else if($approvable->isApprovalCompleted() && get_class($approvable) == OverTime::class){
             $this->overtimeApprovedCompleted($approvable);
+        }else if($approvable->isApprovalCompleted() && get_class($approvable) == SwitchWorkDay::class){
+            $this->switchWorkDayApprovedCompleted($approvable);
         }else if(!$approvable->isApprovalCompleted() && get_class($approvable) == LeaveRequest::class){
             $this->leaveRequestApproved($approvable);
         }else if(!$approvable->isApprovalCompleted() && get_class($approvable) == OverTime::class) {
             $this->overtimeApproved($approvable);
+        }else if(!$approvable->isApprovalCompleted() && get_class($approvable) == SwitchWorkDay::class) {
+            $this->switchWorkDayApproved($approvable);
         }                     
     }
 
@@ -53,7 +59,7 @@ class ProcessApprovalApprovedNotificationListener
 
         $receiver = $leaveRequest->approvalStatus->creator;
         $message = collect([
-            'subject' => __('mail.subject', ['name' => __('btn.label.request', ['label' => $leaveRequest->leaveType->name])]),
+            'subject' => __('mail.subject', ['name' => __('msg.label.completed', ['label' => $leaveRequest->leaveType->name])]),
             'greeting' => __('mail.greeting', ['name' => $receiver->name]),
             'body' => __('msg.body.completed_leave_request', [
                 'request'  => strtolower(__('model.leave_request')), 
@@ -85,12 +91,12 @@ class ProcessApprovalApprovedNotificationListener
 
     protected function leaveRequestApproved(LeaveRequest $leaveRequest){
         $approvers = collect();
-        $nextApproval = $leaveRequest->nextApprovalStep();
-        $getApprover = $leaveRequest->processApprovers->where('step_id', $nextApproval->process_approval_flow_step_id)->where('role_id', $nextApproval->role_id)->first();
+        $nextApproval = $leaveRequest->nextApprovalStep();    
+        $getApprover = $leaveRequest->processApprovers()->where('step_id', $nextApproval->id)->where('role_id', $nextApproval->role_id)->first();
         // send notification to approver
         if($getApprover){
             if($getApprover->approver){
-                $approvers->push($getApprover->approver);
+                $approvers->push($getApprover->approver);            
             }else{
                 $approvers = User::whereHas('employee', fn(Builder $q) => $q->whereNull('resign_date')->orWhereDate('resign_date', '>=', now()))->role($getApprover->role_id)->get();
             }
@@ -182,6 +188,68 @@ class ProcessApprovalApprovedNotificationListener
     
                 // send notification
                 $this->sendNotification($approver, $message);
+            }        
+        }
+    }
+    
+    protected function switchWorkDayApprovedCompleted(SwitchWorkDay $switchWorkDay){
+        $receiver = $switchWorkDay->approvalStatus->creator;
+        $message = collect([
+            'subject' => __('mail.subject', ['name' => __('msg.label.completed', ['label' => __('model.switch_work_day')])]),
+            'greeting' => __('mail.greeting', ['name' => $receiver->name]),
+            'body' => __('msg.body.completed_switch_working_day', [                
+                'from' => $switchWorkDay->from_date->toDateString(),
+                'to'  => $switchWorkDay->to_date->toDateString(), 
+            ]),
+            'action'    => [
+                'name'  => __('btn.view'),
+                'url'   => SwitchWorkDayResource::getUrl('view', ['record' => $switchWorkDay])
+            ]
+        ]);
+
+        // cc approver
+        $ccEmails = [];
+        $ccs = collect(app(SettingOptions::class)->cc_emails)->where('model_type', $switchWorkDay::getApprovableType())->first();
+        if($ccs){
+            $ccEmails = User::whereIn('id', $ccs['accounts'])->get()->pluck('email')->toArray();
+        }
+
+        $this->sendNotification($receiver, $message, cc:$ccEmails);
+    }
+
+    protected function switchWorkDayApproved(SwitchWorkDay $switchWorkDay){
+        $approvers = collect();
+        $nextApproval = $switchWorkDay->nextApprovalStep();
+        $getApprover = $switchWorkDay->processApprovers()->where('step_id', $nextApproval->id)->where('role_id', $nextApproval->role_id)->first();
+        
+        if($getApprover){
+            if($getApprover->approver){
+                $approvers->push($getApprover->approver);
+            }else{
+                $approvers = User::whereHas('employee', fn(Builder $q) => $q->whereNull('resign_date')->orWhereDate('resign_date', '>=', now()))->role($getApprover->role_id)->get();
+            }
+        }else{
+            $approvers = User::whereHas('employee', fn(Builder $q) => $q->whereNull('resign_date')->orWhereDate('resign_date', '>=', now()))->role($nextApproval->role_id)->get();
+        }
+        
+        foreach($approvers as $approver){    
+            if(Auth::id() != $approver->id){
+                $message = collect([
+                    'subject' => __('mail.subject', ['name' => __('btn.label.request', ['label' => __('model.overtime')])]),
+                    'greeting' => __('mail.greeting', ['name' => $approver->name]),
+                    'body' => __('msg.body.switch_working_day', [
+                        'name'  => $switchWorkDay->approvalStatus->creator->full_name, 
+                        'from'  => $switchWorkDay->from_date->toDateString(),
+                        'to'    => $switchWorkDay->to_date->toDateString(), 
+                    ]),
+                    'action'    => [
+                        'name'  => __('btn.approve'),
+                        'url'   => SwitchWorkDayResource::getUrl('view', ['record' => $switchWorkDay])
+                    ]
+                ]);
+    
+                // send notification
+                $this->sendNotification($approver, $message, comment: $switchWorkDay->reason);
             }        
         }
     }
