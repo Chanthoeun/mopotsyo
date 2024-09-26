@@ -9,6 +9,7 @@
 use App\Enums\ActionStatusEnum;
 use App\Models\EmployeeContract;
 use App\Models\LeaveRequest;
+use App\Models\ProcessApprover;
 use App\Models\PublicHoliday;
 use App\Models\User;
 use App\Settings\SettingWorkingHours;
@@ -286,7 +287,37 @@ if(!function_exists('getOvertimeDays')){
 }
 
 
-
+if(!function_exists('createProcessApprover')){   
+    function createProcessApprover(Model $model){
+        $user = $model->approvalStatus->creator;         
+        foreach($model->approvalFlowSteps() as $step){
+            if($user->supervisor && $user->supervisor->hasRole($step->role_id)){
+                ProcessApprover::create([
+                    'step_id'           => $step->id,
+                    'modelable_type'    => get_class($model),
+                    'modelable_id'      => $model->id,
+                    'role_id'           => $step->role_id,
+                    'approver_id'       => $user->supervisor->id
+                ]);                        
+            }else if(!empty($user->department_head) && $user->department_head->hasRole($step->role_id)){
+                ProcessApprover::create([
+                    'step_id'           => $step->id,
+                    'modelable_type'    => get_class($model),
+                    'modelable_id'      => $model->id,
+                    'role_id'           => $step->role_id,
+                    'approver_id'       => $user->department_head->id
+                ]);                            
+            }else{
+                ProcessApprover::create([
+                    'step_id'           => $step->id,
+                    'modelable_type'    => get_class($model),
+                    'modelable_id'      => $model->id,
+                    'role_id'           => $step->role_id
+                ]);                            
+            } 
+        }
+    }
+}
 
 
 

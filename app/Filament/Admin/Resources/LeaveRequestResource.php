@@ -389,7 +389,7 @@ class LeaveRequestResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('requested')
-                    ->label(__('field.created_by'))
+                    ->label(__('field.requested_by'))
                     ->numeric()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('leaveType.name')
@@ -426,10 +426,14 @@ class LeaveRequestResource extends Resource
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
+            ->defaultSort('created_at', 'desc')
             ->filters([
                 Tables\Filters\SelectFilter::make('leave_type_id')
                     ->label(__('model.leave_type'))
                     ->relationship('leaveType', 'name'),
+                Tables\Filters\SelectFilter::make('requested_by')
+                    ->label(__('field.requested_by'))
+                    ->relationship('user', 'name'),
                 Tables\Filters\TrashedFilter::make()
                     ->visible(fn() => Auth::user()->can('restore_leave::request')),
             ])

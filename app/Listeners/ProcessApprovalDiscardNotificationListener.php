@@ -4,8 +4,10 @@ namespace App\Listeners;
 
 use App\Filament\Admin\Resources\LeaveRequestResource;
 use App\Filament\Admin\Resources\OverTimeResource;
+use App\Filament\Admin\Resources\SwitchWorkDayResource;
 use App\Models\LeaveRequest;
 use App\Models\OverTime;
+use App\Models\SwitchWorkDay;
 use App\Models\User;
 use App\Settings\SettingOptions;
 use App\Traits\SendNotification;
@@ -36,6 +38,8 @@ class ProcessApprovalDiscardNotificationListener
             $this->leaveRequestDiscarded($approvable, $discarded);
         }else if(get_class($approvable) == OverTime::class){
             $this->overtimeDiscarded($approvable, $discarded);
+        }else if(get_class($approvable) == SwitchWorkDay::class){
+            $this->switchWorkDayDiscarded($approvable, $discarded);
         }
     }
 
@@ -134,6 +138,55 @@ class ProcessApprovalDiscardNotificationListener
                 // cc approver
                 $ccEmails = [];
                 $ccs = collect(app(SettingOptions::class)->cc_emails)->where('model_type', $overtime::getApprovableType())->first();
+                if($ccs){
+                    $ccEmails = User::whereIn('id', $ccs['accounts'])->get()->pluck('email')->toArray();
+                }
+        
+                // send notification
+                $this->sendNotification($receiver, $message, comment: $discarded->comment, cc:$ccEmails);
+            }
+        }
+    }
+
+    protected function switchWorkDayDiscarded(SwitchWorkDay $switchWorkDay, $discarded){
+        $creator = $switchWorkDay->approvalStatus->creator;
+        if(Auth::id() != $creator->id){
+            $message = collect([
+                'subject' => __('mail.subject', ['name' => __('msg.label.discarded', ['label' => __('model.switch_work_day')])]),
+                'greeting' => __('mail.greeting', ['name' => $creator->name]),
+                'body' => __('msg.body.discarded_switch_working_day', [                            
+                    'from'    => $switchWorkDay->from_date->toDateString(),
+                    'to'      => $switchWorkDay->to_date->toDateString(), 
+                    'name'    => $discarded->approver_name,     
+                ]),
+                'action'    => [
+                    'name'  => __('btn.view'),
+                    'url'   => SwitchWorkDayResource::getUrl('view', ['record' => $switchWorkDay])
+                ]
+            ]);
+    
+            // send notification
+            $this->sendNotification($creator, $message, comment: $discarded->comment);
+        }else{
+            $receivers = User::whereIn('id', $switchWorkDay->processApprovers->pluck('approver_id')->toArray())->get();
+            foreach($receivers as $receiver){
+                $message = collect([
+                    'subject' => __('mail.subject', ['name' => __('msg.label.discarded', ['label' => __('model.switch_work_day')])]),
+                    'greeting' => __('mail.greeting', ['name' => $receiver->name]),
+                    'body' => __('msg.body.discarded_switch_working_day', [                            
+                        'from'    => $switchWorkDay->from_date->toDateString(),
+                        'to'      => $switchWorkDay->to_date->toDateString(), 
+                        'name'    => $discarded->approver_name,     
+                    ]),
+                    'action'    => [
+                        'name'  => __('btn.view'),
+                        'url'   => SwitchWorkDayResource::getUrl('view', ['record' => $switchWorkDay])
+                    ]
+                ]);
+
+                // cc approver
+                $ccEmails = [];
+                $ccs = collect(app(SettingOptions::class)->cc_emails)->where('model_type', $switchWorkDay::getApprovableType())->first();
                 if($ccs){
                     $ccEmails = User::whereIn('id', $ccs['accounts'])->get()->pluck('email')->toArray();
                 }

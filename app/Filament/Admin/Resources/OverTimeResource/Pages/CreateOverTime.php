@@ -8,6 +8,7 @@ use App\Settings\SettingOptions;
 use Filament\Actions;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
+use Illuminate\Support\Facades\Auth;
 
 class CreateOverTime extends CreateRecord
 {
@@ -22,40 +23,15 @@ class CreateOverTime extends CreateRecord
     {
         $data['expiry_date'] = now()->addDays(app(SettingOptions::class)->overtime_expiry);
         $data['unused']      = true;   
-        $data['user_id']     = auth()->id();
+        $data['user_id']     = Auth::id();
     
         return $data;
     }
 
     protected function afterCreate(): void
     {
-        $user = $this->record->approvalStatus->creator;         
-        foreach($this->record->approvalFlowSteps() as $step){
-            if($user->supervisor->hasRole($step->role_id)){
-                ProcessApprover::create([
-                    'step_id'           => $step->id,
-                    'modelable_type'    => get_class($this->record),
-                    'modelable_id'      => $this->record->id,
-                    'role_id'           => $step->role_id,
-                    'approver_id'       => $user->supervisor->id
-                ]);                        
-            }else if(!empty($user->department_head) && $user->department_head->hasRole($step->role_id)){
-                ProcessApprover::create([
-                    'step_id'           => $step->id,
-                    'modelable_type'    => get_class($this->record),
-                    'modelable_id'      => $this->record->id,
-                    'role_id'           => $step->role_id,
-                    'approver_id'       => $user->department_head->id
-                ]);                            
-            }else{
-                ProcessApprover::create([
-                    'step_id'           => $step->id,
-                    'modelable_type'    => get_class($this->record),
-                    'modelable_id'      => $this->record->id,
-                    'role_id'           => $step->role_id
-                ]);                            
-            } 
-        }                    
+        // create process approval
+        createProcessApprover($this->record);                   
     }
 
     protected function getCreatedNotification(): ?Notification

@@ -49,6 +49,11 @@ class LeaveRequest extends ApprovableModel
         'is_completed' => 'boolean',
     ];
 
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
     public function leaveType(): BelongsTo
     {
         return $this->belongsTo(LeaveType::class);
@@ -77,7 +82,7 @@ class LeaveRequest extends ApprovableModel
     protected function requested(): Attribute
     {
         return Attribute::make(
-            get: fn () => $this->createdBy()->full_name ?? null,
+            get: fn () => $this->user ? $this->user->full_name : $this->createdBy()->full_name,
         );
     }
 
