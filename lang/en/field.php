@@ -34,6 +34,8 @@ return [
     'logo'          => 'Logo',
     'icon'          => 'Icon',
     'feature'       => 'Feature',
+    'allow'         => 'Allow',
+    'create_user'   => 'Create User',
 
     'photo'    => 'Photo',
     'name'      => 'Name',
@@ -88,6 +90,7 @@ return [
     'to_time'       => 'To Time',
     'from_date'     => 'From Date',
     'to_date'       => 'To Date',
+    'work_date'     => 'Work Date',
     'select_date'   => 'Select Date',
     'personal_info' => 'Personal Info',
     'account_info'  => 'Account Info',
@@ -174,6 +177,15 @@ return [
         'overtime_link'         => 'Overtime Link',
         'cc_email'  => 'CC Email',
         'accounts'  => 'Accounts',
+    ],
+
+    // Timesheet Type
+    'timesheet_type' => [
+        'office' => 'Office',
+        'home' => 'Home',
+        'field' => 'Field',
+        'holiday' => 'Holiday',
+        'leave' => 'Leave',
     ],
 
     // label

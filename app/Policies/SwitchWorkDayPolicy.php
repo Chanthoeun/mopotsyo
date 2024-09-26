@@ -125,7 +125,7 @@ class SwitchWorkDayPolicy
         if($nextStep){
             $getApprover = $switchWorkDay->processApprovers()->where('step_id', $nextStep->id)->where('role_id', $nextStep->role_id)->first();
             if($getApprover){
-                if($getApprover->user){
+                if($getApprover->approver){
                     if($switchWorkDay->isSubmitted() &&
                     !$switchWorkDay->isApprovalCompleted() &&
                     !$switchWorkDay->isDiscarded() && $user->id == $getApprover->approver->id) return true;
@@ -149,7 +149,7 @@ class SwitchWorkDayPolicy
         if($nextStep){
             $getApprover = $switchWorkDay->processApprovers()->where('step_id', $nextStep->id)->where('role_id', $nextStep->role_id)->first();
             if($getApprover){
-                if($getApprover->user){
+                if($getApprover->approver){
                     if($switchWorkDay->isSubmitted() &&
                     !$switchWorkDay->isApprovalCompleted() &&
                     !$switchWorkDay->isRejected() &&
@@ -180,7 +180,7 @@ class SwitchWorkDayPolicy
         if($nextStep){
             $getApprover = $switchWorkDay->processApprovers()->where('step_id', $nextStep->id)->where('role_id', $nextStep->role_id)->first();
             if($getApprover){
-                if($getApprover->user){
+                if($getApprover->approver){
                     if($switchWorkDay->isRejected() && $user->id == $getApprover->approver->id) return true;
                 }else{
                     if($switchWorkDay->canBeApprovedBy($user) && $switchWorkDay->isRejected()) return true;

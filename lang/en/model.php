@@ -56,4 +56,8 @@ return [
     'overtimes'    => 'Overtimes',    
     'switch_work_day'     => 'Switch Work Day',
     'switch_work_days'    => 'Switch Work Days',    
+    'work_from_home'     => 'Work From Home',
+    'work_from_homes'    => 'Work From Homes',    
+    'timesheet'     => 'Timesheet',
+    'timesheets'    => 'Timesheets',    
 ];

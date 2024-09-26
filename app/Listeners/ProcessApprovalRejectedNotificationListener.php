@@ -5,9 +5,11 @@ namespace App\Listeners;
 use App\Filament\Admin\Resources\LeaveRequestResource;
 use App\Filament\Admin\Resources\OverTimeResource;
 use App\Filament\Admin\Resources\SwitchWorkDayResource;
+use App\Filament\Admin\Resources\WorkFromHomeResource;
 use App\Models\LeaveRequest;
 use App\Models\OverTime;
 use App\Models\SwitchWorkDay;
+use App\Models\WorkFromHome;
 use App\Traits\SendNotification;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
@@ -37,6 +39,8 @@ class ProcessApprovalRejectedNotificationListener
             $this->overtimeRejected($approvable, $rejected);
         }else if(get_class($approvable) == SwitchWorkDay::class){
             $this->switchWorkDayRejected($approvable, $rejected);
+        }else if(get_class($approvable) == WorkFromHome::class){
+            $this->workFromHomeRejected($approvable, $rejected);
         }
     }
 
@@ -96,6 +100,27 @@ class ProcessApprovalRejectedNotificationListener
             'action'    => [
                 'name'  => __('btn.view'),
                 'url'   => SwitchWorkDayResource::getUrl('view', ['record' => $switchWorkDay])
+            ]
+        ]);
+
+        // send notification
+        $this->sendNotification($receiver, $message, comment: $rejected->comment);
+    }
+
+    protected function workFromHomeRejected(WorkFromHome $workFromHome, $rejected){
+        $receiver = $workFromHome->approvalStatus->creator;
+        $message = collect([
+            'subject' => __('mail.subject', ['name' => __('msg.label.rejected', ['label' => __('model.work_from_home')])]),
+            'greeting' => __('mail.greeting', ['name' => $receiver->name]),
+            'body' => __('msg.body.rejected_work_from_home', [    
+                'days'    => strtolower(trans_choice('field.days_with_count', $workFromHome->days, ['count' => $workFromHome->days])),                         
+                'from'    => $workFromHome->from_date->toDateString(),
+                'to'      => $workFromHome->to_date->toDateString(), 
+                'name'    => $rejected->approver_name,     
+            ]),
+            'action'    => [
+                'name'  => __('btn.view'),
+                'url'   => WorkFromHomeResource::getUrl('view', ['record' => $workFromHome])
             ]
         ]);
 

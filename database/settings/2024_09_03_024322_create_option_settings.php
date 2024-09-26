@@ -9,11 +9,15 @@ return new class extends SettingsMigration
         // delete if exists befor add
         $this->migrator->deleteIfExists('option.allow_add_user');
         $this->migrator->deleteIfExists('option.allow_work_from_home');
+        $this->migrator->deleteIfExists('option.work_from_home_rules');
         $this->migrator->deleteIfExists('option.allow_switch_day_work');
+        $this->migrator->deleteIfExists('option.switch_day_work_rules');
 
         $this->migrator->add('option.allow_add_user', true);
         $this->migrator->add('option.allow_work_from_home', true);
+        $this->migrator->add('option.work_from_home_rules', null);
         $this->migrator->add('option.allow_switch_day_work', true);   
+        $this->migrator->add('option.switch_day_work_rules', null);   
 
         $this->migrator->deleteIfExists('option.cc_emails');
         $this->migrator->add('option.cc_emails', [

@@ -5,10 +5,12 @@ namespace App\Listeners;
 use App\Filament\Admin\Resources\LeaveRequestResource;
 use App\Filament\Admin\Resources\OverTimeResource;
 use App\Filament\Admin\Resources\SwitchWorkDayResource;
+use App\Filament\Admin\Resources\WorkFromHomeResource;
 use App\Models\LeaveRequest;
 use App\Models\OverTime;
 use App\Models\SwitchWorkDay;
 use App\Models\User;
+use App\Models\WorkFromHome;
 use App\Settings\SettingOptions;
 use App\Traits\SendNotification;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -40,12 +42,16 @@ class ProcessApprovalApprovedNotificationListener
             $this->overtimeApprovedCompleted($approvable);
         }else if($approvable->isApprovalCompleted() && get_class($approvable) == SwitchWorkDay::class){
             $this->switchWorkDayApprovedCompleted($approvable);
+        }else if($approvable->isApprovalCompleted() && get_class($approvable) == WorkFromHome::class){
+            $this->workFromHomeApprovedCompleted($approvable);
         }else if(!$approvable->isApprovalCompleted() && get_class($approvable) == LeaveRequest::class){
             $this->leaveRequestApproved($approvable);
         }else if(!$approvable->isApprovalCompleted() && get_class($approvable) == OverTime::class) {
             $this->overtimeApproved($approvable);
         }else if(!$approvable->isApprovalCompleted() && get_class($approvable) == SwitchWorkDay::class) {
             $this->switchWorkDayApproved($approvable);
+        }else if(!$approvable->isApprovalCompleted() && get_class($approvable) == WorkFromHome::class) {
+            $this->workFromHomeApproved($approvable);
         }                     
     }
 
@@ -235,7 +241,7 @@ class ProcessApprovalApprovedNotificationListener
         foreach($approvers as $approver){    
             if(Auth::id() != $approver->id){
                 $message = collect([
-                    'subject' => __('mail.subject', ['name' => __('btn.label.request', ['label' => __('model.overtime')])]),
+                    'subject' => __('mail.subject', ['name' => __('btn.label.request', ['label' => __('model.switch_work_day')])]),
                     'greeting' => __('mail.greeting', ['name' => $approver->name]),
                     'body' => __('msg.body.switch_working_day', [
                         'name'  => $switchWorkDay->approvalStatus->creator->full_name, 
@@ -250,6 +256,70 @@ class ProcessApprovalApprovedNotificationListener
     
                 // send notification
                 $this->sendNotification($approver, $message, comment: $switchWorkDay->reason);
+            }        
+        }
+    }
+
+    protected function workFromHomeApprovedCompleted(WorkFromHome $workFromHome){
+        $receiver = $workFromHome->approvalStatus->creator;
+        $message = collect([
+            'subject' => __('mail.subject', ['name' => __('msg.label.completed', ['label' => __('model.work_from_home')])]),
+            'greeting' => __('mail.greeting', ['name' => $receiver->name]),
+            'body' => __('msg.body.completed_work_from_home', [   
+                'days'  => strtolower(trans_choice('field.days_with_count', $workFromHome->days, ['count' => $workFromHome->days])),           
+                'from' => $workFromHome->from_date->toDateString(),
+                'to'  => $workFromHome->to_date->toDateString(), 
+            ]),
+            'action'    => [
+                'name'  => __('btn.view'),
+                'url'   => WorkFromHomeResource::getUrl('view', ['record' => $workFromHome])
+            ]
+        ]);
+
+        // cc approver
+        $ccEmails = [];
+        $ccs = collect(app(SettingOptions::class)->cc_emails)->where('model_type', $workFromHome::getApprovableType())->first();
+        if($ccs){
+            $ccEmails = User::whereIn('id', $ccs['accounts'])->get()->pluck('email')->toArray();
+        }
+
+        $this->sendNotification($receiver, $message, cc:$ccEmails);
+    }
+
+    protected function workFromHomeApproved(WorkFromHome $workFromHome){
+        $approvers = collect();
+        $nextApproval = $workFromHome->nextApprovalStep();
+        $getApprover = $workFromHome->processApprovers()->where('step_id', $nextApproval->id)->where('role_id', $nextApproval->role_id)->first();
+        
+        if($getApprover){
+            if($getApprover->approver){
+                $approvers->push($getApprover->approver);
+            }else{
+                $approvers = User::whereHas('employee', fn(Builder $q) => $q->whereNull('resign_date')->orWhereDate('resign_date', '>=', now()))->role($getApprover->role_id)->get();
+            }
+        }else{
+            $approvers = User::whereHas('employee', fn(Builder $q) => $q->whereNull('resign_date')->orWhereDate('resign_date', '>=', now()))->role($nextApproval->role_id)->get();
+        }
+        
+        foreach($approvers as $approver){    
+            if(Auth::id() != $approver->id){
+                $message = collect([
+                    'subject' => __('mail.subject', ['name' => __('btn.label.request', ['label' => __('model.work_from_home')])]),
+                    'greeting' => __('mail.greeting', ['name' => $approver->name]),
+                    'body' => __('msg.body.work_from_home', [
+                        'name'  => $workFromHome->approvalStatus->creator->full_name, 
+                        'days'  => strtolower(trans_choice('field.days_with_count', $workFromHome->days, ['count' => $workFromHome->days])),  
+                        'from'  => $workFromHome->from_date->toDateString(),
+                        'to'    => $workFromHome->to_date->toDateString(), 
+                    ]),
+                    'action'    => [
+                        'name'  => __('btn.approve'),
+                        'url'   => WorkFromHomeResource::getUrl('view', ['record' => $workFromHome])
+                    ]
+                ]);
+    
+                // send notification
+                $this->sendNotification($approver, $message, comment: $workFromHome->reason);
             }        
         }
     }
