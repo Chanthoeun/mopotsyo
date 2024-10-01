@@ -20,6 +20,7 @@ return [
     'submitted'         => 'Submitted',
     'completed'         => 'Completed',
     'sent'              => 'Sent',
+    'downloaded'        => 'Downloaded',
 
     // label
     'label' => [
@@ -35,6 +36,7 @@ return [
         'submitted'     => ':label Submitted',
         'completed'     => ':label Completed',
         'sent'          => ':label Sent',
+        'download'      => ':label Download',
     ],
 
     // message
@@ -76,5 +78,6 @@ return [
         'working_day'           => 'Selected date must be your work day.',
         'not_working_day'       => 'Selected date must be not your work day.',
         'is_public_holiday'     => 'Selected date is public holiday.',
+        'switch_working_date'   => 'Switched between :from and :to because ":reason"',
     ]
 ];

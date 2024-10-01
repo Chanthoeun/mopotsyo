@@ -12,7 +12,9 @@ enum TimesheetTypeEnum: int implements HasLabel, HasColor, HasIcon
     case HOME       = 2;    
     case FIELD      = 3;    
     case HOLIDAY    = 4;    
-    case LEAVE      = 5;    
+    case LEAVE      = 5;  
+    case WEEKEND    = 6;  
+    case NOT_WORK    = 7;
 
     public function getLabel(): ?string
     {        
@@ -22,6 +24,9 @@ enum TimesheetTypeEnum: int implements HasLabel, HasColor, HasIcon
             self::FIELD    => __('field.timesheet_type.field'),
             self::HOLIDAY  => __('field.timesheet_type.holiday'),
             self::LEAVE    => __('field.timesheet_type.leave'),
+            self::WEEKEND    => __('field.timesheet_type.weekend'),
+            self::NOT_WORK    => __('field.timesheet_type.not_work'),
+
         };
     }
 
@@ -32,7 +37,9 @@ enum TimesheetTypeEnum: int implements HasLabel, HasColor, HasIcon
             self::HOME     => 'info',
             self::FIELD    => 'Secondary',
             self::HOLIDAY  => 'danger',
-            self::LEAVE    => 'primary'
+            self::LEAVE    => 'primary',
+            self::WEEKEND  => 'danger',
+            self::NOT_WORK  => 'danger',
         };
     }
 
@@ -43,7 +50,9 @@ enum TimesheetTypeEnum: int implements HasLabel, HasColor, HasIcon
             self::HOME     => 'fas-house-laptop',
             self::FIELD    => 'fas-person-walking-luggage',
             self::HOLIDAY  => 'fas-person-skiing',
-            self::LEAVE    => 'fas-person-circle-minus'
+            self::LEAVE    => 'fas-person-circle-minus',
+            self::WEEKEND  => 'fas-person-circle-minus',
+            self::NOT_WORK  => 'fas-person-circle-minus',
         };
     }
 }

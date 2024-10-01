@@ -24,6 +24,8 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\HtmlString;
 use RingleSoft\LaravelProcessApproval\Enums\ApprovalStatusEnum;
 use RingleSoft\LaravelProcessApproval\Events\ProcessDiscardedEvent;
 use RingleSoft\LaravelProcessApproval\Models\ProcessApproval;
@@ -77,6 +79,8 @@ class OverTimeResource extends Resource
                                     ->placeholder(__('field.select_date'))
                                     ->required()
                                     ->native(false)
+                                    ->closeOnDateSelection()
+                                    ->hint(new HtmlString(Blade::render('<x-filament::loading-indicator class="h-5 w-5" wire:loading wire:target="data.date" />')))
                                     ->live()
                                     ->rules([
                                         function (Get $get) {

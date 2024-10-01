@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Timesheet extends Model
@@ -17,6 +18,7 @@ class Timesheet extends Model
      * @var array
      */
     protected $fillable = [
+        'name',
         'from_date',
         'to_date',        
         'user_id',
@@ -37,5 +39,10 @@ class Timesheet extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function dates(): HasMany
+    {
+        return $this->hasMany(TimesheetDate::class);
     }
 }

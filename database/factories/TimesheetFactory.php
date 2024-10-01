@@ -22,6 +22,7 @@ class TimesheetFactory extends Factory
     public function definition(): array
     {
         return [
+            'name'  => $this->faker->name(),
             'from_date' => $this->faker->date(),
             'to_date' => $this->faker->date(),
             'reason' => $this->faker->text(),

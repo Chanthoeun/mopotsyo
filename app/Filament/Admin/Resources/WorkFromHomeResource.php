@@ -25,6 +25,8 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\HtmlString;
 use RingleSoft\LaravelProcessApproval\Enums\ApprovalStatusEnum;
 use RingleSoft\LaravelProcessApproval\Events\ProcessDiscardedEvent;
 use RingleSoft\LaravelProcessApproval\Models\ProcessApproval;
@@ -64,6 +66,8 @@ class WorkFromHomeResource extends Resource
                             ->required()
                             ->live()
                             ->native(false)
+                            ->closeOnDateSelection()
+                            ->hint(new HtmlString(Blade::render('<x-filament::loading-indicator class="h-5 w-5" wire:loading wire:target="data.from_date" />')))
                             ->afterStateUpdated(function($state, Set $set) {
                                 $toDate = $state;
                                 $set('to_date', $toDate);
@@ -113,6 +117,8 @@ class WorkFromHomeResource extends Resource
                             ->required()
                             ->live()
                             ->native(false)
+                            ->closeOnDateSelection()
+                            ->hint(new HtmlString(Blade::render('<x-filament::loading-indicator class="h-5 w-5" wire:loading wire:target="data.to_date" />')))
                             ->afterStateUpdated(function($state, Get $get, Set $set) {
                                 if($get('from_date')){
                                     $set("requestDates", []);

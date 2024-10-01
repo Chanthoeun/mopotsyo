@@ -42,6 +42,8 @@ return [
     'contracts'         => 'Contracts',
     'entitlement'       => 'Entitlement',
     'entitlements'      => 'Entitlements',
+    'leave_entitlement'       => 'Leave Entitlement',
+    'leave_entitlements'      => 'Leave Entitlements',
     'carry_forward'     => 'Carry Forward',
     'carry_forwards'    => 'Carry Forwards',    
     'leave_request_rule'     => 'Leave Request Rule',
@@ -60,4 +62,6 @@ return [
     'work_from_homes'    => 'Work From Homes',    
     'timesheet'     => 'Timesheet',
     'timesheets'    => 'Timesheets',    
+    'timesheet_date'     => 'Timesheet Date',
+    'timesheet_dates'    => 'Timesheet Dates',    
 ];

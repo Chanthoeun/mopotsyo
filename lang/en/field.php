@@ -4,16 +4,22 @@ return [
     // General
     'id'            => 'ID',
     'all'           => 'All',
+    'approved_by'   => 'Approved By', 
     'created_by'    => 'Created By',
+    'checked_by'    => 'Checked By',
     'updated_by'    => 'Updated By',
     'modified_by'   => 'Modified By',
     'deleted_by'    => 'Deleted By',
     'requested_by'  => 'Requested By',
+    'submitted_by'  => 'Submitted By',
+    'verified_by'   => 'Verified By',
+    'checked_verified_by'   => 'Checked/Verified By',
     'created_at'    => 'Created At',
     'updated_at'    => 'Updated At',
     'modified_at'   => 'Modified At',
     'deleted_at'    => 'Deleted At',
-    'request_at'    => 'Request At',
+    'requested_at'  => 'Requested At',
+
     'copied'        => ':name Copied!',
     'status'        => 'Status',
     'is_active'     => 'Active',
@@ -36,6 +42,9 @@ return [
     'feature'       => 'Feature',
     'allow'         => 'Allow',
     'create_user'   => 'Create User',
+    'remark'        => 'Remark',
+    'type'          => 'Type',
+
 
     'photo'    => 'Photo',
     'name'      => 'Name',
@@ -59,6 +68,7 @@ return [
     'male'      => 'Male',
     'female'    => 'Female',
     'balance'   => 'Balance',
+    'allowance' => 'Allowance',
     'taken'     => 'Taken',
     'remaining' => 'Remaining',
     'accrued'   => 'Accrued',
@@ -137,7 +147,14 @@ return [
     'working_dates' => 'Working Dates',
     'expiry_date' => 'Expiry Date',
     'unused' => 'Unused',
-
+    'used'  => 'Used',
+    'year'  => 'Year',
+    'month' => 'Month',
+    'signature' => 'Signature',
+    'unit'  => 'Unit',
+    'activities'    => 'Activities',
+    'no_of_days'    => '# of Days',
+    'this_month' => 'This Month',
 
     // day
     'days' => [
@@ -186,6 +203,8 @@ return [
         'field' => 'Field',
         'holiday' => 'Holiday',
         'leave' => 'Leave',
+        'weekend' => 'Weekend',
+        'not_work' => 'Not Work',
     ],
 
     // label

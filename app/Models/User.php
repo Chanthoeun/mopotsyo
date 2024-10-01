@@ -124,6 +124,16 @@ class User extends Authenticatable implements FilamentUser, RenewPasswordContrac
         return $this->hasMany(OverTime::class);
     }
 
+    public function timesheets(): HasMany
+    {
+        return $this->hasMany(Timesheet::class);
+    }
+
+    public function switchWorkDays(): HasMany
+    {
+        return $this->hasMany(SwitchWorkDay::class);
+    }
+
 
     public function activityLogs(): MorphMany
     {

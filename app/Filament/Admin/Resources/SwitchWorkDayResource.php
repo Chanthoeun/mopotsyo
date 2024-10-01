@@ -14,6 +14,7 @@ use Filament\Forms;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
+use Filament\Forms\Set;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
@@ -22,6 +23,8 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\HtmlString;
 use RingleSoft\LaravelProcessApproval\Enums\ApprovalStatusEnum;
 use RingleSoft\LaravelProcessApproval\Events\ProcessDiscardedEvent;
 use RingleSoft\LaravelProcessApproval\Models\ProcessApproval;
@@ -60,7 +63,11 @@ class SwitchWorkDayResource extends Resource
                             ->label(__('field.work_date'))
                             ->required()
                             ->native(false)
+                            ->closeOnDateSelection()
+                            ->hint(new HtmlString(Blade::render('<x-filament::loading-indicator class="h-5 w-5" wire:loading wire:target="data.from_date" />')))
                             ->suffixIcon('fas-calendar')
+                            ->live()
+                            ->afterStateUpdated(fn($state, Set $set) => $set('to_date', $state))
                             ->rules([
                                 function (Get $get) {
                                     return function (string $attribute, $value, Closure $fail) use($get) {
@@ -70,9 +77,9 @@ class SwitchWorkDayResource extends Resource
                                         }
 
                                         // Not allow to select work day after to_date
-                                        if($get('to_date') && $value > $get('to_date')){
-                                            $fail(__('msg.body.select_before', ['option1' => __('field.work_date'), 'option2' => __('field.to_date')]));
-                                        }
+                                        // if($get('to_date') && $value > $get('to_date')){
+                                        //     $fail(__('msg.body.select_before', ['option1' => __('field.work_date'), 'option2' => __('field.to_date')]));
+                                        // }
                                                                                 
                                         // Not allow to select work day that is not  your work day                                         
                                         if(empty(Auth::user()->workDays->where('day_name.value', Carbon::parse($value)->dayOfWeek())->first())){
@@ -90,6 +97,8 @@ class SwitchWorkDayResource extends Resource
                             ->label(__('field.to_date'))
                             ->required()
                             ->native(false)
+                            ->closeOnDateSelection()
+                            ->hint(new HtmlString(Blade::render('<x-filament::loading-indicator class="h-5 w-5" wire:loading wire:target="data.to_date" />')))
                             ->suffixIcon('fas-calendar')
                             ->rules([
                                 function (Get $get) {
@@ -100,9 +109,9 @@ class SwitchWorkDayResource extends Resource
                                         }
 
                                         // Not allow to select work day after to_date
-                                        if($value < $get('from_date')){
-                                            $fail(__('msg.body.select_after', ['option1' => __('field.to_date'), 'option2' => __('field.work_date')]));
-                                        }
+                                        // if($value < $get('from_date')){
+                                        //     $fail(__('msg.body.select_after', ['option1' => __('field.to_date'), 'option2' => __('field.work_date')]));
+                                        // }
                                                                                 
                                         // Not allow to select work day that is not  your work day                                         
                                         if(Auth::user()->workDays->where('day_name.value', Carbon::parse($value)->dayOfWeek())->first()){
