@@ -1,6 +1,9 @@
 <?php 
     use App\Enums\TimesheetTypeEnum;   
     use App\Models\LeaveType;
+
+    $user = auth()->user();
+    $leaveTypeIds = $user->contract->contractType->leave_types;
 ?>
 <!DOCTYPE html>
 <html>
@@ -290,6 +293,7 @@
         </div>
     </div>
     <div class="w-65 float-right">
+        @if ($leaveTypeIds)                
         <div class="table-section bill-tbl w-100">
             <table class="table w-100">
                 <thead>
@@ -307,8 +311,7 @@
                 </thead>
                 <tbody>
                     @php
-                        $user = auth()->user();
-                        $leaveTypes = LeaveType::whereIn('id', $user->contract->contractType->leave_types)->where($user->employee->gender->value, true)->orderBy('id', 'asc')->get();
+                        $leaveTypes = LeaveType::whereIn('id', $leaveTypeIds)->where($user->employee->gender->value, true)->orderBy('id', 'asc')->get();
                     @endphp
                     @foreach ($leaveTypes as $item)       
                     @if ($item->balance > 0 || getTakenLeave($user, $item->id, $record->from_date, $record->to_date) > 0)
@@ -332,6 +335,7 @@
                 </tbody>
             </table>
         </div>
+        @endif
     </div>        
     <div style="clear: both;"></div>
 </div> 
