@@ -20,6 +20,7 @@ return [
     'submitted'         => 'Submitted',
     'completed'         => 'Completed',
     'sent'              => 'Sent',
+    'downloaded'        => 'Downloaded',
 
     // label
     'label' => [
@@ -35,6 +36,7 @@ return [
         'submitted'     => ':label Submitted',
         'completed'     => ':label Completed',
         'sent'          => ':label Sent',
+        'download'      => ':label Download',
     ],
 
     // message
@@ -65,6 +67,10 @@ return [
         'completed_switch_working_day' => 'Your switch working day request from :from to :to was approved and completed.',
         'rejected_switch_working_day'  => 'Your switch working day request from :from to :to was rejected by :name.',
         'discarded_switch_working_day' => 'The switch working day request from :from to :to was discarded by :name.',
+        'work_from_home'        => ':name would like to work from home for :days form :from to :to. Please kindly check and approve in the below link.',
+        'completed_work_from_home' => 'Your work from home request for :days from :from to :to was approved and completed.',
+        'rejected_work_from_home'  => 'Your work from home request for :days from :from to :to was rejected by :name.',
+        'discarded_work_from_home' => 'The work from home request for :days from :from to :to was discarded by :name.',
         'is_not_correct'        => 'The informationis not correct.',
         'not_allow_past_date'   => 'The date cannot be in the past.',
         'select_after'          => 'Selected :option1 must be after :option2.',
@@ -72,5 +78,6 @@ return [
         'working_day'           => 'Selected date must be your work day.',
         'not_working_day'       => 'Selected date must be not your work day.',
         'is_public_holiday'     => 'Selected date is public holiday.',
+        'switch_working_date'   => 'Switched between :from and :to because ":reason"',
     ]
 ];

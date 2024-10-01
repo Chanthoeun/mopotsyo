@@ -117,7 +117,7 @@ class OverTimePolicy
         if($nextStep){
             $getApprover = $overTime->processApprovers()->where('step_id', $nextStep->id)->where('role_id', $nextStep->role_id)->first();
             if($getApprover){
-                if($getApprover->user){
+                if($getApprover->approver){
                     if($overTime->isSubmitted() &&
                     !$overTime->isApprovalCompleted() &&
                     !$overTime->isDiscarded() && $user->id == $getApprover->approver->id) return true;
@@ -142,7 +142,7 @@ class OverTimePolicy
         if($nextStep){
             $getApprover = $overTime->processApprovers()->where('step_id', $nextStep->id)->where('role_id', $nextStep->role_id)->first();
             if($getApprover){
-                if($getApprover->user){
+                if($getApprover->approver){
                     if($overTime->isSubmitted() &&
                     !$overTime->isApprovalCompleted() &&
                     !$overTime->isRejected() &&
@@ -173,7 +173,7 @@ class OverTimePolicy
         if($nextStep){
             $getApprover = $overTime->processApprovers()->where('step_id', $nextStep->id)->where('role_id', $nextStep->role_id)->first();
             if($getApprover){
-                if($getApprover->user){
+                if($getApprover->approver){
                     if($overTime->isRejected() && $user->id == $getApprover->approver->id) return true;
                 }else{
                     if($overTime->canBeApprovedBy($user) && $overTime->isRejected()) return true;

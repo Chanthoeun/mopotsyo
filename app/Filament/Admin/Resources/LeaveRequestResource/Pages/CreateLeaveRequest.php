@@ -40,7 +40,7 @@ class CreateLeaveRequest extends CreateRecord
                 if($this->record->days >= $rule['from_amount'] && $this->record->days <= $rule['to_amount']){
                     $roles = $rule['roles'];
                 }else if($this->record->days >= $rule['from_amount'] && empty($rule['to_amount'])){
-                    $roles = $rule->roles;
+                    $roles = $rule['roles'];
                 }           
             } 
 

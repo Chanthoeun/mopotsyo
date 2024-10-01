@@ -5,10 +5,12 @@ namespace App\Listeners;
 use App\Filament\Admin\Resources\LeaveRequestResource;
 use App\Filament\Admin\Resources\OverTimeResource;
 use App\Filament\Admin\Resources\SwitchWorkDayResource;
+use App\Filament\Admin\Resources\WorkFromHomeResource;
 use App\Models\LeaveRequest;
 use App\Models\OverTime;
 use App\Models\SwitchWorkDay;
 use App\Models\User;
+use App\Models\WorkFromHome;
 use App\Settings\SettingOptions;
 use App\Traits\SendNotification;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -40,6 +42,8 @@ class ProcessApprovalDiscardNotificationListener
             $this->overtimeDiscarded($approvable, $discarded);
         }else if(get_class($approvable) == SwitchWorkDay::class){
             $this->switchWorkDayDiscarded($approvable, $discarded);
+        }else if(get_class($approvable) == WorkFromHome::class){
+            $this->workFromHomeDiscarded($approvable, $discarded);
         }
     }
 
@@ -187,6 +191,57 @@ class ProcessApprovalDiscardNotificationListener
                 // cc approver
                 $ccEmails = [];
                 $ccs = collect(app(SettingOptions::class)->cc_emails)->where('model_type', $switchWorkDay::getApprovableType())->first();
+                if($ccs){
+                    $ccEmails = User::whereIn('id', $ccs['accounts'])->get()->pluck('email')->toArray();
+                }
+        
+                // send notification
+                $this->sendNotification($receiver, $message, comment: $discarded->comment, cc:$ccEmails);
+            }
+        }
+    }
+
+    protected function workFromHomeDiscarded(WorkFromHome $workFromHome, $discarded){
+        $creator = $workFromHome->approvalStatus->creator;
+        if(Auth::id() != $creator->id){
+            $message = collect([
+                'subject' => __('mail.subject', ['name' => __('msg.label.discarded', ['label' => __('model.work_from_home')])]),
+                'greeting' => __('mail.greeting', ['name' => $creator->name]),
+                'body' => __('msg.body.discarded_work_from_home', [    
+                    'days'  => strtolower(trans_choice('field.days_with_count', $workFromHome->days, ['count' => $workFromHome->days])),                         
+                    'from'    => $workFromHome->from_date->toDateString(),
+                    'to'      => $workFromHome->to_date->toDateString(), 
+                    'name'    => $discarded->approver_name,     
+                ]),
+                'action'    => [
+                    'name'  => __('btn.view'),
+                    'url'   => WorkFromHomeResource::getUrl('view', ['record' => $workFromHome])
+                ]
+            ]);
+    
+            // send notification
+            $this->sendNotification($creator, $message, comment: $discarded->comment);
+        }else{
+            $receivers = User::whereIn('id', $workFromHome->processApprovers->pluck('approver_id')->toArray())->get();
+            foreach($receivers as $receiver){
+                $message = collect([
+                    'subject' => __('mail.subject', ['name' => __('msg.label.discarded', ['label' => __('model.work_from_home')])]),
+                    'greeting' => __('mail.greeting', ['name' => $receiver->name]),
+                    'body' => __('msg.body.discarded_work_from_home', [
+                        'days'  => strtolower(trans_choice('field.days_with_count', $workFromHome->days, ['count' => $workFromHome->days])),                             
+                        'from'    => $workFromHome->from_date->toDateString(),
+                        'to'      => $workFromHome->to_date->toDateString(), 
+                        'name'    => $discarded->approver_name,     
+                    ]),
+                    'action'    => [
+                        'name'  => __('btn.view'),
+                        'url'   => WorkFromHomeResource::getUrl('view', ['record' => $workFromHome])
+                    ]
+                ]);
+
+                // cc approver
+                $ccEmails = [];
+                $ccs = collect(app(SettingOptions::class)->cc_emails)->where('model_type', $workFromHome::getApprovableType())->first();
                 if($ccs){
                     $ccEmails = User::whereIn('id', $ccs['accounts'])->get()->pluck('email')->toArray();
                 }

@@ -34,6 +34,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\HtmlString;
 use RingleSoft\LaravelProcessApproval\Enums\ApprovalStatusEnum;
 use RingleSoft\LaravelProcessApproval\Events\ProcessDiscardedEvent;
@@ -167,6 +168,8 @@ class LeaveRequestResource extends Resource
                                     ->placeholder(__('field.select_date'))
                                     ->required()
                                     ->native(false)
+                                    ->closeOnDateSelection()
+                                    ->hint(new HtmlString(Blade::render('<x-filament::loading-indicator class="h-5 w-5" wire:loading wire:target="data.from_date" />')))
                                     ->suffixIcon('fas-calendar')
                                     ->live()
                                     ->afterStateUpdated(function($state, Get $get, Set $set, string $operation, ?Model $record){
@@ -194,6 +197,8 @@ class LeaveRequestResource extends Resource
                                     ->placeholder(__('field.select_date'))
                                     ->required()
                                     ->native(false)
+                                    ->closeOnDateSelection()
+                                    ->hint(new HtmlString(Blade::render('<x-filament::loading-indicator class="h-5 w-5" wire:loading wire:target="data.to_date" />')))
                                     ->suffixIcon('fas-calendar')
                                     ->live()
                                     ->afterStateUpdated(function($state, Get $get, Set $set, string $operation, ?Model $record){

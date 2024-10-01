@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Settings\SettingWorkingHours;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
@@ -35,5 +37,12 @@ class RequestDate extends Model
     public function requestdateable(): MorphTo
     {
         return $this->morphTo();
+    }
+
+    protected function day(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => floatval($this->hours / app(SettingWorkingHours::class)->day),
+        );
     }
 }

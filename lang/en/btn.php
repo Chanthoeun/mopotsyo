@@ -19,6 +19,7 @@ return [
     'submit' => 'Submit',
     'view' => 'View',
     'send' => 'Send',
+    'download'  =>  'Download',
 
     // Button title
     'label' => [
@@ -39,6 +40,7 @@ return [
         'submit'    => 'Submit :label',
         'view'      => 'View :label',
         'send'      => 'Send :label',
+        'download'  => 'Download :label',
     ],
 
     // Button message

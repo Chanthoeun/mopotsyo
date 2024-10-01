@@ -11,7 +11,9 @@ use App\Models\EmployeeContract;
 use App\Models\LeaveRequest;
 use App\Models\ProcessApprover;
 use App\Models\PublicHoliday;
+use App\Models\RequestDate;
 use App\Models\User;
+use App\Settings\SettingOptions;
 use App\Settings\SettingWorkingHours;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
@@ -120,9 +122,9 @@ if(!function_exists('getEntitlementBalance')){
     }
 }
 
-if(!function_exists('dayName')){
-    function dayName($date){
-        return Carbon::parse($date)->locale(config('app.locale'))->dayName;
+if(!function_exists('getDayOfWeek')){
+    function getDayOfWeek($date) : int {
+        return Carbon::parse($date)->dayOfWeek();
     }
 }
 
@@ -142,32 +144,24 @@ if(!function_exists('isWorkHour')){
     }
 }
 
+if(!function_exists('getDayName')){
+    function getDayName($date){
+        return Carbon::parse($date)->locale(config('app.locale'))->dayName;
+    }
+}
+
 if(!function_exists('weekend')){
-    function weekend($date): bool{
-        if(Carbon::parse($date)->isWeekend()){
-            return true;
+    function weekend($date): bool | string {
+        $date = Carbon::parse($date);
+        if($date->isWeekend()){
+            return $date->locale(config('app.locale'))->dayName;
         }
-        return false;        
+        return false;
     }
 }
-
 if(!function_exists('publicHoliday')){
-    function publicHoliday($date): bool{
-        $publicHoliday = PublicHoliday::whereDate('date', $date)->first();
-        return $publicHoliday ? true : false;
-    }
-}
-
-if(!function_exists('getHolidayName')){
-    function getHolidayName($user, $date): string{
-        $holiday = $user->profile->law->publicHolidays->map(function($holiday){
-            return [
-                'date'  => Carbon::parse($holiday->date)->toDateString(),
-                'name'  => $holiday->name
-            ];
-        })->where('date', Carbon::parse($date)->toDateString())->first();
-        
-        return $holiday['name'];
+    function publicHoliday($date): bool | object{        
+        return PublicHoliday::whereDate('date', $date)->first() ?? false;
     }
 }
 
@@ -195,36 +189,6 @@ if(!function_exists('dateIsNotDuplicated')){
             }           
         }
         return true;
-    }
-}
-
-if(!function_exists('checkDuplicatedDate')){
-    function checkDuplicatedDate($user, $date) : string | null {
-        $date = Carbon::parse($date); 
-        
-        // Is it weekend
-        if($date->isWeekend() == true){
-            return __('msg.is_weekend', ['date' => $date->toDateString(), 'name' => dayName($date)]);
-        }
-
-        // Is it public holiday
-        if(isPublicHoliday($user, $date) == true){
-            return __('msg.is_holiday', ['date' => $date->toDateString(), 'name' => getHolidayName($user, $date)]);
-        }
-
-        // check trip date
-        // if(Auth::user()->trip_dates()->contains($date->toDateString()) == true){
-        //     return __('msg.is_trip_day', ['date' => $date->toDateString()]);
-        // }
-
-        // check duplicated leave request
-        foreach($user->leaveRequests as $leaveRequest){
-            if($leaveRequest->requestDates->contains($date->toDateString())){
-                return __('msg.is_duplicated', ['date' => $date->toDateString()]);
-            }
-        }
-
-        return null;
     }
 }
 
@@ -373,17 +337,90 @@ if(!function_exists('createProcessApprover')){
 
 
 
-// if(!function_exists('isOnLeave')){
-//     function isOnLeave($employee, $date){
-//        foreach($employee->leave_requests->where('status', ActionStatusEnum::Approved) as $leave){
-//             $leaveDate = $leave->dates()->whereDate('date', $date)->first();
-//             if($leaveDate){
-//                 return true;
-//             }            
-//         }        
-//         return false;
-//     }
-// }
+
+if(!function_exists('isOnLeave')){
+    function isOnLeave($user, $date): bool | object{        
+        $leave = RequestDate::with('requestdateable')->where('requestdateable_type', 'App\Models\LeaveRequest')->whereDate('date', $date)->whereHas('requestdateable', function(Builder $query) use($user) {
+            $query->where('user_id', $user->id);
+            $query->whereHas('approvalStatus', static function ($q) {
+                return $q->where('status', ApprovalActionEnum::APPROVED->value);
+            });
+        })->first();    
+        return $leave ?? false;
+    }
+}
+
+if(!function_exists('isWorkFromHome')){
+    function isWorkFromHome($user, $date): bool | object{
+        $workFromHome = RequestDate::with('requestdateable')->where('requestdateable_type', 'App\Models\WorkFromHome')->whereDate('date', $date)->whereHas('requestdateable', function(Builder $query) use($user) {
+            $query->where('user_id', $user->id);
+            $query->whereHas('approvalStatus', static function ($q) {
+                return $q->where('status', ApprovalActionEnum::APPROVED->value);
+            });
+        })->first();
+        return $workFromHome ?? false;        
+    }
+}
+
+if(!function_exists('isWorkDay')){
+    function isWorkDay($user, $date): bool | object
+    {        
+        return $user->workDays->where('day_name.value', getDayOfWeek($date))->first() ?? false;    
+    }
+}
+
+if(!function_exists('isSwitchWorkDay')){
+    function isSwitchWorkDay($user, $date): bool | object
+    {
+        return $user->switchWorkDays()->whereDate('from_date', $date)->first() ?? false;
+    }
+}
+
+if(!function_exists('isSwitchWorkDayToDate')){
+    function isSwitchWorkDayToDate($user, $date): bool | object
+    {
+        return $user->switchWorkDays()->whereDate('to_date', $date)->first() ?? false;
+    }
+}
+
+if(!function_exists('getTakenLeave')){
+    function getTakenLeave($user, $leaveType, $from_date = null, $to_date = null): float
+    {        
+        $taken = 0;
+        if($from_date && $to_date){
+            $leaves = $user->leaveRequests()->with('requestDates')->where('leave_type_id', $leaveType)->whereHas('requestDates', function($q) use($from_date, $to_date){
+                $q->whereBetween('date', [$from_date, $to_date]);
+            })->whereHas('approvalStatus', static function ($q) {
+                return $q->where('status', ApprovalActionEnum::APPROVED->value);
+            })->get();                  
+            foreach($leaves as $leave){
+                $taken += floatval($leave->requestDates()->sum('hours') / app(SettingWorkingHours::class)->day);
+            }
+        }else{
+            $entitlement = $user->entitlements()->where('leave_type_id', $leaveType)->whereDate('end_date', '>=', now())->where('is_active', true)->first();
+            if($entitlement){
+                $from_date = $entitlement->start_date;
+                $to_date = $entitlement->end_date;
+                $leaves = $user->leaveRequests()->where('leave_type_id', $leaveType)->whereHas('requestDates', function($q) use($from_date, $to_date){
+                    $q->whereBetween('date', [$from_date, $to_date]);
+                })->whereBetween('to_date', [$entitlement->start_date, $entitlement->end_date])->whereHas('approvalStatus', static function ($q) {
+                    return $q->where('status', ApprovalActionEnum::APPROVED->value);
+                })->get();       
+                foreach($leaves as $leave){
+                    $taken += floatval($leave->requestDates()->sum('hours') / app(SettingWorkingHours::class)->day);
+                }
+            }else{
+                $leaves = $user->leaveRequests()->where('leave_type_id', $leaveType)->whereHas('approvalStatus', static function ($q) {
+                    return $q->where('status', ApprovalActionEnum::APPROVED->value);
+                })->get();       
+                foreach($leaves as $leave){
+                    $taken += floatval($leave->requestDates()->sum('hours') / app(SettingWorkingHours::class)->day);
+                }
+            }
+        }
+        return $taken;
+    }
+}
 
 // if(!function_exists('getLeaveRequestDate')){
 //     function getLeaveRequestDate($employee, $date){

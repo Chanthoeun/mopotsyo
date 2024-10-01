@@ -71,7 +71,9 @@ class LeaveEntitlement extends Model
     {
         return Attribute::make(
             get: function () {               
-                $leaveRequests = $this->user->leaveRequests()->with('requestDates')->where('leave_type_id', $this->leave_type_id)->whereBetween('from_date', [$this->start_date, $this->end_date])->whereBetween('to_date', [$this->start_date, $this->end_date])->whereHas('approvalStatus', static function ($q) {
+                $leaveRequests = $this->user->leaveRequests()->with('requestDates')->where('leave_type_id', $this->leave_type_id)->whereHas('requestDates', function($q){
+                    $q->whereBetween('date', [$this->start_date, $this->end_date]);
+                })->whereHas('approvalStatus', static function ($q) {
                     return $q->where('status', ApprovalActionEnum::APPROVED->value);
                 })->get();
 
