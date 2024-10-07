@@ -27,16 +27,7 @@ class LeaveType extends Model
         'male',
         'female',
         'balance',
-        'minimum_request_days',
-        'balance_increment_period',
-        'balance_increment_amount',
         'maximum_balance',
-        'allow_carry_forward',
-        'carry_forward_duration',
-        'allow_advance',
-        'advance_limit',
-        'allow_accrual',
-        'visible',
         'option',
         'rules',
     ];
@@ -51,14 +42,7 @@ class LeaveType extends Model
         'male' => 'boolean',
         'female' => 'boolean',
         'balance' => 'integer',
-        'minimum_request_days' => 'integer',
-        'balance_increment_amount' => 'integer',
         'maximum_balance' => 'integer',
-        'allow_carry_forward' => 'boolean',
-        'allow_advance' => 'boolean',
-        'advance_limit' => 'integer',
-        'allow_accrual' => 'boolean',
-        'visible' => 'boolean',
         'option' => 'array',
         'rules' => 'array',
     ];
@@ -66,10 +50,5 @@ class LeaveType extends Model
     public function entitlements(): HasMany
     {
         return $this->hasMany(LeaveEntitlement::class);
-    }
-
-    public function rules(): HasMany
-    {
-        return $this->hasMany(LeaveRequestRule::class);
     }
 }

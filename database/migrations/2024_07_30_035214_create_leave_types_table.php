@@ -20,7 +20,7 @@ return new class extends Migration
             $table->boolean('female')->default(0);
             $table->unsignedTinyInteger('balance')->default(0);
             $table->unsignedTinyInteger('maximum_balance')->default(0)->nullable();
-            $table->json('options')->nullable();
+            $table->json('option')->nullable();
             $table->json('rules')->nullable();
             $table->timestamps();
             $table->softDeletes();
