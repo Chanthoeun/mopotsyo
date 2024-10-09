@@ -41,7 +41,10 @@ class OverTimePolicy
      */
     public function update(User $user, OverTime $overTime): bool
     {
-        return $user->can('update_over::time');
+        if($overTime->approvalStatus->status == 'Created' && $user->id == $overTime->user_id){            
+            return $user->can('update_over::time');
+        }
+        return false;
     }
 
     /**

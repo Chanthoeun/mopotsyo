@@ -174,7 +174,6 @@ class SwitchWorkDayResource extends Resource
                     ->label(__('field.requested_by'))
                     ->relationship('user', 'name'),
                 Tables\Filters\TrashedFilter::make()
-                    ->visible(fn() => Auth::user()->can('restore_over::time')),
             ])
             ->actions(
                 ApprovalActions::make(
@@ -217,6 +216,9 @@ class SwitchWorkDayResource extends Resource
                                     ->title(__('msg.label.discarded', ['label' => __('model.switch_work_day')]))
                                     ->send();
                             }),
+                    ],
+                    [                            
+                        Tables\Actions\EditAction::make(),
                     ]
                 )
             )

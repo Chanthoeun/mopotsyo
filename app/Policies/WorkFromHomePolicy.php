@@ -49,7 +49,10 @@ class WorkFromHomePolicy
      */
     public function update(User $user, WorkFromHome $workFromHome): bool
     {
-        return $user->can('update_work::from::home');
+        if($workFromHome->approvalStatus->status == 'Created' && $user->id == $workFromHome->user_id){
+            return $user->can('update_work::from::home');
+        }
+        return false;
     }
 
     /**

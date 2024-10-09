@@ -59,13 +59,17 @@ class LeaveRequestPolicy
      */
     public function update(User $user, LeaveRequest $leaveRequest): bool
     {
-        if(empty($user->supervisor)) return false;
+        // if(empty($user->supervisor)) return false;
 
-        if(empty($user->contract)) return false;
+        // if(empty($user->contract)) return false;
 
-        if(empty($user->contract->contractType->allow_leave_request)) return false;
+        // if(empty($user->contract->contractType->allow_leave_request)) return false;
+
+        if($leaveRequest->approvalStatus->status == 'Created' && $user->id == $leaveRequest->user_id){            
+            return $user->can('update_leave::request');
+        }
+        return false;
         
-        return $user->can('update_leave::request');
     }
 
     /**

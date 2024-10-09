@@ -7,4 +7,5 @@ return [
     'rdf'       => 'RDF',
     'hr'        => 'Human Resource',
     'employee'  => 'Employee',
+    'procurement'   => 'Procurement',
 ];

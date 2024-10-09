@@ -447,7 +447,6 @@ class LeaveRequestResource extends Resource
                     ->label(__('field.requested_by'))
                     ->relationship('user', 'name'),
                 Tables\Filters\TrashedFilter::make()
-                    ->visible(fn() => Auth::user()->can('restore_leave::request')),
             ])
             ->actions(
                 ApprovalActions::make(
@@ -490,6 +489,9 @@ class LeaveRequestResource extends Resource
                                     ->title(__('msg.label.discarded', ['label' => __('model.leave_request')]))
                                     ->send();
                             }),
+                    ],
+                    [                            
+                        Tables\Actions\EditAction::make(),
                     ]
                 )
             )
