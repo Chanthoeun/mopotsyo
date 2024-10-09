@@ -155,6 +155,14 @@ return [
     'activities'    => 'Activities',
     'no_of_days'    => '# of Days',
     'this_month' => 'This Month',
+    'purpose'   => 'Purpose',
+    'for_project_department' => 'For Project or Department',
+    'for_location' => 'For Location',
+    'use_funds' => 'Use Funds',
+    'expected_date' => 'Expected Date to receive',
+    'pr_no' => 'PR No',
+    'request_items' => 'Request Items',
+    'item'  => 'Item',
 
     // day
     'days' => [

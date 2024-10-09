@@ -49,7 +49,10 @@ class SwitchWorkDayPolicy
      */
     public function update(User $user, SwitchWorkDay $switchWorkDay): bool
     {
-        return $user->can('update_switch::work::day');
+        if($switchWorkDay->approvalStatus->status == 'Created' && $user->id == $switchWorkDay->user_id){            
+            return $user->can('update_switch::work::day');
+        }
+        return false;
     }
 
     /**

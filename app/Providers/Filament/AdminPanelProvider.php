@@ -29,6 +29,7 @@ use Kenepa\TranslationManager\TranslationManagerPlugin;
 use Mchev\Banhammer\Middleware\AuthBanned;
 use Mchev\Banhammer\Middleware\LogoutBanned;
 use Njxqlus\FilamentProgressbar\FilamentProgressbarPlugin;
+use RickDBCN\FilamentEmail\FilamentEmail;
 use Saade\FilamentFullCalendar\FilamentFullCalendarPlugin;
 use Tapp\FilamentAuthenticationLog\FilamentAuthenticationLogPlugin;
 use Yebor974\Filament\RenewPassword\RenewPasswordPlugin;
@@ -94,12 +95,16 @@ class AdminPanelProvider extends PanelProvider
                 FilamentFullCalendarPlugin::make()
                     ->selectable()
                     ->timezone(config('app.timezone')),
+                FilamentEmail::make()
             ])
             ->unsavedChangesAlerts()
             ->navigationGroups([
                 NavigationGroup::make()
                      ->label(fn() => __('nav.employee'))
                      ->icon('fas-user'),
+                NavigationGroup::make()
+                     ->label(fn() => __('nav.procurement'))
+                     ->icon('fas-cart-shopping'),
                 NavigationGroup::make()
                      ->label(fn() => __('nav.hr'))
                      ->icon('fas-users'),

@@ -240,7 +240,6 @@ class WorkFromHomeResource extends Resource
                     ->label(__('field.requested_by'))
                     ->relationship('user', 'name'),
                 Tables\Filters\TrashedFilter::make()
-                    ->visible(fn() => Auth::user()->can('restore_work::from::home')),
             ])
             ->actions(
                 ApprovalActions::make(
@@ -283,6 +282,9 @@ class WorkFromHomeResource extends Resource
                                     ->title(__('msg.label.discarded', ['label' => __('model.leave_request')]))
                                     ->send();
                             }),
+                    ],
+                    [                            
+                        Tables\Actions\EditAction::make(),
                     ]
                 )
             )

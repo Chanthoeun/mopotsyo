@@ -11,6 +11,7 @@ use App\Models\EmployeeContract;
 use App\Models\LeaveRequest;
 use App\Models\ProcessApprover;
 use App\Models\PublicHoliday;
+use App\Models\PurchaseRequest;
 use App\Models\RequestDate;
 use App\Models\User;
 use App\Settings\SettingOptions;
@@ -419,6 +420,12 @@ if(!function_exists('getTakenLeave')){
             }
         }
         return $taken;
+    }
+}
+
+if(!function_exists('generatePrNo')){
+    function generatePrNo(){
+        return 'PR'.date('Ym').'-'.str_pad(PurchaseRequest::count() + 1, 5, '0', STR_PAD_LEFT);
     }
 }
 

@@ -192,7 +192,6 @@ class OverTimeResource extends Resource
                     ->label(__('field.requested_by'))
                     ->relationship('user', 'name'),
                 Tables\Filters\TrashedFilter::make()
-                    ->visible(fn() => Auth::user()->can('over_time::request')),
             ])
             ->actions(
                 ApprovalActions::make(
@@ -235,6 +234,9 @@ class OverTimeResource extends Resource
                                     ->title(__('msg.label.discarded', ['label' => __('model.overtime')]))
                                     ->send();
                             }),
+                    ],
+                    [                            
+                        Tables\Actions\EditAction::make(),
                     ]
                 )
             )
