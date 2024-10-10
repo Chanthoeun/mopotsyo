@@ -3,6 +3,7 @@
 namespace App\Filament\Admin\Resources\LeaveRequestResource\Pages;
 
 use App\Filament\Admin\Resources\LeaveRequestResource;
+use App\Models\User;
 use Filament\Actions;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Textarea;
@@ -26,7 +27,7 @@ class ViewLeaveRequest extends ViewRecord
      * @throws Exception
      */
     protected function getOnCompletionAction()
-    {        
+    {                
         return Action::make("discard")
             ->label(__('filament-approvals::approvals.actions.discard'))                                       
             ->hidden(fn() => Auth::id() != $this->record->approvalStatus->creator->id || $this->record->isDiscarded())   

@@ -60,7 +60,10 @@ class SwitchWorkDayPolicy
      */
     public function delete(User $user, SwitchWorkDay $switchWorkDay): bool
     {
-        return $user->can('delete_switch::work::day');
+        if($switchWorkDay->approvalStatus->status == 'Created' && $user->id == $switchWorkDay->user_id){            
+            return $user->can('delete_switch::work::day');
+        }
+        return false;
     }
 
     /**
@@ -76,7 +79,10 @@ class SwitchWorkDayPolicy
      */
     public function forceDelete(User $user, SwitchWorkDay $switchWorkDay): bool
     {
-        return $user->can('force_delete_switch::work::day');
+        if($switchWorkDay->approvalStatus->status == 'Created' && $user->id == $switchWorkDay->user_id){                        
+            return $user->can('force_delete_switch::work::day');
+        }
+        return false;
     }
 
     /**
@@ -92,7 +98,10 @@ class SwitchWorkDayPolicy
      */
     public function restore(User $user, SwitchWorkDay $switchWorkDay): bool
     {
-        return $user->can('restore_switch::work::day');
+        if($switchWorkDay->approvalStatus->status == 'Created' && $user->id == $switchWorkDay->user_id){            
+            return $user->can('restore_switch::work::day');
+        }
+        return false;
     }
 
     /**

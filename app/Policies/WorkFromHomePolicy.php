@@ -60,7 +60,10 @@ class WorkFromHomePolicy
      */
     public function delete(User $user, WorkFromHome $workFromHome): bool
     {
-        return $user->can('delete_work::from::home');
+        if($workFromHome->approvalStatus->status == 'Created' && $user->id == $workFromHome->user_id){
+            return $user->can('delete_work::from::home');
+        }
+        return false;
     }
 
     /**
@@ -76,7 +79,10 @@ class WorkFromHomePolicy
      */
     public function forceDelete(User $user, WorkFromHome $workFromHome): bool
     {
-        return $user->can('force_delete_work::from::home');
+        if($workFromHome->approvalStatus->status == 'Created' && $user->id == $workFromHome->user_id){
+            return $user->can('force_delete_work::from::home');
+        }
+        return false;
     }
 
     /**
@@ -92,7 +98,10 @@ class WorkFromHomePolicy
      */
     public function restore(User $user, WorkFromHome $workFromHome): bool
     {
-        return $user->can('restore_work::from::home');
+        if($workFromHome->approvalStatus->status == 'Created' && $user->id == $workFromHome->user_id){
+            return $user->can('restore_work::from::home');
+        }
+        return false;
     }
 
     /**

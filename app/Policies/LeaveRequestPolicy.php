@@ -59,12 +59,6 @@ class LeaveRequestPolicy
      */
     public function update(User $user, LeaveRequest $leaveRequest): bool
     {
-        // if(empty($user->supervisor)) return false;
-
-        // if(empty($user->contract)) return false;
-
-        // if(empty($user->contract->contractType->allow_leave_request)) return false;
-
         if($leaveRequest->approvalStatus->status == 'Created' && $user->id == $leaveRequest->user_id){            
             return $user->can('update_leave::request');
         }
@@ -76,31 +70,18 @@ class LeaveRequestPolicy
      * Determine whether the user can delete the model.
      */
     public function delete(User $user, LeaveRequest $leaveRequest): bool
-    {
-        if($user->hasRole('super_admin')) return true;
-
-        if(empty($user->supervisor)) return false;
-
-        if(empty($user->contract)) return false;
-
-        if(empty($user->contract->contractType->allow_leave_request)) return false;
-
-        return $user->can('delete_leave::request');
+    {        
+        if($leaveRequest->approvalStatus->status == 'Created' && $user->id == $leaveRequest->user_id){            
+            return $user->can('delete_leave::request');
+        }
+        return false;
     }
 
     /**
      * Determine whether the user can bulk delete.
      */
     public function deleteAny(User $user): bool
-    {
-        if($user->hasRole('super_admin')) return true;
-
-        if(empty($user->supervisor)) return false;
-
-        if(empty($user->contract)) return false;
-
-        if(empty($user->contract->contractType->allow_leave_request)) return false;
-
+    {        
         return $user->can('delete_any_leave::request');
     }
 
@@ -109,14 +90,6 @@ class LeaveRequestPolicy
      */
     public function forceDelete(User $user, LeaveRequest $leaveRequest): bool
     {
-        if($user->hasRole('super_admin')) return true;
-
-        if(empty($user->supervisor)) return false;
-
-        if(empty($user->contract)) return false;
-
-        if(empty($user->contract->contractType->allow_leave_request)) return false;
-
         return $user->can('force_delete_leave::request');
     }
 
@@ -124,15 +97,7 @@ class LeaveRequestPolicy
      * Determine whether the user can permanently bulk delete.
      */
     public function forceDeleteAny(User $user): bool
-    {
-        if($user->hasRole('super_admin')) return true;
-
-        if(empty($user->supervisor)) return false;
-
-        if(empty($user->contract)) return false;
-
-        if(empty($user->contract->contractType->allow_leave_request)) return false;
-        
+    {        
         return $user->can('force_delete_any_leave::request');
     }
 
@@ -143,7 +108,11 @@ class LeaveRequestPolicy
     {
         if($user->hasRole('super_admin')) return true;
 
-        return $user->can('restore_leave::request');
+        if($leaveRequest->approvalStatus->status == 'Created' && $user->id == $leaveRequest->user_id){                        
+            return $user->can('restore_leave::request');
+        }
+
+        return false;
     }
 
     /**
@@ -226,7 +195,7 @@ class LeaveRequestPolicy
      * Determine whether the user can discard.
      */
     public function discard(User $user, LeaveRequest $leaveRequest): bool
-    {                 
+    {                     
         if($leaveRequest->isRejected() && !$leaveRequest->isDiscarded()){
             if($leaveRequest->leaveType->rules){
                 $nextStep = $leaveRequest->nextApprovalStep();
