@@ -41,10 +41,7 @@ class TimesheetPolicy
      */
     public function update(User $user, Timesheet $timesheet): bool
     {
-        if($timesheet->approvalStatus->status == 'Created' && $user->id == $timesheet->user_id){
-            return $user->can('update_timesheet');
-        }
-        return false;
+        return $user->can('update_timesheet');
     }
 
     /**
@@ -52,10 +49,7 @@ class TimesheetPolicy
      */
     public function delete(User $user, Timesheet $timesheet): bool
     {
-        if($timesheet->approvalStatus->status == 'Created' && $user->id == $timesheet->user_id){
-            return $user->can('delete_timesheet');
-        }
-        return false;
+        return $user->can('delete_timesheet');
     }
 
     /**
@@ -71,10 +65,7 @@ class TimesheetPolicy
      */
     public function forceDelete(User $user, Timesheet $timesheet): bool
     {
-        if($timesheet->approvalStatus->status == 'Created' && $user->id == $timesheet->user_id){
-            return $user->can('force_delete_timesheet');
-        }
-        return false;
+        return $user->can('force_delete_timesheet');
     }
 
     /**
@@ -90,10 +81,7 @@ class TimesheetPolicy
      */
     public function restore(User $user, Timesheet $timesheet): bool
     {
-        if($timesheet->approvalStatus->status == 'Created' && $user->id == $timesheet->user_id){
-            return $user->can('restore_timesheet');
-        }
-        return false;
+        return $user->can('restore_timesheet');
     }
 
     /**
