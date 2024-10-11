@@ -20,6 +20,7 @@ return [
     'view' => 'View',
     'send' => 'Send',
     'download'  =>  'Download',
+    'check' =>  'Check',
 
     // Button title
     'label' => [
@@ -41,6 +42,7 @@ return [
         'view'      => 'View :label',
         'send'      => 'Send :label',
         'download'  => 'Download :label',
+        'check'     => 'Check :label',
     ],
 
     // Button message

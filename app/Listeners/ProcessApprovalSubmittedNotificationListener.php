@@ -4,10 +4,12 @@ namespace App\Listeners;
 
 use App\Filament\Admin\Resources\LeaveRequestResource;
 use App\Filament\Admin\Resources\OverTimeResource;
+use App\Filament\Admin\Resources\PurchaseRequestResource;
 use App\Filament\Admin\Resources\SwitchWorkDayResource;
 use App\Filament\Admin\Resources\WorkFromHomeResource;
 use App\Models\LeaveRequest;
 use App\Models\OverTime;
+use App\Models\PurchaseRequest;
 use App\Models\SwitchWorkDay;
 use App\Models\User;
 use App\Models\WorkFromHome;
@@ -42,6 +44,8 @@ class ProcessApprovalSubmittedNotificationListener
             $this->switchWorkDaySubmitted($approvable);
         }else if(get_class($approvable) == WorkFromHome::class){
             $this->workFromHomeSubmitted($approvable);
+        }else if(get_class($approvable) == PurchaseRequest::class){
+            $this->purchaseRequestSubmitted($approvable);
         }
     }
 
@@ -190,6 +194,42 @@ class ProcessApprovalSubmittedNotificationListener
 
             // send notification
             $this->sendNotification($approver, $message, comment: $workFromHome->reason);
+        }
+    }
+
+    protected function purchaseRequestSubmitted(PurchaseRequest $purchaseRequest)
+    {
+        $approvers = collect();
+        $nextApproval = $purchaseRequest->nextApprovalStep();
+        $processApprover = $purchaseRequest->processApprovers()->where('step_id', $nextApproval->id)->where('role_id', $nextApproval->role_id)->first();
+        
+        if($processApprover){
+            if($processApprover->approver){
+                $approvers->push($processApprover->approver);
+            }else{
+                $approvers = User::whereHas('employee', fn(Builder $q) => $q->whereNull('resign_date')->orWhereDate('resign_date', '>=', now()))->role($processApprover->role_id)->get();
+            }
+        }else{
+            $approvers = User::whereHas('employee', fn(Builder $q) => $q->whereNull('resign_date')->orWhereDate('resign_date', '>=', now()))->role($nextApproval->role_id)->get();
+        }
+        
+        foreach($approvers as $approver){            
+            $message = collect([
+                'subject' => __('mail.subject', ['name' => __('btn.label.request', ['label' => __('model.purchase_request')])]),
+                'greeting' => __('mail.greeting', ['name' => $approver->name]),
+                'body' => __('msg.body.purchase_request', [
+                    'name'      => $purchaseRequest->approvalStatus->creator->full_name, 
+                    'action'    => strtolower(__('btn.request')),
+                    'number'    => strtoupper($purchaseRequest->pr_no)
+                ]),
+                'action'    => [
+                    'name'  => __('btn.approve'),
+                    'url'   => PurchaseRequestResource::getUrl('view', ['record' => $purchaseRequest])
+                ]
+            ]);
+
+            // send notification
+            $this->sendNotification($approver, $message, comment: $purchaseRequest->purpose);
         }
     }
 }
