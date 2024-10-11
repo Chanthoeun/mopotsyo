@@ -4,10 +4,12 @@ namespace App\Listeners;
 
 use App\Filament\Admin\Resources\LeaveRequestResource;
 use App\Filament\Admin\Resources\OverTimeResource;
+use App\Filament\Admin\Resources\PurchaseRequestResource;
 use App\Filament\Admin\Resources\SwitchWorkDayResource;
 use App\Filament\Admin\Resources\WorkFromHomeResource;
 use App\Models\LeaveRequest;
 use App\Models\OverTime;
+use App\Models\PurchaseRequest;
 use App\Models\SwitchWorkDay;
 use App\Models\User;
 use App\Models\WorkFromHome;
@@ -44,6 +46,8 @@ class ProcessApprovalDiscardNotificationListener
             $this->switchWorkDayDiscarded($approvable, $discarded);
         }else if(get_class($approvable) == WorkFromHome::class){
             $this->workFromHomeDiscarded($approvable, $discarded);
+        }else if(get_class($approvable) == PurchaseRequest::class){
+            $this->purchaseRequestDiscarded($approvable, $discarded);
         }
     }
 
@@ -242,6 +246,53 @@ class ProcessApprovalDiscardNotificationListener
                 // cc approver
                 $ccEmails = [];
                 $ccs = collect(app(SettingOptions::class)->cc_emails)->where('model_type', $workFromHome::getApprovableType())->first();
+                if($ccs){
+                    $ccEmails = User::whereIn('id', $ccs['accounts'])->get()->pluck('email')->toArray();
+                }
+        
+                // send notification
+                $this->sendNotification($receiver, $message, comment: $discarded->comment, cc:$ccEmails);
+            }
+        }
+    }
+
+    protected function purchaseRequestDiscarded(PurchaseRequest $purchaseRequest, $discarded){
+        $creator = $purchaseRequest->approvalStatus->creator;
+        if(Auth::id() != $creator->id){
+            $message = collect([
+                'subject' => __('mail.subject', ['name' => __('msg.label.discarded', ['label' => __('model.purchase_request')])]),
+                'greeting' => __('mail.greeting', ['name' => $creator->name]),
+                'body' => __('msg.body.purchase_request_discarded', [    
+                    'number'        => strtoupper($purchaseRequest->pr_no), 
+                    'actionedBy'    => $discarded->approver_name,     
+                ]),
+                'action'    => [
+                    'name'  => __('btn.view'),
+                    'url'   => PurchaseRequestResource::getUrl('view', ['record' => $purchaseRequest])
+                ]
+            ]);
+    
+            // send notification
+            $this->sendNotification($creator, $message, comment: $discarded->comment);
+        }else{
+            $receivers = User::whereIn('id', $purchaseRequest->processApprovers->pluck('approver_id')->toArray())->get();
+            foreach($receivers as $receiver){
+                $message = collect([
+                    'subject' => __('mail.subject', ['name' => __('msg.label.discarded', ['label' => __('model.purchase_request')])]),
+                    'greeting' => __('mail.greeting', ['name' => $receiver->name]),
+                    'body' => __('msg.body.purchase_request_discarded_by_owner', [
+                        'name'      => $purchaseRequest->approvalStatus->creator->full_name,                             
+                        'number'    => strtoupper($purchaseRequest->pr_no),
+                    ]),
+                    'action'    => [
+                        'name'  => __('btn.view'),
+                        'url'   => PurchaseRequestResource::getUrl('view', ['record' => $purchaseRequest])
+                    ]
+                ]);
+
+                // cc approver
+                $ccEmails = [];
+                $ccs = collect(app(SettingOptions::class)->cc_emails)->where('model_type', $purchaseRequest::getApprovableType())->first();
                 if($ccs){
                     $ccEmails = User::whereIn('id', $ccs['accounts'])->get()->pluck('email')->toArray();
                 }

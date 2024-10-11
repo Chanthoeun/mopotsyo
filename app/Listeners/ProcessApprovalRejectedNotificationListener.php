@@ -4,10 +4,12 @@ namespace App\Listeners;
 
 use App\Filament\Admin\Resources\LeaveRequestResource;
 use App\Filament\Admin\Resources\OverTimeResource;
+use App\Filament\Admin\Resources\PurchaseRequestResource;
 use App\Filament\Admin\Resources\SwitchWorkDayResource;
 use App\Filament\Admin\Resources\WorkFromHomeResource;
 use App\Models\LeaveRequest;
 use App\Models\OverTime;
+use App\Models\PurchaseRequest;
 use App\Models\SwitchWorkDay;
 use App\Models\WorkFromHome;
 use App\Traits\SendNotification;
@@ -41,6 +43,8 @@ class ProcessApprovalRejectedNotificationListener
             $this->switchWorkDayRejected($approvable, $rejected);
         }else if(get_class($approvable) == WorkFromHome::class){
             $this->workFromHomeRejected($approvable, $rejected);
+        }else if(get_class($approvable) == PurchaseRequest::class){
+            $this->purchaseRequestRejected($approvable, $rejected);
         }
     }
 
@@ -121,6 +125,25 @@ class ProcessApprovalRejectedNotificationListener
             'action'    => [
                 'name'  => __('btn.view'),
                 'url'   => WorkFromHomeResource::getUrl('view', ['record' => $workFromHome])
+            ]
+        ]);
+
+        // send notification
+        $this->sendNotification($receiver, $message, comment: $rejected->comment);
+    }
+
+    protected function purchaseRequestRejected(PurchaseRequest $purchaseRequest, $rejected){
+        $receiver = $purchaseRequest->approvalStatus->creator;
+        $message = collect([
+            'subject' => __('mail.subject', ['name' => __('msg.label.rejected', ['label' => __('model.work_from_home')])]),
+            'greeting' => __('mail.greeting', ['name' => $receiver->name]),
+            'body' => __('msg.body.purchase_request_rejected', [    
+                'number'  => strtoupper($purchaseRequest->pr_no), 
+                'actionedBy'    => $rejected->approver_name,     
+            ]),
+            'action'    => [
+                'name'  => __('btn.view'),
+                'url'   => PurchaseRequestResource::getUrl('view', ['record' => $purchaseRequest])
             ]
         ]);
 

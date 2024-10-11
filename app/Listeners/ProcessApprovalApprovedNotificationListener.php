@@ -4,10 +4,12 @@ namespace App\Listeners;
 
 use App\Filament\Admin\Resources\LeaveRequestResource;
 use App\Filament\Admin\Resources\OverTimeResource;
+use App\Filament\Admin\Resources\PurchaseRequestResource;
 use App\Filament\Admin\Resources\SwitchWorkDayResource;
 use App\Filament\Admin\Resources\WorkFromHomeResource;
 use App\Models\LeaveRequest;
 use App\Models\OverTime;
+use App\Models\PurchaseRequest;
 use App\Models\SwitchWorkDay;
 use App\Models\User;
 use App\Models\WorkFromHome;
@@ -35,27 +37,32 @@ class ProcessApprovalApprovedNotificationListener
      */
     public function handle(ProcessApprovedEvent $event): void
     {        
-        $approvable = $event->approval->approvable;            
+        $approved = $event->approval;
+        $approvable = $approved->approvable;            
         if($approvable->isApprovalCompleted() && get_class($approvable) == LeaveRequest::class){
-            $this->leaveRequestApprovedCompleted($approvable);
+            $this->leaveRequestApprovedCompleted($approvable, $approved);
         }else if($approvable->isApprovalCompleted() && get_class($approvable) == OverTime::class){
-            $this->overtimeApprovedCompleted($approvable);
+            $this->overtimeApprovedCompleted($approvable, $approved);
         }else if($approvable->isApprovalCompleted() && get_class($approvable) == SwitchWorkDay::class){
-            $this->switchWorkDayApprovedCompleted($approvable);
+            $this->switchWorkDayApprovedCompleted($approvable, $approved);
         }else if($approvable->isApprovalCompleted() && get_class($approvable) == WorkFromHome::class){
-            $this->workFromHomeApprovedCompleted($approvable);
+            $this->workFromHomeApprovedCompleted($approvable, $approved);
+        }else if($approvable->isApprovalCompleted() && get_class($approvable) == PurchaseRequest::class){
+            $this->purchaseRequestApprovedCompleted($approvable, $approved);
         }else if(!$approvable->isApprovalCompleted() && get_class($approvable) == LeaveRequest::class){
-            $this->leaveRequestApproved($approvable);
+            $this->leaveRequestApproved($approvable, $approved);
         }else if(!$approvable->isApprovalCompleted() && get_class($approvable) == OverTime::class) {
-            $this->overtimeApproved($approvable);
+            $this->overtimeApproved($approvable, $approved);
         }else if(!$approvable->isApprovalCompleted() && get_class($approvable) == SwitchWorkDay::class) {
-            $this->switchWorkDayApproved($approvable);
+            $this->switchWorkDayApproved($approvable, $approved);
         }else if(!$approvable->isApprovalCompleted() && get_class($approvable) == WorkFromHome::class) {
-            $this->workFromHomeApproved($approvable);
+            $this->workFromHomeApproved($approvable, $approved);
+        }else if(!$approvable->isApprovalCompleted() && get_class($approvable) == PurchaseRequest::class) {
+            $this->purchaseRequestApproved($approvable, $approved);
         }                     
     }
 
-    protected function leaveRequestApprovedCompleted(LeaveRequest $leaveRequest){
+    protected function leaveRequestApprovedCompleted(LeaveRequest $leaveRequest, $approved){
         // reset unused overtime
         if(app(SettingOptions::class)->allow_overtime == true && app(SettingOptions::class)->overtime_link == $leaveRequest->leave_type_id && $leaveRequest->overTimes){
             $leaveRequest->overTimes()->update([
@@ -95,7 +102,7 @@ class ProcessApprovalApprovedNotificationListener
         $this->sendNotification($receiver, $message, cc:$ccEmails);
     }
 
-    protected function leaveRequestApproved(LeaveRequest $leaveRequest){
+    protected function leaveRequestApproved(LeaveRequest $leaveRequest, $approved){
         $approvers = collect();
         $nextApproval = $leaveRequest->nextApprovalStep();    
         $getApprover = $leaveRequest->processApprovers()->where('step_id', $nextApproval->id)->where('role_id', $nextApproval->role_id)->first();
@@ -135,7 +142,7 @@ class ProcessApprovalApprovedNotificationListener
         }
     }
     
-    protected function overtimeApprovedCompleted(OverTime $overtime){
+    protected function overtimeApprovedCompleted(OverTime $overtime, $approved){
         $receiver = $overtime->approvalStatus->creator;
         $message = collect([
             'subject' => __('mail.subject', ['name' => __('msg.label.completed', ['label' => __('model.overtime')])]),
@@ -160,7 +167,7 @@ class ProcessApprovalApprovedNotificationListener
         $this->sendNotification($receiver, $message, cc:$ccEmails);
     }
 
-    protected function overtimeApproved(OverTime $overtime){
+    protected function overtimeApproved(OverTime $overtime, $approved){
         $approvers = collect();
         $nextApproval = $overtime->nextApprovalStep();
         $getApprover = $overtime->processApprovers()->where('step_id', $nextApproval->id)->where('role_id', $nextApproval->role_id)->first();
@@ -198,7 +205,7 @@ class ProcessApprovalApprovedNotificationListener
         }
     }
     
-    protected function switchWorkDayApprovedCompleted(SwitchWorkDay $switchWorkDay){
+    protected function switchWorkDayApprovedCompleted(SwitchWorkDay $switchWorkDay, $approved){
         $receiver = $switchWorkDay->approvalStatus->creator;
         $message = collect([
             'subject' => __('mail.subject', ['name' => __('msg.label.completed', ['label' => __('model.switch_work_day')])]),
@@ -223,7 +230,7 @@ class ProcessApprovalApprovedNotificationListener
         $this->sendNotification($receiver, $message, cc:$ccEmails);
     }
 
-    protected function switchWorkDayApproved(SwitchWorkDay $switchWorkDay){
+    protected function switchWorkDayApproved(SwitchWorkDay $switchWorkDay, $approved){
         $approvers = collect();
         $nextApproval = $switchWorkDay->nextApprovalStep();
         $getApprover = $switchWorkDay->processApprovers()->where('step_id', $nextApproval->id)->where('role_id', $nextApproval->role_id)->first();
@@ -260,7 +267,7 @@ class ProcessApprovalApprovedNotificationListener
         }
     }
 
-    protected function workFromHomeApprovedCompleted(WorkFromHome $workFromHome){
+    protected function workFromHomeApprovedCompleted(WorkFromHome $workFromHome, $approved){
         $receiver = $workFromHome->approvalStatus->creator;
         $message = collect([
             'subject' => __('mail.subject', ['name' => __('msg.label.completed', ['label' => __('model.work_from_home')])]),
@@ -286,7 +293,7 @@ class ProcessApprovalApprovedNotificationListener
         $this->sendNotification($receiver, $message, cc:$ccEmails);
     }
 
-    protected function workFromHomeApproved(WorkFromHome $workFromHome){
+    protected function workFromHomeApproved(WorkFromHome $workFromHome, $approved){
         $approvers = collect();
         $nextApproval = $workFromHome->nextApprovalStep();
         $getApprover = $workFromHome->processApprovers()->where('step_id', $nextApproval->id)->where('role_id', $nextApproval->role_id)->first();
@@ -320,6 +327,68 @@ class ProcessApprovalApprovedNotificationListener
     
                 // send notification
                 $this->sendNotification($approver, $message, comment: $workFromHome->reason);
+            }        
+        }
+    }
+
+    protected function purchaseRequestApprovedCompleted(PurchaseRequest $purchaseRequest, $approved){
+        $receiver = $purchaseRequest->approvalStatus->creator;
+        $message = collect([
+            'subject' => __('mail.subject', ['name' => __('msg.label.completed', ['label' => __('model.purchase_request')])]),
+            'greeting' => __('mail.greeting', ['name' => $receiver->name]),
+            'body' => __('msg.body.purchase_request_completed', [   
+                'number'        => strtoupper($purchaseRequest->pr_no),                
+            ]),
+            'action'    => [
+                'name'  => __('btn.view'),
+                'url'   => PurchaseRequestResource::getUrl('view', ['record' => $purchaseRequest])
+            ]
+        ]);
+
+        // cc approver
+        $ccEmails = [];
+        $ccs = collect(app(SettingOptions::class)->cc_emails)->where('model_type', $purchaseRequest::getApprovableType())->first();
+        if($ccs){
+            $ccEmails = User::whereIn('id', $ccs['accounts'])->get()->pluck('email')->toArray();
+        }
+
+        $this->sendNotification($receiver, $message, cc:$ccEmails);
+    }
+
+    protected function purchaseRequestApproved(PurchaseRequest $purchaseRequest, $approved){        
+        $approvers = collect();
+        $nextApproval = $purchaseRequest->nextApprovalStep();
+        $getApprover = $purchaseRequest->processApprovers()->where('step_id', $nextApproval->id)->where('role_id', $nextApproval->role_id)->first();
+        
+        if($getApprover){
+            if($getApprover->approver){
+                $approvers->push($getApprover->approver);
+            }else{
+                $approvers = User::whereHas('employee', fn(Builder $q) => $q->whereNull('resign_date')->orWhereDate('resign_date', '>=', now()))->role($getApprover->role_id)->get();
+            }
+        }else{
+            $approvers = User::whereHas('employee', fn(Builder $q) => $q->whereNull('resign_date')->orWhereDate('resign_date', '>=', now()))->role($nextApproval->role_id)->get();
+        }
+        
+        foreach($approvers as $approver){    
+            if(Auth::id() != $approver->id){
+                $message = collect([
+                    'subject' => __('mail.subject', ['name' => __('btn.label.request', ['label' => __('model.purchase_request')])]),
+                    'greeting' => __('mail.greeting', ['name' => $approver->name]),
+                    'body' => __('msg.body.purchase_request_approved', [
+                        'name'      => $purchaseRequest->approvalStatus->creator->full_name, 
+                        'action'    => strtolower(__('btn.request')),  
+                        'number'    => strtoupper($purchaseRequest->pr_no),
+                        'actionedBy'=> $approved->approver_name, 
+                    ]),
+                    'action'    => [
+                        'name'  => __('btn.approve'),
+                        'url'   => PurchaseRequestResource::getUrl('view', ['record' => $purchaseRequest])
+                    ]
+                ]);
+    
+                // send notification
+                $this->sendNotification($approver, $message, comment: $purchaseRequest->purpose);
             }        
         }
     }

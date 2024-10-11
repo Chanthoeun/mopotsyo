@@ -79,5 +79,11 @@ return [
         'not_working_day'       => 'Selected date must be not your work day.',
         'is_public_holiday'     => 'Selected date is public holiday.',
         'switch_working_date'   => 'Switched between :from and :to because ":reason"',
+        'purchase_request'      => ':name just :action a purchase request. This is a purchase number :number. Please kindly check and approve in the below link.',
+        'purchase_request_approved'    => ':name just :action a purchase request. This is a purchase number :number and it was checked and approved by :actionedBy. Please kindly check and approve in the below link.',
+        'purchase_request_completed'   => 'Your purchase request number :number was checked and approved. Procurement team continue to work on your request.',
+        'purchase_request_rejected'    => 'Your purchase request number :number was rejected by :actionedBy.',
+        'purchase_request_discarded'   => 'Your purchase request number :number was discard by :actionedBy.',
+        'purchase_request_discarded_by_owner'   => ':name just :action a purchase request number :number.',
     ]
 ];
