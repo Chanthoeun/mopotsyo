@@ -247,7 +247,7 @@ class WorkFromHomeResource extends Resource
                         Tables\Actions\Action::make('discard') 
                             ->label(__('filament-approvals::approvals.actions.discard'))                           
                             ->visible(fn (Model $record) => (Auth::id() == $record->approvalStatus->creator->id && $record->isApprovalCompleted() && $record->isApproved()))                                                      
-                            ->hidden(fn(Model $record) => (Auth::id() != $record->approvalStatus->creator->id || $record->isDiscarded()))                            
+                            ->hidden(fn(Model $record) => (Auth::id() != $record->approvalStatus->creator->id || $record->isDiscarded() || $record->to_date < now()))                            
                             ->form([
                                 Textarea::make('reason')
                                     ->label(__('field.reason'))
@@ -284,17 +284,14 @@ class WorkFromHomeResource extends Resource
                             }),
                     ],
                     [                            
-                        Tables\Actions\EditAction::make(),
+                        Tables\Actions\ActionGroup::make([
+                            Tables\Actions\EditAction::make(),
+                            Tables\Actions\DeleteAction::make(),
+                            Tables\Actions\RestoreAction::make(),
+                        ])
                     ]
                 )
-            )
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                    Tables\Actions\ForceDeleteBulkAction::make(),
-                    Tables\Actions\RestoreBulkAction::make(),
-                ]),
-            ]);
+            );
     }
 
     public static function getRelations(): array

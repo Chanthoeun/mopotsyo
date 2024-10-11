@@ -33,7 +33,7 @@ return [
     'prune_crontab' => '0 0 * * *',
 
     'can_access' => [
-        'role' => [],
+        'role' => ['super_admin'],
     ],
 
     'pagination_page_options' => [

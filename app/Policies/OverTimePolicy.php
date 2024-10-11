@@ -52,7 +52,10 @@ class OverTimePolicy
      */
     public function delete(User $user, OverTime $overTime): bool
     {
-        return $user->can('delete_over::time');
+        if($overTime->approvalStatus->status == 'Created' && $user->id == $overTime->user_id){            
+            return $user->can('delete_over::time');
+        }
+        return false;
     }
 
     /**
@@ -68,7 +71,10 @@ class OverTimePolicy
      */
     public function forceDelete(User $user, OverTime $overTime): bool
     {
-        return $user->can('force_delete_over::time');
+        if($overTime->approvalStatus->status == 'Created' && $user->id == $overTime->user_id){            
+            return $user->can('force_delete_over::time');
+        }
+        return false;
     }
 
     /**
@@ -84,7 +90,10 @@ class OverTimePolicy
      */
     public function restore(User $user, OverTime $overTime): bool
     {
-        return $user->can('restore_over::time');
+        if($overTime->approvalStatus->status == 'Created' && $user->id == $overTime->user_id){            
+            return $user->can('restore_over::time');
+        }
+        return false;
     }
 
     /**

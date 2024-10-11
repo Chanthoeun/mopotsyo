@@ -10,6 +10,7 @@ use App\Models\LeaveRequest;
 use App\Models\User;
 use App\Policies\ActivityPolicy;
 use App\Policies\AuthenticationLogPolicy;
+use App\Policies\EmailPolicy;
 use App\Policies\LeaveCarryForwardPolicy;
 use App\Policies\LeaveEntitlementPolicy;
 use App\Policies\LeaveRequestPolicy;
@@ -20,6 +21,7 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Rappasoft\LaravelAuthenticationLog\Models\AuthenticationLog;
+use RickDBCN\FilamentEmail\Models\Email;
 use RingleSoft\LaravelProcessApproval\Events\ApprovalNotificationEvent;
 use RingleSoft\LaravelProcessApproval\Events\ProcessSubmittedEvent;
 use RingleSoft\LaravelProcessApproval\Models\ProcessApprovalFlow;
@@ -45,10 +47,8 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Role::class, RolePolicy::class);
         Gate::policy(Activity::class, ActivityPolicy::class);
         Gate::policy(AuthenticationLog::class, AuthenticationLogPolicy::class);
+        Gate::policy(Email::class, EmailPolicy::class);
         Gate::policy(ProcessApprovalFlow::class, ProcessApprovalFlowPolicy::class);
-        Gate::policy(LeaveRequest::class, LeaveRequestPolicy::class);
-        Gate::policy(LeaveEntitlement::class, LeaveEntitlementPolicy::class);
-        Gate::policy(LeaveCarryForward::class, LeaveCarryForwardPolicy::class);
 
         
         Gate::define('use-translation-manager', function (?User $user) {
