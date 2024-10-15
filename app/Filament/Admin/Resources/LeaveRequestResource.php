@@ -98,30 +98,44 @@ class LeaveRequestResource extends Resource
                                     ->rules([
                                         function (Get $get) {
                                             return function (string $attribute, $value, Closure $fail) use($get) {
-                                                if($get('requestDates')){
-                                                    $user = Auth::user();
-                                                    // get leave request days                                    
-                                                    $requestDays = getRequestDays($get('requestDates'));
-
-                                                    // request days in advance
-                                                    $inAdvance = round(now()->diffInDays($get('from_date')), 0);
-                                                    // dd($inAdvance);
-                                                    // allow accruing leave days if no rule
-                                                    $leaveType = LeaveType::where('id', $value)->first();
-                                                    
+                                                $user = Auth::user();
+                                                // get leave request days                                    
+                                                $requestDays = getRequestDays($get('requestDates'));
+                                                // request days in advance
+                                                $inAdvance = round(now()->diffInDays($get('from_date')), 0);
+                                                // allow accruing leave days if no rule
+                                                $leaveType = LeaveType::where('id', $value)->first();
+                                                
+                                                // check if request back date
+                                                if(isRequestBackDate($get('to_date')) == true){
+                                                    // check balance
+                                                    $entitlement = $user->entitlements()->where('leave_type_id', $leaveType->id)->where('is_active', true)->whereDate('end_date', '>=', now())->first();
+                                                    if($entitlement && ($entitlement->remaining == 0 || $requestDays > $entitlement->remaining)){
+                                                        $fail(__('msg.balance_is_not_enough'));
+                                                    }else if($entitlement && (array_key_exists('allow_accrual', $leaveType->option) && $leaveType->option['allow_accrual'] == true && $requestDays > $entitlement->accrued)){
+                                                        $fail(__('msg.body.request_over_accrued_amount', ['amount' => $entitlement->accrued]));
+                                                    }else{                                                            
+                                                        // use overtime
+                                                        if(app(SettingOptions::class)->allow_overtime == true && app(SettingOptions::class)->overtime_link == $leaveType->id && getOvertimeDays($user, $get('overTimes')) < $requestDays){                                                                
+                                                            $fail(__('msg.balance_is_not_enough'));
+                                                        }
+                                                    }
+                                                }else if($requestDays){
                                                     if($leaveType){
                                                         // TODO: check rule
                                                         if($leaveType->rules){
-                                                            foreach($leaveType->rules as $rule){                                                    
+                                                            foreach($leaveType->rules as $rule){   
+                                                                                                               
                                                                 if(empty($rule['to_amount']) && $requestDays > $rule['from_amount'] && !empty($rule['day_in_advance']) && $inAdvance < $rule['day_in_advance']){
                                                                     $fail(trans_choice('msg.body.in_advance', $rule['day_in_advance'], ['days' => $rule['day_in_advance']]));
                                                                 }else if($requestDays >= $rule['from_amount'] && $requestDays <= $rule['to_amount'] && !empty($rule['day_in_advance']) && $inAdvance < $rule['day_in_advance']){
                                                                     $fail(trans_choice('msg.body.in_advance', $rule['day_in_advance'], ['days' => $rule['day_in_advance']]));
                                                                 }
+                                                                // $fail(trans_choice('msg.body.in_advance', $rule['day_in_advance'], ['days' => $rule['day_in_advance']]));
                                                             }
                                                         }
                                                                                                                 
-                                                        // TODO: check balance
+                                                        // check balance
                                                         $entitlement = $user->entitlements()->where('leave_type_id', $leaveType->id)->where('is_active', true)->whereDate('end_date', '>=', now())->first();
                                                         if($entitlement && ($entitlement->remaining == 0 || $requestDays > $entitlement->remaining)){
                                                             $fail(__('msg.balance_is_not_enough'));
@@ -224,11 +238,12 @@ class LeaveRequestResource extends Resource
                                     ->label(__('field.reason'))
                                     ->required()
                                     ->visible(function(Get $get){
-                                        if($get('requestDates') && $get('leave_type_id')){
+                                        if(isRequestBackDate($get('to_date'))){
+                                            return true;
+                                        }else if($get('requestDates') && $get('leave_type_id')){
                                             // get leave request days                                    
                                             $requestDays = getRequestDays($get('requestDates'));
                                             $leaveType = LeaveType::find($get('leave_type_id'));
-
 
                                             // check rule     
                                             if($leaveType->rules){
@@ -370,8 +385,49 @@ class LeaveRequestResource extends Resource
                                         }
                                     } ),
                                 ]),
+                        Forms\Components\Section::make(__('field.holiday_duplicated_date'))
+                            ->columnSpanFull()
+                            ->visible(function(Get $get) {
+                                if($get('from_date') && $get('to_date')){
+                                    $user = Auth::user();
+                                    foreach(getDateRangeBetweenTwoDates($get('from_date'), $get('to_date')) as $key => $date){                                          
+                                        $workDay = $user->workDays->where('day_name.value', $date->dayOfWeek())->first();
+                                        if($workDay){
+                                            if(!dateIsNotDuplicated($user, $date) || publicHoliday($date)){
+                                                return true;
+                                            }
+                                        }                                     
+                                    }
+                                }
+                                
+                                return false;
+                            })
+                            ->schema([
+                                Forms\Components\Placeholder::make('dupliatedDate')
+                                    ->hiddenLabel()
+                                    ->content(function (Get $get) {                                            
+                                        $user = Auth::user();
+                                        $str = '<div class="container mx-auto px-1 py-1"><ul class="list-decimal">';
+                                        foreach(getDateRangeBetweenTwoDates($get('from_date'), $get('to_date')) as $key => $date){                                          
+                                            $workDay = $user->workDays->where('day_name.value', $date->dayOfWeek())->first();
+                                            $publicHoliday = publicHoliday($date);
+                                            $duplicatedLeave = getLeaveDuplicatedDate($user, $date);
+                                            if($workDay){
+                                                if($duplicatedLeave){
+                                                    $str = $str . '<li>'.$duplicatedLeave->date->toDateString() .': '. $duplicatedLeave->requestdateable->leaveType->name .'</li>';
+                                                }else if($publicHoliday){
+                                                    $str = $str . '<li>'.$publicHoliday->date->toDateString() .': '. $publicHoliday->name .'</li>';
+                                                }
+                                                
+                                            }                                     
+                                        }
+                                        $str = $str . '</ul></div>';
+                                        return new HtmlString($str);                                            
+                                    } ),
+                            ]),
                         Forms\Components\Section::make(__('model.leave_request_rules'))
                             ->columnSpanFull()
+                            ->collapsed()
                             ->visible(function(Get $get): bool {
                                 $leaveType = LeaveType::find($get('leave_type_id'));
                                 return empty($leaveType->rules) ? false : true;
@@ -419,6 +475,10 @@ class LeaveRequestResource extends Resource
                 Tables\Columns\TextColumn::make('days')
                     ->label(__('field.requested_days'))                     
                     ->formatStateUsing(fn($state) => trans_choice('field.days_with_count', $state, ['count' => $state]))
+                    ->alignCenter(),
+                Tables\Columns\IconColumn::make('back_date')
+                    ->label(__('field.is_back_date'))
+                    ->boolean()
                     ->alignCenter(),
                 ApprovalStatusColumn::make("approvalStatus.status")
                     ->label(__('field.status')),                

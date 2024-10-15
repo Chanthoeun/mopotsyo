@@ -163,6 +163,9 @@ return [
     'pr_no' => 'PR No',
     'request_items' => 'Request Items',
     'item'  => 'Item',
+    'duplicated'    => 'Duplicated',
+    'holiday_duplicated_date'   => 'Holiday and Duplicated Date',
+    'is_back_date'  => 'Back Date',
 
     // day
     'days' => [
@@ -213,6 +216,7 @@ return [
         'leave' => 'Leave',
         'weekend' => 'Weekend',
         'not_work' => 'Not Work',
+        'overtime' => 'Overtime',
     ],
 
     // label

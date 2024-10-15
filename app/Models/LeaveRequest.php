@@ -112,8 +112,12 @@ class LeaveRequest extends ApprovableModel
             },
         );
     }
-    // public function canBeApproved(User $user): bool
-    // {
-    //     return true;
-    // }
+
+    protected function backDate(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->from_date < $this->created_at ? true : false,
+        );
+    }
+    
 }
