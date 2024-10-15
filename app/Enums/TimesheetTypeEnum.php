@@ -15,6 +15,7 @@ enum TimesheetTypeEnum: int implements HasLabel, HasColor, HasIcon
     case LEAVE      = 5;  
     case WEEKEND    = 6;  
     case NOT_WORK    = 7;
+    case OVERTIME    = 8;
 
     public function getLabel(): ?string
     {        
@@ -26,7 +27,7 @@ enum TimesheetTypeEnum: int implements HasLabel, HasColor, HasIcon
             self::LEAVE    => __('field.timesheet_type.leave'),
             self::WEEKEND    => __('field.timesheet_type.weekend'),
             self::NOT_WORK    => __('field.timesheet_type.not_work'),
-
+            self::OVERTIME    => __('field.timesheet_type.overtime'),
         };
     }
 
@@ -40,6 +41,7 @@ enum TimesheetTypeEnum: int implements HasLabel, HasColor, HasIcon
             self::LEAVE    => 'primary',
             self::WEEKEND  => 'danger',
             self::NOT_WORK  => 'danger',
+            self::OVERTIME   => 'success',
         };
     }
 
@@ -53,6 +55,7 @@ enum TimesheetTypeEnum: int implements HasLabel, HasColor, HasIcon
             self::LEAVE    => 'fas-person-circle-minus',
             self::WEEKEND  => 'fas-person-circle-minus',
             self::NOT_WORK  => 'fas-person-circle-minus',
+            self::OVERTIME   => 'fas-building',
         };
     }
 }

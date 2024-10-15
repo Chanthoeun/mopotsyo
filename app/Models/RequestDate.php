@@ -12,6 +12,8 @@ class RequestDate extends Model
 {
     use HasFactory;
 
+    public $with = ['requestdateable'];
+    
     /**
      * The attributes that are mass assignable.
      *

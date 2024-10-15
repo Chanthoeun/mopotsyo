@@ -193,6 +193,26 @@ if(!function_exists('dateIsNotDuplicated')){
     }
 }
 
+if(!function_exists('getLeaveDuplicatedDate')){
+    function getLeaveDuplicatedDate($user, $date){
+        $leaveRequests = LeaveRequest::whereHas('approvalStatus', static function ($q) use ($user) {
+            return $q->where('creator_id', $user->id)->where('status', ApprovalActionEnum::APPROVED->value)->orWhere('status', ApprovalActionEnum::SUBMITTED->value)->orWhere('status', ApprovalActionEnum::CREATED->value);
+        })->get();
+
+        foreach($leaveRequests as $leaveRequest){
+            foreach($leaveRequest->requestDates as $requestDate)
+            {
+                if($requestDate->date == $date){
+                    return $requestDate;
+                }
+            }           
+        }
+        return null;
+    }
+}
+
+
+
 if(!function_exists('calculateAccrud'))
 {
     function calculateAccrud($balance, $startDate, $endDate): float{
@@ -312,6 +332,16 @@ if(!function_exists('createProcessApprover')){
     }
 }
 
+if(!function_exists('isRequestBackDate')){
+    function isRequestBackDate($date){
+        $date = Carbon::parse($date);
+        if($date < now()){
+            return true;
+        }
+        return false;
+    }
+}
+
 
 
 // if(!function_exists('rangeWeek')){
@@ -348,6 +378,18 @@ if(!function_exists('isOnLeave')){
             });
         })->first();    
         return $leave ?? false;
+    }
+}
+
+if(!function_exists('isOvertime')){
+    function isOvertime($user, $date): bool | object{        
+        $overtime = RequestDate::with('requestdateable')->where('requestdateable_type', 'App\Models\OverTime')->whereDate('date', $date)->whereHas('requestdateable', function(Builder $query) use($user) {
+            $query->where('user_id', $user->id);
+            $query->whereHas('approvalStatus', static function ($q) {
+                return $q->where('status', ApprovalActionEnum::APPROVED->value);
+            });
+        })->first();    
+        return $overtime ?? false;
     }
 }
 

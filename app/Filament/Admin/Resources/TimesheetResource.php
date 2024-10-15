@@ -81,6 +81,7 @@ class TimesheetResource extends Resource
                                         $holiday = publicHoliday($date);
                                         $weekend = weekend($date);
                                         $leave = isOnLeave($user, $date);
+                                        $overtime = isOvertime($user, $date);
                                         $workFromHome = isWorkFromHome($user, $date);
                                         $workDay = isWorkDay($user, $date);
                                         $switchWorkDayFromDate = isSwitchWorkDay($user, $date);
@@ -110,7 +111,13 @@ class TimesheetResource extends Resource
                                                 $set("dates.{$i}.type", TimesheetTypeEnum::LEAVE);
                                                 $set("dates.{$i}.remark", $leave->requestdateable->leaveType->name);
                                                 $i++;
-                                            }                                                                                                            
+                                            }  
+                                        }else if($overtime){
+                                            $set("dates.{$i}.date", $date->toDateString());
+                                            $set("dates.{$i}.day", $overtime->day);
+                                            $set("dates.{$i}.type", TimesheetTypeEnum::OVERTIME);
+                                            $set("dates.{$i}.remark", $overtime->requestdateable->reason);
+                                            $i++;                                                                                                  
                                         }else if($weekend){                                            
                                             $set("dates.{$i}.date", $date->toDateString());
                                             $set("dates.{$i}.day", 1);
@@ -120,7 +127,7 @@ class TimesheetResource extends Resource
                                             $set("dates.{$i}.date", $date->toDateString());
                                             $set("dates.{$i}.day", $workFromHome->day);
                                             $set("dates.{$i}.type", TimesheetTypeEnum::HOME);
-                                            $set("dates.{$i}.remark", $workFromHome->reason);
+                                            $set("dates.{$i}.remark", $workFromHome->requestdateable->reason);
                                             $i++;
                                         }else if($workDay){   
                                             if($switchWorkDayFromDate){
