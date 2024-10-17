@@ -41,6 +41,13 @@ class RequestDate extends Model
         return $this->morphTo();
     }
 
+    protected function date(): Attribute
+    {
+        return Attribute::make(
+            get: fn ($value) => $value,
+        );
+    }
+
     protected function day(): Attribute
     {
         return Attribute::make(

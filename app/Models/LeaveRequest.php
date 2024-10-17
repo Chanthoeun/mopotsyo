@@ -20,7 +20,6 @@ use RingleSoft\LaravelProcessApproval\Enums\ApprovalStatusEnum;
 class LeaveRequest extends ApprovableModel
 {
     use HasFactory, SoftDeletes;
-
     /**
      * The attributes that are mass assignable.
      *

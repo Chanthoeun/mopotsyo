@@ -61,8 +61,7 @@ class ProcessApprovalDiscardNotificationListener
                     'request'  => strtolower(__('model.leave_request')), 
                     'days'  => strtolower(trans_choice('field.days_with_count', $leaveRequest->days, ['count' => $leaveRequest->days])),
                     'leave_type' => strtolower($leaveRequest->leaveType->name),
-                    'from'  => $leaveRequest->from_date->toDateString(), 
-                    'to' => $leaveRequest->to_date->toDateString(),
+                    'dates'  => $leaveRequest->days <= 2 ? $leaveRequest->requestDates->implode('date', ', ') : $leaveRequest->from_date->toDateString() .' - '.$leaveRequest->to_date->toDateString(),
                     'name'  => $discarded->approver_name
                 ]),
                 'action'    => [
