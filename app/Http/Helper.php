@@ -177,7 +177,7 @@ if(! function_exists('getDateRangeBetweenTwoDates')){
 
 if(!function_exists('dateIsNotDuplicated')){
     function dateIsNotDuplicated($user, $date){
-        $leaveRequests = LeaveRequest::whereHas('approvalStatus', static function ($q) use ($user) {
+        $leaveRequests = LeaveRequest::where('user_id', $user->id)->whereHas('approvalStatus', static function ($q) use ($user) {
             return $q->where('creator_id', $user->id)->where('status', ApprovalActionEnum::APPROVED->value)->orWhere('status', ApprovalActionEnum::SUBMITTED->value)->orWhere('status', ApprovalActionEnum::CREATED->value);
         })->get();
 
@@ -195,7 +195,7 @@ if(!function_exists('dateIsNotDuplicated')){
 
 if(!function_exists('getLeaveDuplicatedDate')){
     function getLeaveDuplicatedDate($user, $date){
-        $leaveRequests = LeaveRequest::whereHas('approvalStatus', static function ($q) use ($user) {
+        $leaveRequests = LeaveRequest::where('user_id', $user->id)->whereHas('approvalStatus', static function ($q) use ($user) {
             return $q->where('creator_id', $user->id)->where('status', ApprovalActionEnum::APPROVED->value)->orWhere('status', ApprovalActionEnum::SUBMITTED->value)->orWhere('status', ApprovalActionEnum::CREATED->value);
         })->get();
 

@@ -74,7 +74,6 @@ class ContractsRelationManager extends RelationManager
                                 ->live(onBlur: true)
                                 ->afterStateUpdated(function($state, Set $set){
                                     if($state == 1){
-                                        
                                         foreach(app(SettingWorkingHours::class)->work_days as $key => $workDay){
                                             $set("employeeWorkDays.{$key}.employee_id", $this->ownerRecord->id);
                                             $set("employeeWorkDays.{$key}.day_name", $workDay['day_name']);

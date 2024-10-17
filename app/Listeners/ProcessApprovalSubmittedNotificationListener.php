@@ -73,8 +73,7 @@ class ProcessApprovalSubmittedNotificationListener
                     'name'  => $leaveRequest->approvalStatus->creator->full_name, 
                     'days'  => strtolower(trans_choice('field.days_with_count', $leaveRequest->days, ['count' => $leaveRequest->days])),
                     'leave_type' => strtolower($leaveRequest->leaveType->name),
-                    'from'  => $leaveRequest->from_date->toDateString(), 
-                    'to' => $leaveRequest->to_date->toDateString()
+                    'dates'  => $leaveRequest->days <= 2 ? $leaveRequest->requestDates->implode('date', ', ') : $leaveRequest->from_date->toDateString() .' - '.$leaveRequest->to_date->toDateString(),
                 ]),
                 'action'    => [
                     'name'  => __('btn.approve'),
@@ -111,7 +110,7 @@ class ProcessApprovalSubmittedNotificationListener
                     'name'  => $overtime->approvalStatus->creator->full_name, 
                     'action'    => strtolower(__('msg.requested')),
                     'amount' => strtolower(trans_choice('field.hours_with_count', $overtime->hours, ['count' => $overtime->hours])),
-                    'date'  => implode(', ', $overtime->requestDates->map(fn($requestDate) => ['date' => $requestDate->date->toDateString()])->pluck('date')->toArray()), 
+                    'date'  => $overtime->requestDates->implode('date', ', '), 
                 ]),
                 'action'    => [
                     'name'  => __('btn.approve'),
