@@ -5,6 +5,7 @@ namespace App\Filament\Admin\Resources\LeaveRequestResource\Widgets;
 use App\Filament\Admin\Resources\LeaveRequestResource;
 use App\Models\LeaveRequest;
 use App\Models\PublicHoliday;
+use Carbon\Carbon;
 use Filament\Widgets\Widget;
 use Saade\FilamentFullCalendar\Data\EventData;
 use Saade\FilamentFullCalendar\Widgets\FullCalendarWidget;
@@ -18,20 +19,30 @@ class CalendarWidget extends FullCalendarWidget
         // This method should return an array of event-like objects. See: https://github.com/saade/filament-fullcalendar/blob/3.x/#returning-events
         // You can also return an array of EventData objects. See: https://github.com/saade/filament-fullcalendar/blob/3.x/#the-eventdata-class
         $events = array();
-        $leaveRequests = LeaveRequest::approved()->get()->map(fn($leaveRequest) => EventData::make()
-            ->id($leaveRequest->id)
-            ->title($leaveRequest->leaveType->abbr .' - '. $leaveRequest->approvalStatus->creator->name .' - '. trans_choice('field.days_with_count', $leaveRequest->days, ['count' => $leaveRequest->days]))
-            ->start($leaveRequest->from_date)
-            ->end($leaveRequest->to_date->addDay())
-            ->allDay(true)
-            ->backgroundColor($leaveRequest->leaveType->color)
-            ->url(LeaveRequestResource::getUrl('view', ['record' => $leaveRequest]), true)
-        )->toArray();
+        // $leaveRequests = LeaveRequest::approved()->get()->map(fn($leaveRequest) => EventData::make()
+        //     ->id($leaveRequest->id)
+        //     ->title($leaveRequest->leaveType->abbr .' - '. $leaveRequest->approvalStatus->creator->name .' - '. trans_choice('field.days_with_count', $leaveRequest->days, ['count' => $leaveRequest->days]))
+        //     ->start($leaveRequest->from_date)
+        //     ->end($leaveRequest->to_date->addDay())
+        //     ->allDay(true)
+        //     ->backgroundColor($leaveRequest->leaveType->color)
+        //     ->url(LeaveRequestResource::getUrl('view', ['record' => $leaveRequest]), true)
+        // )->toArray();
 
+        $leaveRequests = LeaveRequest::approved()->get();
         foreach($leaveRequests as $leaveRequest){
-            $events[] = $leaveRequest;
+            foreach($leaveRequest->requestDates as $requestDate){
+                $events[] = collect(EventData::make()
+                    ->id($leaveRequest->id)
+                    ->title($leaveRequest->leaveType->abbr .' - '. $leaveRequest->approvalStatus->creator->name .' - '. trans_choice('field.days_with_count', $leaveRequest->days, ['count' => $leaveRequest->days]))
+                    ->start(Carbon::parse($requestDate->date))
+                    ->end(Carbon::parse($requestDate->date)->addDay())
+                    ->allDay(true)
+                    ->backgroundColor($leaveRequest->leaveType->color)
+                    ->url(LeaveRequestResource::getUrl('view', ['record' => $leaveRequest]), true))->toArray();
+            }
+            //$events[] = $leaveRequest;
         }
-        
         
         $publicHolidays = PublicHoliday::all()->map(fn($holiday) => EventData::make()
             ->id($holiday->id)
