@@ -76,8 +76,13 @@ class LeaveRequestResource extends Resource
                             ->schema([
                                 Forms\Components\ToggleButtons::make('leave_type_id')
                                     ->label(__('model.leave_type'))
-                                    ->options(function() {
-                                        $user = Auth::user();                
+                                    ->options(function(string $operation, ?Model $record) {
+                                        if($operation == 'view'){
+                                            $user = $record->user;
+                                        }else{
+                                            $user = Auth::user(); 
+                                        }
+                                              
                                         return LeaveType::whereIn('id', $user->contract->contractType->leave_types)->where($user->employee->gender->value, true)->orderBy('id', 'asc')->pluck('abbr', 'id');
                                     })
                                     ->required()                                    
@@ -96,9 +101,14 @@ class LeaveRequestResource extends Resource
                                         $set('overTimes', []);
                                     })
                                     ->rules([
-                                        function (Get $get) {
-                                            return function (string $attribute, $value, Closure $fail) use($get) {
-                                                $user = Auth::user();
+                                        function (Get $get, string $operation, ?Model $record) {
+                                            return function (string $attribute, $value, Closure $fail) use($get, $operation, $record) {
+                                                if($operation == 'view'){
+                                                    $user = $record->user;
+                                                }else{
+                                                    $user = Auth::user();
+                                                }
+                                                
                                                 // get leave request days                                    
                                                 $requestDays = getRequestDays($get('requestDates'));
                                                 // request days in advance
@@ -190,8 +200,11 @@ class LeaveRequestResource extends Resource
                                         $set("to_date", $state);
                                         $set("requestDates", []);
                                         if($get('leave_type_id') && $get('to_date')){
-                                            $user = Auth::user();
-                                            
+                                            if($operation == 'view'){
+                                                $user = $record->user;
+                                            }else{
+                                                $user = Auth::user();
+                                            }
                                             // add date to request dates list
                                             foreach(getDateRangeBetweenTwoDates($state, $get('to_date')) as $key => $date){                                          
                                                 $workDay = $user->workDays->where('day_name.value', $date->dayOfWeek())->first();
@@ -218,7 +231,11 @@ class LeaveRequestResource extends Resource
                                     ->afterStateUpdated(function($state, Get $get, Set $set, string $operation, ?Model $record){
                                         $set("requestDates", []);
                                         if($get('leave_type_id') && $get('from_date')){
-                                            $user = Auth::user();
+                                            if($operation == 'view'){
+                                                $user = $record->user;
+                                            }else{
+                                                $user = Auth::user();
+                                            }
                                             
                                             // add date to request dates list
                                             foreach(getDateRangeBetweenTwoDates($get('from_date'), $state) as $key => $date){                                          
@@ -344,16 +361,26 @@ class LeaveRequestResource extends Resource
                     ->schema([
                         Forms\Components\Section::make(fn(Get $get): string => !empty($get('leave_type_id')) ? LeaveType::find($get('leave_type_id'))->name : __('field.balance'))                                                        
                             ->columns(4)
-                            ->visible(function(Get $get): bool {
-                                $entitlement = Auth::user()->entitlements()->where('leave_type_id', $get('leave_type_id'))->where('is_active', true)->whereDate('end_date', '>=', now())->first();
+                            ->visible(function(Get $get, string $operation, ?Model $record): bool {
+                                if($operation == 'view'){
+                                    $user = $record->user;
+                                }else{
+                                    $user = Auth::user();
+                                }
+                                $entitlement = $user->entitlements()->where('leave_type_id', $get('leave_type_id'))->where('is_active', true)->whereDate('end_date', '>=', now())->first();
                                 return empty($entitlement) ? false : true;
                             })
                             ->schema([
                                 Forms\Components\Placeholder::make('balance')
                                     ->label(__('field.balance'))
-                                    ->content(function (Get $get) {
+                                    ->content(function (Get $get, string $operation, ?Model $record) {
+                                        if($operation == 'view'){
+                                            $user = $record->user;
+                                        }else{  
+                                            $user = Auth::user();
+                                        }
                                         if(!empty($get('leave_type_id'))){                                            
-                                            return Auth::user()->entitlements->where('is_active', true)->where('leave_type_id', $get('leave_type_id'))->first()->balance ?? 0;                                            
+                                            return $user->entitlements->where('is_active', true)->where('leave_type_id', $get('leave_type_id'))->first()->balance ?? 0;                                            
                                         }
                                     } ),
                                 Forms\Components\Placeholder::make('accrued')
@@ -365,31 +392,51 @@ class LeaveRequestResource extends Resource
                                         }
                                         return false;
                                     })                                 
-                                    ->content(function (Get $get) {
+                                    ->content(function (Get $get, string $operation, ?Model $record) {
+                                        if($operation == 'view'){
+                                            $user = $record->user;
+                                        }else{
+                                            $user = Auth::user();
+                                        }
                                         if(!empty($get('leave_type_id'))){                                       
-                                            return  Auth::user()->entitlements()->where('is_active', true)->where('leave_type_id', $get('leave_type_id'))->whereDate('end_date', '>=', now())->first()->accrued ?? 0;                                                                                                                                                         
+                                            return  $user->entitlements()->where('is_active', true)->where('leave_type_id', $get('leave_type_id'))->whereDate('end_date', '>=', now())->first()->accrued ?? 0;                                                                                                                                                         
                                         }
                                     } ),
                                 Forms\Components\Placeholder::make('taken')
                                     ->label(__('field.taken'))
-                                    ->content(function (Get $get) {
+                                    ->content(function (Get $get, string $operation, ?Model $record) {
+                                        if($operation == 'view'){
+                                            $user = $record->user;
+                                        }else{
+                                            $user = Auth::user();
+                                        }
                                         if(!empty($get('leave_type_id'))){
-                                            return Auth::user()->entitlements->where('is_active', true)->where('leave_type_id', $get('leave_type_id'))->first()->taken ?? 0;                                            
+                                            return $user->entitlements->where('is_active', true)->where('leave_type_id', $get('leave_type_id'))->first()->taken ?? 0;                                            
                                         }
                                     } ),
                                 Forms\Components\Placeholder::make('remaining')
                                     ->label(__('field.remaining'))
-                                    ->content(function (Get $get) {
+                                    ->content(function (Get $get, string $operation, ?Model $record) {
+                                        if($operation == 'view'){
+                                            $user = $record->user;
+                                        }else{
+                                            $user = Auth::user();
+                                        }
                                         if(!empty($get('leave_type_id'))){
-                                            return Auth::user()->entitlements->where('is_active', true)->where('leave_type_id', $get('leave_type_id'))->first()->remaining ?? 0;                                            
+                                            return $user->entitlements->where('is_active', true)->where('leave_type_id', $get('leave_type_id'))->first()->remaining ?? 0;                                            
                                         }
                                     } ),
                                 ]),
                         Forms\Components\Section::make(__('field.holiday_duplicated_date'))
                             ->columnSpanFull()
-                            ->visible(function(Get $get) {
+                            ->visible(function(Get $get, string $operation, ?Model $record) {
                                 if($get('from_date') && $get('to_date')){
-                                    $user = Auth::user();
+                                    if($operation == 'view'){
+                                        $user = $record->user;
+                                    }else{
+                                        $user = Auth::user();
+                                    }
+                                    
                                     foreach(getDateRangeBetweenTwoDates($get('from_date'), $get('to_date')) as $key => $date){                                          
                                         $workDay = $user->workDays->where('day_name.value', $date->dayOfWeek())->first();
                                         if($workDay){
@@ -405,8 +452,12 @@ class LeaveRequestResource extends Resource
                             ->schema([
                                 Forms\Components\Placeholder::make('dupliatedDate')
                                     ->hiddenLabel()
-                                    ->content(function (Get $get) {                                            
-                                        $user = Auth::user();
+                                    ->content(function (Get $get, string $operation, ?Model $record) {
+                                        if($operation == 'view'){
+                                            $user = $record->user;
+                                        }else{
+                                            $user = Auth::user();
+                                        }   
                                         $str = '<div class="container mx-auto px-1 py-1"><ul class="list-decimal">';
                                         foreach(getDateRangeBetweenTwoDates($get('from_date'), $get('to_date')) as $key => $date){                                          
                                             $workDay = $user->workDays->where('day_name.value', $date->dayOfWeek())->first();
