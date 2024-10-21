@@ -175,7 +175,7 @@ class LeaveRequestResource extends Resource
                                     ->getOptionLabelFromRecordUsing(function (Model $record) {
                                         $dates = array();
                                         foreach($record->requestDates as $item){
-                                            $dates[] = $item->date->toDateString();
+                                            $dates[] = $item->date;
                                         }
                                         return strtolower(implode(',', $dates). ' - ' . trans_choice('field.hours_with_count', $record->hours, ['count' => floatval($record->hours)]). ' - expire on: '. $record->expiry_date->toDateString());
                                     })
