@@ -108,7 +108,6 @@ class ContractsRelationManager extends RelationManager
                                 ->label(__('model.approvers'))
                                 ->relationship()                            
                                 ->reorderable(true)
-                                ->maxItems(7)  
                                 ->addActionLabel(__('btn.label.add', ['label' => __('model.approver')]))       
                                 ->defaultItems(0)                                  
                                 ->headers([
