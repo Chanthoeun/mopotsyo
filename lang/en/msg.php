@@ -56,7 +56,7 @@ return [
         'approved_leave_request' => ':name just requested :days of :leave_type :dates so it needs your approval to process next step. Would you like to approve this request?',
         'rejected'             => 'The :request for :days of :leave_type :dates was rejected by :name.',
         'discarded'            => 'The :request for :days of :leave_type :dates was discarded by :name.',
-        'completed_leave_request'   => 'Your :request for :days of :leave_type on :dates was approved and completed.',
+        'completed_leave_request'   => 'Your :request for :days of :leave_type :dates was approved and completed.',
         'request_over_accrued_amount'      => 'Your request date is over accrued amount. Your current accured amount is :amount.',
         'is_working_hour'       => 'The request date and time is in working hour. Please choose another date and time.',
         'overtime'              => ':name just :action an overtime for :amount on :date. Please kindly check and approve in the below link.',

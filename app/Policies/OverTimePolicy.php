@@ -125,22 +125,13 @@ class OverTimePolicy
      */
     public function approve(User $user, OverTime $overTime): bool
     {
-        $nextStep = $overTime->nextApprovalStep();
-        if($nextStep){
-            $getApprover = $overTime->processApprovers()->where('step_id', $nextStep->id)->where('role_id', $nextStep->role_id)->first();
-            if($getApprover){
-                if($getApprover->approver){
-                    if($overTime->isSubmitted() &&
-                    !$overTime->isApprovalCompleted() &&
-                    !$overTime->isDiscarded() && $user->id == $getApprover->approver->id) return true;
-                }else{
-                    if($overTime->canBeApprovedBy($user) && $overTime->isSubmitted() &&
-                    !$overTime->isApprovalCompleted() &&
-                    !$overTime->isDiscarded()) return true;
-                }            
-            }
-        }    
-        // dump($nextStep);
+        if($overTime->isSubmitted() && !$overTime->isApprovalCompleted() && !$overTime->isDiscarded()){
+            $nextStep = $overTime->nextApprovalStep();
+            $approval = $overTime->user->approvers->where('model_type', get_class($overTime))->where('role_id', $nextStep->role_id)->first();
+            if($approval && $approval->approver_id == $user->id){
+                return $overTime->canBeApprovedBy($user);
+            }            
+        }
         
         return false;
     }
@@ -149,28 +140,12 @@ class OverTimePolicy
      */
     public function reject(User $user, OverTime $overTime): bool
     {      
-        
-        $nextStep = $overTime->nextApprovalStep();
-        if($nextStep){
-            $getApprover = $overTime->processApprovers()->where('step_id', $nextStep->id)->where('role_id', $nextStep->role_id)->first();
-            if($getApprover){
-                if($getApprover->approver){
-                    if($overTime->isSubmitted() &&
-                    !$overTime->isApprovalCompleted() &&
-                    !$overTime->isRejected() &&
-                    !$overTime->isDiscarded() && $user->id == $getApprover->approver->id) return true;
-                }else{
-                    if($overTime->canBeApprovedBy($user) && $overTime->isSubmitted() &&
-                    !$overTime->isApprovalCompleted() &&
-                    !$overTime->isRejected() &&
-                    !$overTime->isDiscarded()) return true;
-                }            
-            }
-        }else{
-            if($overTime->canBeApprovedBy($user) && $overTime->isSubmitted() &&
-                !$overTime->isApprovalCompleted() &&
-                !$overTime->isRejected() &&
-                !$overTime->isDiscarded()) return true;
+        if($overTime->isSubmitted() && !$overTime->isApprovalCompleted() && !$overTime->isDiscarded()){
+            $nextStep = $overTime->nextApprovalStep();
+            $approval = $overTime->user->approvers->where('model_type', get_class($overTime))->where('role_id', $nextStep->role_id)->first();
+            if($approval && $approval->approver_id == $user->id){
+                return $overTime->canBeApprovedBy($user);
+            }            
         }
         
         return false;
@@ -180,21 +155,14 @@ class OverTimePolicy
      */
     public function discard(User $user, OverTime $overTime): bool
     {                           
-        // dd($leaveRequest->nextApprovalStep()->role_id);
-        $nextStep = $overTime->nextApprovalStep();
-        if($nextStep){
-            $getApprover = $overTime->processApprovers()->where('step_id', $nextStep->id)->where('role_id', $nextStep->role_id)->first();
-            if($getApprover){
-                if($getApprover->approver){
-                    if($overTime->isRejected() && $user->id == $getApprover->approver->id) return true;
-                }else{
-                    if($overTime->canBeApprovedBy($user) && $overTime->isRejected()) return true;
-                }            
-            }
-        }else{
-            if($overTime->canBeApprovedBy($user) && $overTime->isRejected()) return true;
-        }   
-                
+        if($overTime->isRejected() && !$overTime->isDiscarded()){
+            $nextStep = $overTime->nextApprovalStep();
+            $approval = $overTime->user->approvers->where('model_type', get_class($overTime))->where('role_id', $nextStep->role_id)->first();
+            if($overTime->user_id == $user->id || ($approval && $approval->approver_id == $user->id)){
+                return true;
+            }                  
+        }       
+
         return false;
     }
 }

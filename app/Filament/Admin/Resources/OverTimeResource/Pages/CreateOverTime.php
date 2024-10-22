@@ -3,6 +3,7 @@
 namespace App\Filament\Admin\Resources\OverTimeResource\Pages;
 
 use App\Filament\Admin\Resources\OverTimeResource;
+use App\Models\OverTime;
 use App\Models\ProcessApprover;
 use App\Settings\SettingOptions;
 use Filament\Actions;
@@ -30,8 +31,15 @@ class CreateOverTime extends CreateRecord
 
     protected function afterCreate(): void
     {
-        // create process approval
-        createProcessApprover($this->record);                   
+        $approvers = $this->record->user->approvers->where('model_type', OverTime::class)->pluck('role_id');        
+        
+        $steps = $this->record->approvalFlowSteps()->whereIn('role_id', $approvers->toArray())->map(function ($item) {                    
+            return $item->toApprovalStatusArray();
+        })->toArray();
+        
+        $this->record->approvalStatus()->update([
+            'steps' => array_values($steps)
+         ]);                
     }
 
     protected function getCreatedNotification(): ?Notification

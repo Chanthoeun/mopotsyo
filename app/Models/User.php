@@ -234,4 +234,12 @@ class User extends Authenticatable implements FilamentUser, RenewPasswordContrac
             },
         );
     }
+    protected function approvers(): Attribute
+    {
+        return Attribute::make(
+            get: function() {
+                return $this->employee->contract->approvers ?? null;
+            },
+        );
+    }
 }

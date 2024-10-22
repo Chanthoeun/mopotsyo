@@ -3,6 +3,7 @@
 namespace App\Filament\Admin\Resources\WorkFromHomeResource\Pages;
 
 use App\Filament\Admin\Resources\WorkFromHomeResource;
+use App\Models\WorkFromHome;
 use App\Settings\SettingOptions;
 use Filament\Actions;
 use Filament\Resources\Pages\CreateRecord;
@@ -26,26 +27,35 @@ class CreateWorkFromHome extends CreateRecord
 
     protected function afterCreate(): void
     {
-        // create process approval
-        if(app(SettingOptions::class)->work_from_home_rules){
-            foreach(app(SettingOptions::class)->work_from_home_rules as $rule){ 
-                if($this->record->days >= $rule['from_amount'] && $this->record->days <= $rule['to_amount']){
-                    $roles = $rule['roles'];
-                }else if($this->record->days >= $rule['from_amount'] && empty($rule['to_amount'])){
-                    $roles = $rule['roles'];
-                }
-            }
-
-            $this->record->approvalStatus()->update([
-                'steps' => $this->record->approvalFlowSteps()->whereIn('role_id', $roles)->map(function ($item) {                    
-                     // create process approver
-                     createProcessApprover($this->record, $item);
-                        
-                     return $item->toApprovalStatusArray();
-                 })->toArray()
-             ]);
+        $approvers = $this->record->user->approvers->where('model_type', WorkFromHome::class);
+        if($approvers->count() == 1){
+            $approvers = $approvers->pluck('role_id');
         }else{
-            createProcessApprover($this->record);
-        }                           
+            if(app(SettingOptions::class)->work_from_home_rules){
+                foreach(app(SettingOptions::class)->work_from_home_rules as $rule){ 
+                    if($this->record->days >= $rule['from_amount'] && $this->record->days <= $rule['to_amount']){
+                        $roles = $rule['roles'];
+                    }else if($this->record->days >= $rule['from_amount'] && empty($rule['to_amount'])){
+                        $roles = $rule['roles'];
+                    }
+                }
+                $approvers = $this->record->user->approvers->where('model_type', WorkFromHome::class)->whereIn('role_id', $roles);
+                if($approvers->count() == 0){
+                    $approvers[] = $this->record->user->approvers->where('model_type', WorkFromHome::class)->first()->role_id;
+                }else{
+                    $approvers = $approvers->pluck('role_id');
+                }
+            }else{
+                $approvers = $approvers->pluck('role_id');
+            }
+        }
+        
+        $steps = $this->record->approvalFlowSteps()->whereIn('role_id', $approvers->toArray())->map(function ($item) {                    
+            return $item->toApprovalStatusArray();
+        })->toArray();
+        
+        $this->record->approvalStatus()->update([
+            'steps' => array_values($steps)
+        ]);                      
     }
 }

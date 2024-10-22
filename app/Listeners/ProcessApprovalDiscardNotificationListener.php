@@ -73,7 +73,9 @@ class ProcessApprovalDiscardNotificationListener
             // send notification
             $this->sendNotification($creator, $message, comment: $discarded->comment);
         }else{
-            $receivers = User::whereIn('id', $leaveRequest->processApprovers->pluck('approver_id')->toArray())->get();
+            $approvalRoles = collect($leaveRequest->approvalStatus->steps)->pluck('role_id')->toArray();
+            $approvers = $leaveRequest->user->approvers->where('model_type', get_class($leaveRequest))->whereIn('role_id', $approvalRoles)->pluck('approver_id')->toArray();
+            $receivers = User::whereIn('id', $approvers)->get();
             foreach($receivers as $receiver){
                 $message = collect([
                     'subject' => __('mail.subject', ['name' => __('msg.label.discarded', ['label' => __('model.leave_request')])]),
@@ -82,8 +84,7 @@ class ProcessApprovalDiscardNotificationListener
                         'request'  => strtolower(__('model.leave_request')), 
                         'days'  => strtolower(trans_choice('field.days_with_count', $leaveRequest->days, ['count' => $leaveRequest->days])),
                         'leave_type' => strtolower($leaveRequest->leaveType->name),
-                        'from'  => $leaveRequest->from_date->toDateString(), 
-                        'to' => $leaveRequest->to_date->toDateString(),
+                        'dates'  => $leaveRequest->days <= 2 ? $leaveRequest->requestDates->implode('date', ', ') : $leaveRequest->from_date->toDateString() .' - '.$leaveRequest->to_date->toDateString(),
                         'name'  => $discarded->approver_name
                     ]),
                     'action'    => [
@@ -126,7 +127,9 @@ class ProcessApprovalDiscardNotificationListener
             // send notification
             $this->sendNotification($creator, $message, comment: $discarded->comment);
         }else{
-            $receivers = User::whereIn('id', $overtime->processApprovers->pluck('approver_id')->toArray())->get();
+            $approvalRoles = collect($overtime->approvalStatus->steps)->pluck('role_id')->toArray();
+            $approvers = $overtime->user->approvers->where('model_type', get_class($overtime))->whereIn('role_id', $approvalRoles)->pluck('approver_id')->toArray();
+            $receivers = User::whereIn('id', $approvers)->get();
             foreach($receivers as $receiver){
                 $message = collect([
                     'subject' => __('mail.subject', ['name' => __('msg.label.discarded', ['label' => __('model.overtime')])]),
@@ -175,7 +178,9 @@ class ProcessApprovalDiscardNotificationListener
             // send notification
             $this->sendNotification($creator, $message, comment: $discarded->comment);
         }else{
-            $receivers = User::whereIn('id', $switchWorkDay->processApprovers->pluck('approver_id')->toArray())->get();
+            $approvalRoles = collect($switchWorkDay->approvalStatus->steps)->pluck('role_id')->toArray();
+            $approvers = $switchWorkDay->user->approvers->where('model_type', get_class($switchWorkDay))->whereIn('role_id', $approvalRoles)->pluck('approver_id')->toArray();
+            $receivers = User::whereIn('id', $approvers)->get();
             foreach($receivers as $receiver){
                 $message = collect([
                     'subject' => __('mail.subject', ['name' => __('msg.label.discarded', ['label' => __('model.switch_work_day')])]),
@@ -225,7 +230,9 @@ class ProcessApprovalDiscardNotificationListener
             // send notification
             $this->sendNotification($creator, $message, comment: $discarded->comment);
         }else{
-            $receivers = User::whereIn('id', $workFromHome->processApprovers->pluck('approver_id')->toArray())->get();
+            $approvalRoles = collect($workFromHome->approvalStatus->steps)->pluck('role_id')->toArray();
+            $approvers = $workFromHome->user->approvers->where('model_type', get_class($workFromHome))->whereIn('role_id', $approvalRoles)->pluck('approver_id')->toArray();
+            $receivers = User::whereIn('id', $approvers)->get();
             foreach($receivers as $receiver){
                 $message = collect([
                     'subject' => __('mail.subject', ['name' => __('msg.label.discarded', ['label' => __('model.work_from_home')])]),
@@ -274,7 +281,9 @@ class ProcessApprovalDiscardNotificationListener
             // send notification
             $this->sendNotification($creator, $message, comment: $discarded->comment);
         }else{
-            $receivers = User::whereIn('id', $purchaseRequest->processApprovers->pluck('approver_id')->toArray())->get();
+            $approvalRoles = collect($purchaseRequest->approvalStatus->steps)->pluck('role_id')->toArray();
+            $approvers = $purchaseRequest->user->approvers->where('model_type', get_class($purchaseRequest))->whereIn('role_id', $approvalRoles)->pluck('approver_id')->toArray();
+            $receivers = User::whereIn('id', $approvers)->get();
             foreach($receivers as $receiver){
                 $message = collect([
                     'subject' => __('mail.subject', ['name' => __('msg.label.discarded', ['label' => __('model.purchase_request')])]),

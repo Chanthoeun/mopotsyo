@@ -87,4 +87,9 @@ class EmployeeContract extends Model
     {
         return $this->hasMany(EmployeeWorkDay::class, 'contract_id');
     }
+
+    public function approvers(): HasMany
+    {
+        return $this->hasMany(Aprovers::class, 'contract_id');
+    }
 }

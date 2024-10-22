@@ -66,4 +66,6 @@ return [
     'timesheet_dates'    => 'Timesheet Dates',    
     'purchase_request'     => 'Purchase Request',
     'purchase_requests'    => 'Purchase Requests',    
+    'approver'     => 'Approver',
+    'approvers'    => 'Approvers',    
 ];

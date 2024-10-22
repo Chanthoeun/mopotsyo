@@ -40,6 +40,19 @@ class ResetDataCommand extends Command
         DB::table('purchase_requests')->truncate();
         DB::table('timesheet_dates')->truncate();
         DB::table('timesheets')->truncate();
+
+        DB::table('activity_log')->truncate();
+        DB::table('authentication_log')->truncate();
+        DB::table('cache')->truncate();
+        DB::table('failed_import_rows')->truncate();
+        DB::table('failed_jobs')->truncate();
+        DB::table('filament_email_log')->truncate();
+        DB::table('exports')->truncate();
+        DB::table('imports')->truncate();
+        DB::table('job_batches')->truncate();
+        DB::table('jobs')->truncate();
+        DB::table('notifications')->truncate();
+        DB::table('language_lines')->truncate();
         DB::statement('SET FOREIGN_KEY_CHECKS=1;');
 
         $this->info('Job is done!');
