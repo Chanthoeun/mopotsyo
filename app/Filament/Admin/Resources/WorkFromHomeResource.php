@@ -279,7 +279,7 @@ class WorkFromHomeResource extends Resource
                                     ->success()
                                     ->icon('fas-user-clock')
                                     ->iconColor('success')
-                                    ->title(__('msg.label.discarded', ['label' => __('model.leave_request')]))
+                                    ->title(__('msg.label.discarded', ['label' => __('model.work_from_home')]))
                                     ->send();
                             }),
                     ],

@@ -6,6 +6,7 @@ use App\Enums\DayOfWeekEnum;
 use App\Settings\SettingWorkingHours;
 use Awcodes\TableRepeater\Components\TableRepeater;
 use Awcodes\TableRepeater\Header;
+use EightyNine\Approvals\Services\ModelScannerService;
 use Filament\Forms;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Wizard;
@@ -20,6 +21,8 @@ use Filament\Resources\RelationManagers\Concerns\Translatable;
 use Hugomyb\FilamentMediaAction\Tables\Actions\MediaAction;
 use Illuminate\Database\Eloquent\Model;
 use Livewire\Attributes\Reactive;
+use Spatie\Permission\Models\Role;
+use Illuminate\Support\Str;
 
 class ContractsRelationManager extends RelationManager
 {
@@ -34,6 +37,7 @@ class ContractsRelationManager extends RelationManager
 
     public function form(Form $form): Form
     {
+        $models = (new ModelScannerService())->getApprovableModels();
         return $form
             ->schema([
                 Wizard::make([ 
@@ -85,23 +89,57 @@ class ContractsRelationManager extends RelationManager
                                         }                                        
                                     }
                                 }),
-                            Forms\Components\Select::make('supervisor_id')
-                                ->label(__('field.supervisor'))
-                                ->relationship('supervisor', 'name', fn(Builder $query) => $query->whereHas('employee', fn(Builder $query) => $query->whereNull('resign_date')->orWhereDate('resign_date', '>=', now()))->orderBy('id', 'asc')),
-                            Forms\Components\Select::make('department_head_id')
-                                ->label(__('field.department_head'))
-                                ->relationship('departmentHead', 'name', fn(Builder $query) => $query->whereHas('employee', fn(Builder $query) => $query->whereNull('resign_date')->orWhereDate('resign_date', '>=', now()))->orderBy('id', 'asc')),
+                            // Forms\Components\Select::make('supervisor_id')
+                            //     ->label(__('field.supervisor'))
+                            //     ->relationship('supervisor', 'name', fn(Builder $query) => $query->whereHas('employee', fn(Builder $query) => $query->whereNull('resign_date')->orWhereDate('resign_date', '>=', now()))->orderBy('id', 'asc')),
+                            // Forms\Components\Select::make('department_head_id')
+                            //     ->label(__('field.department_head'))
+                            //     ->relationship('departmentHead', 'name', fn(Builder $query) => $query->whereHas('employee', fn(Builder $query) => $query->whereNull('resign_date')->orWhereDate('resign_date', '>=', now()))->orderBy('id', 'asc')),
                             Forms\Components\TextInput::make('contract_no')
                                 ->label(__('field.contract_no'))
                                 ->unique(ignoreRecord: true)
-                                ->maxLength(255)
-                                ->columnSpanFull(),
+                                ->maxLength(255),
                             Forms\Components\FileUpload::make('file')
                                 ->hiddenLabel()
                                 ->placeholder(__('field.attachment'))
                                 ->directory('employee-contracts')
-                                ->acceptedFileTypes(['application/pdf'])
-                                ->columnSpanFull(),
+                                ->acceptedFileTypes(['application/pdf']),
+                            TableRepeater::make('approvers')
+                                ->label(__('model.approvers'))
+                                ->relationship()                            
+                                ->reorderable(true)
+                                ->maxItems(7)  
+                                ->addActionLabel(__('btn.label.add', ['label' => __('model.approver')]))       
+                                ->defaultItems(0)                                  
+                                ->headers([
+                                    Header::make(__('field.feature')),
+                                    Header::make(__('model.role')),
+                                    Header::make(__('model.approver')),
+                                ])                                             
+                                ->columnSpan('full')                                
+                                ->schema([
+                                    Forms\Components\Select::make('model_type')
+                                        ->hiddenLabel()
+                                        ->options(function() use ($models) {
+                                            // remove 'App\Models\' from the value of models
+                                            $models = array_map(function($model) {
+                                                return str_replace('App\Models\\', '', $model);
+                                            }, $models);
+                                            return $models;
+                                        })
+                                        ->required(),
+                                    Forms\Components\Select::make('role_id')
+                                        ->hiddenLabel()
+                                        ->relationship('role', 'name', fn(Builder $query) => $query->whereNot('name', 'super_admin'))
+                                        ->getOptionLabelFromRecordUsing(fn (Role $record) => ucwords(Str::of($record->name)->replace('_', ' ')))
+                                        ->preload()
+                                        ->searchable(),
+                                    Forms\Components\Select::make('approver_id')
+                                        ->hiddenLabel()
+                                        ->relationship('approver', 'name', fn(Builder $query) => $query->whereHas('employee', fn(Builder $query) => $query->whereNull('resign_date')->orWhereDate('resign_date', '>=', now()))->orderBy('id', 'asc'))
+                                        ->preload()
+                                        ->searchable(),
+                                ]),
                         ]),
                     Wizard\Step::make('workingHours')
                         ->label(__('field.work_info'))

@@ -133,75 +133,40 @@ class SwitchWorkDayPolicy
      */
     public function approve(User $user, SwitchWorkDay $switchWorkDay): bool
     {
-        $nextStep = $switchWorkDay->nextApprovalStep();
-        if($nextStep){
-            $getApprover = $switchWorkDay->processApprovers()->where('step_id', $nextStep->id)->where('role_id', $nextStep->role_id)->first();
-            if($getApprover){
-                if($getApprover->approver){
-                    if($switchWorkDay->isSubmitted() &&
-                    !$switchWorkDay->isApprovalCompleted() &&
-                    !$switchWorkDay->isDiscarded() && $user->id == $getApprover->approver->id) return true;
-                }else{
-                    if($switchWorkDay->canBeApprovedBy($user) && $switchWorkDay->isSubmitted() &&
-                    !$switchWorkDay->isApprovalCompleted() &&
-                    !$switchWorkDay->isDiscarded()) return true;
-                }            
-            }
-        }    
-        // dump($nextStep);
-        
-        return false;
+        if($switchWorkDay->isSubmitted() && !$switchWorkDay->isApprovalCompleted() && !$switchWorkDay->isDiscarded()){
+            $nextStep = $switchWorkDay->nextApprovalStep();
+            $approval = $switchWorkDay->user->approvers->where('model_type', get_class($switchWorkDay))->where('role_id', $nextStep->role_id)->first();
+            if($approval && $approval->approver_id == $user->id){
+                return $switchWorkDay->canBeApprovedBy($user);
+            }            
+        }
     }
     /**
      * Determine whether the user can reject.
      */
     public function reject(User $user, SwitchWorkDay $switchWorkDay): bool
     {           
-        $nextStep = $switchWorkDay->nextApprovalStep();
-        if($nextStep){
-            $getApprover = $switchWorkDay->processApprovers()->where('step_id', $nextStep->id)->where('role_id', $nextStep->role_id)->first();
-            if($getApprover){
-                if($getApprover->approver){
-                    if($switchWorkDay->isSubmitted() &&
-                    !$switchWorkDay->isApprovalCompleted() &&
-                    !$switchWorkDay->isRejected() &&
-                    !$switchWorkDay->isDiscarded() && $user->id == $getApprover->approver->id) return true;
-                }else{
-                    if($switchWorkDay->canBeApprovedBy($user) && $switchWorkDay->isSubmitted() &&
-                    !$switchWorkDay->isApprovalCompleted() &&
-                    !$switchWorkDay->isRejected() &&
-                    !$switchWorkDay->isDiscarded()) return true;
-                }            
-            }
-        }else{
-            if($switchWorkDay->canBeApprovedBy($user) && $switchWorkDay->isSubmitted() &&
-                !$switchWorkDay->isApprovalCompleted() &&
-                !$switchWorkDay->isRejected() &&
-                !$switchWorkDay->isDiscarded()) return true;
+        if($switchWorkDay->isSubmitted() && !$switchWorkDay->isApprovalCompleted() && !$switchWorkDay->isDiscarded()){
+            $nextStep = $switchWorkDay->nextApprovalStep();
+            $approval = $switchWorkDay->user->approvers->where('model_type', get_class($switchWorkDay))->where('role_id', $nextStep->role_id)->first();
+            if($approval && $approval->approver_id == $user->id){
+                return $switchWorkDay->canBeApprovedBy($user);
+            }            
         }
-        
-        return false;
     }
     /**
      * Determine whether the user can discard.
      */
     public function discard(User $user, SwitchWorkDay $switchWorkDay): bool
     {                           
-        // dd($leaveRequest->nextApprovalStep()->role_id);
-        $nextStep = $switchWorkDay->nextApprovalStep();
-        if($nextStep){
-            $getApprover = $switchWorkDay->processApprovers()->where('step_id', $nextStep->id)->where('role_id', $nextStep->role_id)->first();
-            if($getApprover){
-                if($getApprover->approver){
-                    if($switchWorkDay->isRejected() && $user->id == $getApprover->approver->id) return true;
-                }else{
-                    if($switchWorkDay->canBeApprovedBy($user) && $switchWorkDay->isRejected()) return true;
-                }            
-            }
-        }else{
-            if($switchWorkDay->canBeApprovedBy($user) && $switchWorkDay->isRejected()) return true;
-        }   
-                
+        if($switchWorkDay->isRejected() && !$switchWorkDay->isDiscarded()){
+            $nextStep = $switchWorkDay->nextApprovalStep();
+            $approval = $switchWorkDay->user->approvers->where('model_type', get_class($switchWorkDay))->where('role_id', $nextStep->role_id)->first();
+            if($switchWorkDay->user_id == $user->id || ($approval && $approval->approver_id == $user->id)){
+                return true;
+            }                  
+        }       
+
         return false;
     }
 }

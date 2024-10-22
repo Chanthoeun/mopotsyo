@@ -166,6 +166,7 @@ return [
     'duplicated'    => 'Duplicated',
     'holiday_duplicated_date'   => 'Holiday and Duplicated Date',
     'is_back_date'  => 'Back Date',
+    'model_type'    => 'Model Type',
 
     // day
     'days' => [

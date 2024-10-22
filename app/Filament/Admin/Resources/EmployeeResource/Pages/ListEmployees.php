@@ -7,6 +7,7 @@ use App\Imports\EmployeeImport;
 use EightyNine\ExcelImport\ExcelImportAction;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
+use JoseEspinal\RecordNavigation\Traits\HasRecordsList;
 use pxlrbt\FilamentExcel\Actions\Pages\ExportAction;
 use pxlrbt\FilamentExcel\Columns\Column;
 use pxlrbt\FilamentExcel\Exports\ExcelExport;
@@ -14,6 +15,7 @@ use pxlrbt\FilamentExcel\Exports\ExcelExport;
 class ListEmployees extends ListRecords
 {
     use ListRecords\Concerns\Translatable;
+    use HasRecordsList;
 
     protected static string $resource = EmployeeResource::class;
 

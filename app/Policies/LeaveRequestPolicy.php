@@ -7,6 +7,7 @@ use App\Models\LeaveRequest;
 use App\Models\ProcessApprover;
 use App\Settings\SettingOptions;
 use Illuminate\Auth\Access\HandlesAuthorization;
+use PhpOffice\PhpSpreadsheet\Calculation\MathTrig\Trunc;
 
 class LeaveRequestPolicy
 {
@@ -58,7 +59,7 @@ class LeaveRequestPolicy
      * Determine whether the user can update the model.
      */
     public function update(User $user, LeaveRequest $leaveRequest): bool
-    {
+    {        
         if($leaveRequest->approvalStatus->status == 'Created' && $user->id == $leaveRequest->user_id){            
             return $user->can('update_leave::request');
         }
@@ -151,19 +152,11 @@ class LeaveRequestPolicy
     public function approve(User $user, LeaveRequest $leaveRequest): bool
     {                        
         if($leaveRequest->isSubmitted() && !$leaveRequest->isApprovalCompleted() && !$leaveRequest->isDiscarded()){
-            if($leaveRequest->leaveType->rules){
-                $nextStep = $leaveRequest->nextApprovalStep();
-                if($nextStep){
-                    $processApprover = $leaveRequest->processApprovers->where('step_id', $nextStep->id)->where('role_id', $nextStep->role_id)->first();                    
-                    if($processApprover && !empty($processApprover->approver) && $processApprover->approver->id == $user->id){                        
-                        return true;
-                    }else if($processApprover && empty($processApprover->approver)){
-                        return $leaveRequest->canBeApprovedBy($user);
-                    }
-                }
-            }else{
+            $nextStep = $leaveRequest->nextApprovalStep();
+            $approval = $leaveRequest->user->approvers->where('model_type', get_class($leaveRequest))->where('role_id', $nextStep->role_id)->first();
+            if($approval && $approval->approver_id == $user->id){
                 return $leaveRequest->canBeApprovedBy($user);
-            }                  
+            }            
         }
         
         return false;
@@ -174,19 +167,11 @@ class LeaveRequestPolicy
     public function reject(User $user, LeaveRequest $leaveRequest): bool
     {     
         if($leaveRequest->isSubmitted() && !$leaveRequest->isApprovalCompleted() && !$leaveRequest->isRejected() && !$leaveRequest->isDiscarded()){
-            if($leaveRequest->leaveType->rules){
-                $nextStep = $leaveRequest->nextApprovalStep();
-                if($nextStep){
-                    $processApprover = $leaveRequest->processApprovers->where('step_id', $nextStep->id)->where('role_id', $nextStep->role_id)->first();
-                    if($processApprover && !empty($processApprover->approver) && $processApprover->approver->id == $user->id){
-                        return $leaveRequest->canBeApprovedBy($user);
-                    }else if($processApprover && empty($processApprover->approver)){
-                        return $leaveRequest->canBeApprovedBy($user);
-                    }
-                }
-            }else{
+            $nextStep = $leaveRequest->nextApprovalStep();
+            $approval = $leaveRequest->user->approvers->where('model_type', get_class($leaveRequest))->where('role_id', $nextStep->role_id)->first();
+            if($approval && $approval->approver_id == $user->id){
                 return $leaveRequest->canBeApprovedBy($user);
-            }                  
+            }               
         }
         
         return false;
@@ -197,18 +182,10 @@ class LeaveRequestPolicy
     public function discard(User $user, LeaveRequest $leaveRequest): bool
     {                     
         if($leaveRequest->isRejected() && !$leaveRequest->isDiscarded()){
-            if($leaveRequest->leaveType->rules){
-                $nextStep = $leaveRequest->nextApprovalStep();
-                if($nextStep){
-                    $processApprover = $leaveRequest->processApprovers->where('step_id', $nextStep->id)->where('role_id', $nextStep->role_id)->first();
-                    if($processApprover && !empty($processApprover->approver) && $processApprover->approver->id == $user->id){
-                        return $leaveRequest->canBeApprovedBy($user);
-                    }else if($processApprover && empty($processApprover->approver)){
-                        return $leaveRequest->canBeApprovedBy($user);
-                    }
-                }
-            }else{
-                return $leaveRequest->canBeApprovedBy($user);
+            $nextStep = $leaveRequest->nextApprovalStep();
+            $approval = $leaveRequest->user->approvers->where('model_type', get_class($leaveRequest))->where('role_id', $nextStep->role_id)->first();
+            if($leaveRequest->user_id == $user->id || ($approval && $approval->approver_id == $user->id)){
+                return true;
             }                  
         }       
 

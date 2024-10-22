@@ -5,10 +5,12 @@ namespace App\Filament\Admin\Resources\UserResource\Pages;
 use App\Filament\Admin\Resources\UserResource;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
+use JoseEspinal\RecordNavigation\Traits\HasRecordsList;
 
 class ListUsers extends ListRecords
 {
     use ListRecords\Concerns\Translatable;
+    use HasRecordsList;
  
     protected static string $resource = UserResource::class;
 

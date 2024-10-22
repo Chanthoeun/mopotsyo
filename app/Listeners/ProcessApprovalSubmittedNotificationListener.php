@@ -51,21 +51,10 @@ class ProcessApprovalSubmittedNotificationListener
 
     protected function leaveRequestSubmitted(LeaveRequest $leaveRequest)
     {
-        $approvers = collect();
-        $nextApproval = $leaveRequest->nextApprovalStep();
-        $getApprover = $leaveRequest->processApprovers()->where('step_id', $nextApproval->id)->where('role_id', $nextApproval->role_id)->first();
-
-        if($getApprover){
-            if($getApprover->approver){
-                $approvers->push($getApprover->approver);
-            }else{
-                $approvers = User::whereHas('employee', fn(Builder $q) => $q->whereNull('resign_date')->orWhereDate('resign_date', '>=', now()))->role($getApprover->role_id)->get();
-            }
-        }else{
-            $approvers = User::whereHas('employee', fn(Builder $q) => $q->whereNull('resign_date')->orWhereDate('resign_date', '>=', now()))->role($nextApproval->role_id)->get();
-        }
-        
-        foreach($approvers as $approver){            
+        $nextStep = $leaveRequest->nextApprovalStep();
+        $approval = $leaveRequest->user->approvers->where('model_type', get_class($leaveRequest))->where('role_id', $nextStep->role_id)->first();
+        if($approval){
+            $approver = $approval->approver;
             $message = collect([
                 'subject' => __('mail.subject', ['name' => __('btn.label.request', ['label' => $leaveRequest->leaveType->name])]),
                 'greeting' => __('mail.greeting', ['name' => $approver->name]),
@@ -73,7 +62,7 @@ class ProcessApprovalSubmittedNotificationListener
                     'name'  => $leaveRequest->approvalStatus->creator->full_name, 
                     'days'  => strtolower(trans_choice('field.days_with_count', $leaveRequest->days, ['count' => $leaveRequest->days])),
                     'leave_type' => strtolower($leaveRequest->leaveType->name),
-                    'dates'  => $leaveRequest->days <= 2 ? $leaveRequest->requestDates->implode('date', ', ') : $leaveRequest->from_date->toDateString() .' - '.$leaveRequest->to_date->toDateString(),
+                    'dates'  => $leaveRequest->days <= 2 ? $leaveRequest->requestDates->implode('date', ', ') : $leaveRequest->from_date->toDateString() .' - '. $leaveRequest->to_date->toDateString(),
                 ]),
                 'action'    => [
                     'name'  => __('btn.approve'),
@@ -88,21 +77,10 @@ class ProcessApprovalSubmittedNotificationListener
 
     protected function overtimeSubmitted(OverTime $overtime)
     {
-        $approvers = collect();
-        $nextApproval = $overtime->nextApprovalStep();
-        $processApprover = $overtime->processApprovers()->where('step_id', $nextApproval->id)->where('role_id', $nextApproval->role_id)->first();
-        
-        if($processApprover){
-            if($processApprover->approver){
-                $approvers->push($processApprover->approver);
-            }else{
-                $approvers = User::whereHas('employee', fn(Builder $q) => $q->whereNull('resign_date')->orWhereDate('resign_date', '>=', now()))->role($processApprover->role_id)->get();
-            }
-        }else{
-            $approvers = User::whereHas('employee', fn(Builder $q) => $q->whereNull('resign_date')->orWhereDate('resign_date', '>=', now()))->role($nextApproval->role_id)->get();
-        }
-        
-        foreach($approvers as $approver){            
+        $nextStep = $overtime->nextApprovalStep();
+        $approval = $overtime->user->approvers->where('model_type', get_class($overtime))->where('role_id', $nextStep->role_id)->first();
+        if($approval){
+            $approver = $approval->approver;
             $message = collect([
                 'subject' => __('mail.subject', ['name' => __('btn.label.request', ['label' => __('model.overtime')])]),
                 'greeting' => __('mail.greeting', ['name' => $approver->name]),
@@ -125,21 +103,10 @@ class ProcessApprovalSubmittedNotificationListener
 
     protected function switchWorkDaySubmitted(SwitchWorkDay $switchWorkDay)
     {
-        $approvers = collect();
-        $nextApproval = $switchWorkDay->nextApprovalStep();
-        $processApprover = $switchWorkDay->processApprovers()->where('step_id', $nextApproval->id)->where('role_id', $nextApproval->role_id)->first();
-        
-        if($processApprover){
-            if($processApprover->approver){
-                $approvers->push($processApprover->approver);
-            }else{
-                $approvers = User::whereHas('employee', fn(Builder $q) => $q->whereNull('resign_date')->orWhereDate('resign_date', '>=', now()))->role($processApprover->role_id)->get();
-            }
-        }else{
-            $approvers = User::whereHas('employee', fn(Builder $q) => $q->whereNull('resign_date')->orWhereDate('resign_date', '>=', now()))->role($nextApproval->role_id)->get();
-        }
-        
-        foreach($approvers as $approver){            
+        $nextStep = $switchWorkDay->nextApprovalStep();
+        $approval = $switchWorkDay->user->approvers->where('model_type', get_class($switchWorkDay))->where('role_id', $nextStep->role_id)->first();
+        if($approval){
+            $approver = $approval->approver;
             $message = collect([
                 'subject' => __('mail.subject', ['name' => __('btn.label.request', ['label' => __('model.switch_work_day')])]),
                 'greeting' => __('mail.greeting', ['name' => $approver->name]),
@@ -157,27 +124,17 @@ class ProcessApprovalSubmittedNotificationListener
             // send notification
             $this->sendNotification($approver, $message, comment: $switchWorkDay->reason);
         }
+        
     }
 
     protected function workFromHomeSubmitted(WorkFromHome $workFromHome)
     {
-        $approvers = collect();
-        $nextApproval = $workFromHome->nextApprovalStep();
-        $processApprover = $workFromHome->processApprovers()->where('step_id', $nextApproval->id)->where('role_id', $nextApproval->role_id)->first();
-        
-        if($processApprover){
-            if($processApprover->approver){
-                $approvers->push($processApprover->approver);
-            }else{
-                $approvers = User::whereHas('employee', fn(Builder $q) => $q->whereNull('resign_date')->orWhereDate('resign_date', '>=', now()))->role($processApprover->role_id)->get();
-            }
-        }else{
-            $approvers = User::whereHas('employee', fn(Builder $q) => $q->whereNull('resign_date')->orWhereDate('resign_date', '>=', now()))->role($nextApproval->role_id)->get();
-        }
-        
-        foreach($approvers as $approver){            
+        $nextStep = $workFromHome->nextApprovalStep();
+        $approval = $workFromHome->user->approvers->where('model_type', get_class($workFromHome))->where('role_id', $nextStep->role_id)->first();
+        if($approval){
+            $approver = $approval->approver;
             $message = collect([
-                'subject' => __('mail.subject', ['name' => __('btn.label.request', ['label' => __('model.switch_work_day')])]),
+                'subject' => __('mail.subject', ['name' => __('btn.label.request', ['label' => __('model.work_from_home')])]),
                 'greeting' => __('mail.greeting', ['name' => $approver->name]),
                 'body' => __('msg.body.work_from_home', [
                     'name'  => $workFromHome->approvalStatus->creator->full_name, 
@@ -198,21 +155,10 @@ class ProcessApprovalSubmittedNotificationListener
 
     protected function purchaseRequestSubmitted(PurchaseRequest $purchaseRequest)
     {
-        $approvers = collect();
-        $nextApproval = $purchaseRequest->nextApprovalStep();
-        $processApprover = $purchaseRequest->processApprovers()->where('step_id', $nextApproval->id)->where('role_id', $nextApproval->role_id)->first();
-        
-        if($processApprover){
-            if($processApprover->approver){
-                $approvers->push($processApprover->approver);
-            }else{
-                $approvers = User::whereHas('employee', fn(Builder $q) => $q->whereNull('resign_date')->orWhereDate('resign_date', '>=', now()))->role($processApprover->role_id)->get();
-            }
-        }else{
-            $approvers = User::whereHas('employee', fn(Builder $q) => $q->whereNull('resign_date')->orWhereDate('resign_date', '>=', now()))->role($nextApproval->role_id)->get();
-        }
-        
-        foreach($approvers as $approver){            
+        $nextStep = $purchaseRequest->nextApprovalStep();
+        $approval = $purchaseRequest->user->approvers->where('model_type', get_class($purchaseRequest))->where('role_id', $nextStep->role_id)->first();
+        if($approval){
+            $approver = $approval->approver;
             $message = collect([
                 'subject' => __('mail.subject', ['name' => __('btn.label.request', ['label' => __('model.purchase_request')])]),
                 'greeting' => __('mail.greeting', ['name' => $approver->name]),

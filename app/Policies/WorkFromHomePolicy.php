@@ -133,22 +133,13 @@ class WorkFromHomePolicy
      */
     public function approve(User $user, WorkFromHome $workFromHome): bool
     {
-        $nextStep = $workFromHome->nextApprovalStep();
-        if($nextStep){
-            $getApprover = $workFromHome->processApprovers()->where('step_id', $nextStep->id)->where('role_id', $nextStep->role_id)->first();
-            if($getApprover){
-                if($getApprover->approver){
-                    if($workFromHome->isSubmitted() &&
-                    !$workFromHome->isApprovalCompleted() &&
-                    !$workFromHome->isDiscarded() && $user->id == $getApprover->approver->id) return true;
-                }else{
-                    if($workFromHome->canBeApprovedBy($user) && $workFromHome->isSubmitted() &&
-                    !$workFromHome->isApprovalCompleted() &&
-                    !$workFromHome->isDiscarded()) return true;
-                }            
-            }
-        }    
-        // dump($nextStep);
+        if($workFromHome->isSubmitted() && !$workFromHome->isApprovalCompleted() && !$workFromHome->isDiscarded()){
+            $nextStep = $workFromHome->nextApprovalStep();
+            $approval = $workFromHome->user->approvers->where('model_type', get_class($workFromHome))->where('role_id', $nextStep->role_id)->first();
+            if($approval && $approval->approver_id == $user->id){
+                return $workFromHome->canBeApprovedBy($user);
+            }            
+        }
         
         return false;
     }
@@ -157,27 +148,12 @@ class WorkFromHomePolicy
      */
     public function reject(User $user, WorkFromHome $workFromHome): bool
     {           
-        $nextStep = $workFromHome->nextApprovalStep();
-        if($nextStep){
-            $getApprover = $workFromHome->processApprovers()->where('step_id', $nextStep->id)->where('role_id', $nextStep->role_id)->first();
-            if($getApprover){
-                if($getApprover->approver){
-                    if($workFromHome->isSubmitted() &&
-                    !$workFromHome->isApprovalCompleted() &&
-                    !$workFromHome->isRejected() &&
-                    !$workFromHome->isDiscarded() && $user->id == $getApprover->approver->id) return true;
-                }else{
-                    if($workFromHome->canBeApprovedBy($user) && $workFromHome->isSubmitted() &&
-                    !$workFromHome->isApprovalCompleted() &&
-                    !$workFromHome->isRejected() &&
-                    !$workFromHome->isDiscarded()) return true;
-                }            
-            }
-        }else{
-            if($workFromHome->canBeApprovedBy($user) && $workFromHome->isSubmitted() &&
-                !$workFromHome->isApprovalCompleted() &&
-                !$workFromHome->isRejected() &&
-                !$workFromHome->isDiscarded()) return true;
+        if($workFromHome->isSubmitted() && !$workFromHome->isApprovalCompleted() && !$workFromHome->isDiscarded()){
+            $nextStep = $workFromHome->nextApprovalStep();
+            $approval = $workFromHome->user->approvers->where('model_type', get_class($workFromHome))->where('role_id', $nextStep->role_id)->first();
+            if($approval && $approval->approver_id == $user->id){
+                return $workFromHome->canBeApprovedBy($user);
+            }            
         }
         
         return false;
@@ -187,21 +163,14 @@ class WorkFromHomePolicy
      */
     public function discard(User $user, WorkFromHome $workFromHome): bool
     {                           
-        // dd($leaveRequest->nextApprovalStep()->role_id);
-        $nextStep = $workFromHome->nextApprovalStep();
-        if($nextStep){
-            $getApprover = $workFromHome->processApprovers()->where('step_id', $nextStep->id)->where('role_id', $nextStep->role_id)->first();
-            if($getApprover){
-                if($getApprover->approver){
-                    if($workFromHome->isRejected() && $user->id == $getApprover->approver->id) return true;
-                }else{
-                    if($workFromHome->canBeApprovedBy($user) && $workFromHome->isRejected()) return true;
-                }            
-            }
-        }else{
-            if($workFromHome->canBeApprovedBy($user) && $workFromHome->isRejected()) return true;
-        }   
-                
+        if($workFromHome->isRejected() && !$workFromHome->isDiscarded()){
+            $nextStep = $workFromHome->nextApprovalStep();
+            $approval = $workFromHome->user->approvers->where('model_type', get_class($workFromHome))->where('role_id', $nextStep->role_id)->first();
+            if($workFromHome->user_id == $user->id || ($approval && $approval->approver_id == $user->id)){
+                return true;
+            }                  
+        }       
+
         return false;
     }
 }

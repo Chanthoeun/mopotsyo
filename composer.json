@@ -15,6 +15,7 @@
         "filament/spatie-laravel-settings-plugin": "^3.2",
         "filament/spatie-laravel-translatable-plugin": "^3.2",
         "hugomyb/filament-media-action": "^3.1",
+        "josespinal/filament-record-navigation": "^2.0",
         "kenepa/translation-manager": "^4.0",
         "laravel/framework": "^11.0",
         "laravel/tinker": "^2.9",

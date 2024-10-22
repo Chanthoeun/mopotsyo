@@ -124,22 +124,13 @@ class PurchaseRequestPolicy
      */
     public function approve(User $user, PurchaseRequest $purchaseRequest): bool
     {
-        $nextStep = $purchaseRequest->nextApprovalStep();
-        if($nextStep){
-            $getApprover = $purchaseRequest->processApprovers()->where('step_id', $nextStep->id)->where('role_id', $nextStep->role_id)->first();
-            if($getApprover){
-                if($getApprover->approver){
-                    if($purchaseRequest->isSubmitted() &&
-                    !$purchaseRequest->isApprovalCompleted() &&
-                    !$purchaseRequest->isDiscarded() && $user->id == $getApprover->approver->id) return true;
-                }else{
-                    if($purchaseRequest->canBeApprovedBy($user) && $purchaseRequest->isSubmitted() &&
-                    !$purchaseRequest->isApprovalCompleted() &&
-                    !$purchaseRequest->isDiscarded()) return true;
-                }            
-            }
-        }    
-        // dump($nextStep);
+        if($purchaseRequest->isSubmitted() && !$purchaseRequest->isApprovalCompleted() && !$purchaseRequest->isDiscarded()){
+            $nextStep = $purchaseRequest->nextApprovalStep();
+            $approval = $purchaseRequest->user->approvers->where('model_type', get_class($purchaseRequest))->where('role_id', $nextStep->role_id)->first();
+            if($approval && $approval->approver_id == $user->id){
+                return $purchaseRequest->canBeApprovedBy($user);
+            }            
+        }
         
         return false;
     }
@@ -148,28 +139,12 @@ class PurchaseRequestPolicy
      */
     public function reject(User $user, PurchaseRequest $purchaseRequest): bool
     {      
-        
-        $nextStep = $purchaseRequest->nextApprovalStep();
-        if($nextStep){
-            $getApprover = $purchaseRequest->processApprovers()->where('step_id', $nextStep->id)->where('role_id', $nextStep->role_id)->first();
-            if($getApprover){
-                if($getApprover->approver){
-                    if($purchaseRequest->isSubmitted() &&
-                    !$purchaseRequest->isApprovalCompleted() &&
-                    !$purchaseRequest->isRejected() &&
-                    !$purchaseRequest->isDiscarded() && $user->id == $getApprover->approver->id) return true;
-                }else{
-                    if($purchaseRequest->canBeApprovedBy($user) && $purchaseRequest->isSubmitted() &&
-                    !$purchaseRequest->isApprovalCompleted() &&
-                    !$purchaseRequest->isRejected() &&
-                    !$purchaseRequest->isDiscarded()) return true;
-                }            
-            }
-        }else{
-            if($purchaseRequest->canBeApprovedBy($user) && $purchaseRequest->isSubmitted() &&
-                !$purchaseRequest->isApprovalCompleted() &&
-                !$purchaseRequest->isRejected() &&
-                !$purchaseRequest->isDiscarded()) return true;
+        if($purchaseRequest->isSubmitted() && !$purchaseRequest->isApprovalCompleted() && !$purchaseRequest->isDiscarded()){
+            $nextStep = $purchaseRequest->nextApprovalStep();
+            $approval = $purchaseRequest->user->approvers->where('model_type', get_class($purchaseRequest))->where('role_id', $nextStep->role_id)->first();
+            if($approval && $approval->approver_id == $user->id){
+                return $purchaseRequest->canBeApprovedBy($user);
+            }            
         }
         
         return false;
@@ -179,21 +154,14 @@ class PurchaseRequestPolicy
      */
     public function discard(User $user, PurchaseRequest $purchaseRequest): bool
     {                           
-        // dd($leaveRequest->nextApprovalStep()->role_id);
-        $nextStep = $purchaseRequest->nextApprovalStep();
-        if($nextStep){
-            $getApprover = $purchaseRequest->processApprovers()->where('step_id', $nextStep->id)->where('role_id', $nextStep->role_id)->first();
-            if($getApprover){
-                if($getApprover->approver){
-                    if($purchaseRequest->isRejected() && $user->id == $getApprover->approver->id) return true;
-                }else{
-                    if($purchaseRequest->canBeApprovedBy($user) && $purchaseRequest->isRejected()) return true;
-                }            
-            }
-        }else{
-            if($purchaseRequest->canBeApprovedBy($user) && $purchaseRequest->isRejected()) return true;
-        }   
-                
+        if($purchaseRequest->isRejected() && !$purchaseRequest->isDiscarded()){
+            $nextStep = $purchaseRequest->nextApprovalStep();
+            $approval = $purchaseRequest->user->approvers->where('model_type', get_class($purchaseRequest))->where('role_id', $nextStep->role_id)->first();
+            if($purchaseRequest->user_id == $user->id || ($approval && $approval->approver_id == $user->id)){
+                return true;
+            }                  
+        }       
+
         return false;
     }
 }
