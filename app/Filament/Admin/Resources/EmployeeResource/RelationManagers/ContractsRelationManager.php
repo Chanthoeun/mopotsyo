@@ -3,6 +3,7 @@
 namespace App\Filament\Admin\Resources\EmployeeResource\RelationManagers;
 
 use App\Enums\DayOfWeekEnum;
+use App\Models\User;
 use App\Settings\SettingWorkingHours;
 use Awcodes\TableRepeater\Components\TableRepeater;
 use Awcodes\TableRepeater\Header;
@@ -11,6 +12,7 @@ use Filament\Forms;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Wizard;
 use Filament\Forms\Form;
+use Filament\Forms\Get;
 use Filament\Forms\Set;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables;
@@ -89,21 +91,135 @@ class ContractsRelationManager extends RelationManager
                                         }                                        
                                     }
                                 }),
-                            // Forms\Components\Select::make('supervisor_id')
-                            //     ->label(__('field.supervisor'))
-                            //     ->relationship('supervisor', 'name', fn(Builder $query) => $query->whereHas('employee', fn(Builder $query) => $query->whereNull('resign_date')->orWhereDate('resign_date', '>=', now()))->orderBy('id', 'asc')),
-                            // Forms\Components\Select::make('department_head_id')
-                            //     ->label(__('field.department_head'))
-                            //     ->relationship('departmentHead', 'name', fn(Builder $query) => $query->whereHas('employee', fn(Builder $query) => $query->whereNull('resign_date')->orWhereDate('resign_date', '>=', now()))->orderBy('id', 'asc')),
+                            Forms\Components\Select::make('supervisor_id')
+                                ->label(__('field.supervisor'))
+                                ->relationship('supervisor', 'name', fn(Builder $query) => $query->whereHas('employee', fn(Builder $query) => $query->whereNull('resign_date')->orWhereDate('resign_date', '>=', now()))->orderBy('id', 'asc'))
+                                ->preload()
+                                ->searchable(),
+                            Forms\Components\Select::make('department_head_id')
+                                ->label(__('field.department_head'))
+                                ->relationship('departmentHead', 'name', fn(Builder $query) => $query->whereHas('employee', fn(Builder $query) => $query->whereNull('resign_date')->orWhereDate('resign_date', '>=', now()))->orderBy('id', 'asc'))
+                                ->preload()
+                                ->searchable()
+                                ->live()
+                                ->afterStateUpdated(function($state, Get $get, Set $set){
+                                    if($state){
+                                        $set('approvers', []);
+                                        if($get('supervisor_id')){
+                                            $approver = User::find($get('supervisor_id'));
+                                            if($get('supervisor_id') == $state){
+                                                if($approver->hasRole('acting_director')){
+                                                    // Leave Request
+                                                    $set("approvers.0.model_type", "App\Models\LeaveRequest");
+                                                    $set("approvers.0.role_id", Role::where('name', 'acting_director')->first()->id);
+                                                    $set("approvers.0.approver_id", $get('supervisor_id'));
+                                                    
+                                                    // Overtime
+                                                    $set("approvers.1.model_type", "App\Models\OverTime");
+                                                    $set("approvers.1.role_id", Role::where('name', 'acting_director')->first()->id);
+                                                    $set("approvers.1.approver_id", $get('supervisor_id'));
+                                                    
+                                                    // Work From Home
+                                                    $set("approvers.2.model_type", "App\Models\WorkFromHome");
+                                                    $set("approvers.2.role_id", Role::where('name', 'acting_director')->first()->id);
+                                                    $set("approvers.2.approver_id", $get('supervisor_id'));
+                                                    
+                                                    // Purchase Request
+                                                    $set("approvers.3.model_type", "App\Models\PurchaseRequest");
+                                                    $set("approvers.3.role_id", Role::where('name', 'acting_director')->first()->id);
+                                                    $set("approvers.3.approver_id", $get('supervisor_id'));
+
+                                                }else if($approver->hasRole('head_of_department')){
+                                                    // Leave Request
+                                                    $set("approvers.0.model_type", "App\Models\LeaveRequest");
+                                                    $set("approvers.0.role_id", Role::where('name', 'head_of_department')->first()->id);
+                                                    $set("approvers.0.approver_id", $state);
+
+                                                    $set("approvers.1.model_type", "App\Models\LeaveRequest");
+                                                    $set("approvers.1.role_id", Role::where('name', 'acting_director')->first()->id);
+                                                    $set("approvers.1.approver_id", 2);
+                                                    
+                                                    // Overtime
+                                                    $set("approvers.2.model_type", "App\Models\OverTime");
+                                                    $set("approvers.2.role_id", Role::where('name', 'head_of_department')->first()->id);
+                                                    $set("approvers.2.approver_id", $state);
+                                                    
+                                                    // Work From Home
+                                                    $set("approvers.3.model_type", "App\Models\WorkFromHome");
+                                                    $set("approvers.3.role_id", Role::where('name', 'head_of_department')->first()->id);
+                                                    $set("approvers.3.approver_id", $state);
+
+                                                    $set("approvers.4.model_type", "App\Models\WorkFromHome");
+                                                    $set("approvers.4.role_id", Role::where('name', 'acting_director')->first()->id);
+                                                    $set("approvers.4.approver_id", 2);
+                                                    
+                                                    // Purchase Request
+                                                    $set("approvers.5.model_type", "App\Models\PurchaseRequest");
+                                                    $set("approvers.5.role_id", Role::where('name', 'head_of_department')->first()->id);
+                                                    $set("approvers.5.approver_id", $state);
+                                                }
+                                                
+                                            }else{
+                                                // Leave Request
+                                                $set("approvers.0.model_type", "App\Models\LeaveRequest");
+                                                $set("approvers.0.role_id", Role::where('name', 'supervisor')->first()->id);
+                                                $set("approvers.0.approver_id", $get('supervisor_id'));
+
+                                                $set("approvers.1.model_type", "App\Models\LeaveRequest");
+                                                $set("approvers.1.role_id", Role::where('name', 'head_of_department')->first()->id);
+                                                $set("approvers.1.approver_id", $state);
+
+                                                $set("approvers.2.model_type", "App\Models\LeaveRequest");
+                                                $set("approvers.2.role_id", Role::where('name', 'acting_director')->first()->id);
+                                                $set("approvers.2.approver_id", 2);
+                                                
+                                                // Overtime
+                                                $set("approvers.3.model_type", "App\Models\OverTime");
+                                                $set("approvers.3.role_id", Role::where('name', 'supervisor')->first()->id);
+                                                $set("approvers.3.approver_id", $get('supervisor_id'));
+
+                                                $set("approvers.4.model_type", "App\Models\OverTime");
+                                                $set("approvers.4.role_id", Role::where('name', 'head_of_department')->first()->id);
+                                                $set("approvers.4.approver_id", $state);
+                                                
+                                                // Work From Home
+                                                $set("approvers.5.model_type", "App\Models\WorkFromHome");
+                                                $set("approvers.5.role_id", Role::where('name', 'supervisor')->first()->id);
+                                                $set("approvers.5.approver_id", $get('supervisor_id'));
+
+                                                $set("approvers.6.model_type", "App\Models\WorkFromHome");
+                                                $set("approvers.6.role_id", Role::where('name', 'head_of_department')->first()->id);
+                                                $set("approvers.6.approver_id", $state);
+
+                                                $set("approvers.7.model_type", "App\Models\WorkFromHome");
+                                                $set("approvers.7.role_id", Role::where('name', 'acting_director')->first()->id);
+                                                $set("approvers.7.approver_id", 2);
+                                                
+                                                // Purchase Request
+                                                $set("approvers.8.model_type", "App\Models\PurchaseRequest");
+                                                $set("approvers.8.role_id", Role::where('name', 'supervisor')->first()->id);
+                                                $set("approvers.8.approver_id", $get('supervisor_id'));
+
+                                                $set("approvers.9.model_type", "App\Models\PurchaseRequest");
+                                                $set("approvers.9.role_id", Role::where('name', 'head_of_department')->first()->id);
+                                                $set("approvers.9.approver_id", $state);
+
+                                            }
+                                        }
+                                    }
+                                    
+                                }),
                             Forms\Components\TextInput::make('contract_no')
                                 ->label(__('field.contract_no'))
                                 ->unique(ignoreRecord: true)
-                                ->maxLength(255),
+                                ->maxLength(255)
+                                ->columnSpan(2),
                             Forms\Components\FileUpload::make('file')
                                 ->hiddenLabel()
                                 ->placeholder(__('field.attachment'))
                                 ->directory('employee-contracts')
-                                ->acceptedFileTypes(['application/pdf']),
+                                ->acceptedFileTypes(['application/pdf'])
+                                ->columnSpan(2),
                             TableRepeater::make('approvers')
                                 ->label(__('model.approvers'))
                                 ->relationship()                            
