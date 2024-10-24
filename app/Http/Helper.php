@@ -130,7 +130,11 @@ if(!function_exists('getDayOfWeek')){
 }
 
 if(!function_exists('isWorkHour')){
-    function isWorkHour($user, $date, $request_time): bool{        
+    function isWorkHour($user, $date, $request_time): bool{  
+        if(publicHoliday($date)){
+            return false;
+        }
+        
         foreach($user->workDays as $workDay){
             $startWorkHour = Carbon::parse($workDay->start_time);
             $endWorkHour = Carbon::parse($workDay->end_time);
