@@ -87,10 +87,17 @@ class TimesheetResource extends Resource
                                         $switchWorkDayFromDate = isSwitchWorkDay($user, $date);
                                         $switchWorkDayToDate = isSwitchWorkDayToDate($user, $date);
                                         if($holiday){
-                                            $set("dates.{$i}.date", $date->toDateString());
-                                            $set("dates.{$i}.day", 1);
-                                            $set("dates.{$i}.type", TimesheetTypeEnum::HOLIDAY);
-                                            $set("dates.{$i}.remark", $holiday->name);
+                                            if($overtime){
+                                                $set("dates.{$i}.date", $date->toDateString());
+                                                $set("dates.{$i}.day", $overtime->day);
+                                                $set("dates.{$i}.type", TimesheetTypeEnum::OVERTIME);
+                                                $set("dates.{$i}.remark", $overtime->requestdateable->reason .' | '.$holiday->name);
+                                            }else{
+                                                $set("dates.{$i}.date", $date->toDateString());
+                                                $set("dates.{$i}.day", 1);
+                                                $set("dates.{$i}.type", TimesheetTypeEnum::HOLIDAY);
+                                                $set("dates.{$i}.remark", $holiday->name);
+                                            }
                                             $i++;
                                         }else if($leave){
                                             if($leave->day < 1){
@@ -119,9 +126,16 @@ class TimesheetResource extends Resource
                                             $set("dates.{$i}.remark", $overtime->requestdateable->reason);
                                             $i++;                                                                                                  
                                         }else if($weekend){                                            
-                                            $set("dates.{$i}.date", $date->toDateString());
-                                            $set("dates.{$i}.day", 1);
-                                            $set("dates.{$i}.type", TimesheetTypeEnum::WEEKEND);
+                                            if($overtime){
+                                                $set("dates.{$i}.date", $date->toDateString());
+                                                $set("dates.{$i}.day", $overtime->day);
+                                                $set("dates.{$i}.type", TimesheetTypeEnum::OVERTIME);
+                                                $set("dates.{$i}.remark", $overtime->requestdateable->reason);
+                                            }else{
+                                                $set("dates.{$i}.date", $date->toDateString());
+                                                $set("dates.{$i}.day", 1);
+                                                $set("dates.{$i}.type", TimesheetTypeEnum::WEEKEND);
+                                            } 
                                             $i++;
                                         }else if($workFromHome){
                                             $set("dates.{$i}.date", $date->toDateString());
@@ -183,10 +197,17 @@ class TimesheetResource extends Resource
                                         $switchWorkDayFromDate = isSwitchWorkDay($user, $date);
                                         $switchWorkDayToDate = isSwitchWorkDayToDate($user, $date);
                                         if($holiday){
-                                            $set("dates.{$i}.date", $date->toDateString());
-                                            $set("dates.{$i}.day", 1);
-                                            $set("dates.{$i}.type", TimesheetTypeEnum::HOLIDAY);
-                                            $set("dates.{$i}.remark", $holiday->name);
+                                            if($overtime){
+                                                $set("dates.{$i}.date", $date->toDateString());
+                                                $set("dates.{$i}.day", $overtime->day);
+                                                $set("dates.{$i}.type", TimesheetTypeEnum::OVERTIME);
+                                                $set("dates.{$i}.remark", $overtime->requestdateable->reason .' | '.$holiday->name);
+                                            }else{
+                                                $set("dates.{$i}.date", $date->toDateString());
+                                                $set("dates.{$i}.day", 1);
+                                                $set("dates.{$i}.type", TimesheetTypeEnum::HOLIDAY);
+                                                $set("dates.{$i}.remark", $holiday->name);
+                                            }
                                             $i++;
                                         }else if($leave){
                                             if($leave->day < 1){
@@ -213,11 +234,18 @@ class TimesheetResource extends Resource
                                             $set("dates.{$i}.day", $overtime->day);
                                             $set("dates.{$i}.type", TimesheetTypeEnum::OVERTIME);
                                             $set("dates.{$i}.remark", $overtime->requestdateable->reason);
-                                            $i++;                                                                                                  
-                                        }else if($weekend){                                            
-                                            $set("dates.{$i}.date", $date->toDateString());
-                                            $set("dates.{$i}.day", 1);
-                                            $set("dates.{$i}.type", TimesheetTypeEnum::WEEKEND);
+                                            $i++;                                                                                           
+                                        }else if($weekend){   
+                                            if($overtime){
+                                                $set("dates.{$i}.date", $date->toDateString());
+                                                $set("dates.{$i}.day", $overtime->day);
+                                                $set("dates.{$i}.type", TimesheetTypeEnum::OVERTIME);
+                                                $set("dates.{$i}.remark", $overtime->requestdateable->reason);
+                                            }else{
+                                                $set("dates.{$i}.date", $date->toDateString());
+                                                $set("dates.{$i}.day", 1);
+                                                $set("dates.{$i}.type", TimesheetTypeEnum::WEEKEND);
+                                            }                                      
                                             $i++;
                                         }else if($workFromHome){
                                             $set("dates.{$i}.date", $date->toDateString());
