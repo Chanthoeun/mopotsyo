@@ -74,7 +74,7 @@ class LeaveEntitlement extends Model
                 $leaveRequests = $this->user->leaveRequests()->with('requestDates')->where('leave_type_id', $this->leave_type_id)->whereHas('requestDates', function($q){
                     $q->whereBetween('date', [$this->start_date, $this->end_date]);
                 })->whereHas('approvalStatus', static function ($q) {
-                    return $q->where('status', ApprovalActionEnum::APPROVED->value);
+                    return $q->whereIn('status', [ApprovalActionEnum::APPROVED->value, ApprovalActionEnum::SUBMITTED->value]);
                 })->get();
 
                 $taken = 0;

@@ -174,12 +174,12 @@ class TimesheetResource extends Resource
                                     $i = 0;
                                     $dates = getDateRangeBetweenTwoDates($get('from_date'), $state);
                                     foreach($dates as $date){                                        
-                                        // check if date is public holiday
                                         $holiday = publicHoliday($date);
                                         $weekend = weekend($date);
                                         $leave = isOnLeave($user, $date);
+                                        $overtime = isOvertime($user, $date);
                                         $workFromHome = isWorkFromHome($user, $date);
-                                        $workDay = isWorkDay($user, $date);         
+                                        $workDay = isWorkDay($user, $date);
                                         $switchWorkDayFromDate = isSwitchWorkDay($user, $date);
                                         $switchWorkDayToDate = isSwitchWorkDayToDate($user, $date);
                                         if($holiday){
@@ -207,7 +207,13 @@ class TimesheetResource extends Resource
                                                 $set("dates.{$i}.type", TimesheetTypeEnum::LEAVE);
                                                 $set("dates.{$i}.remark", $leave->requestdateable->leaveType->name);
                                                 $i++;
-                                            }                                                                                                            
+                                            }  
+                                        }else if($overtime){
+                                            $set("dates.{$i}.date", $date->toDateString());
+                                            $set("dates.{$i}.day", $overtime->day);
+                                            $set("dates.{$i}.type", TimesheetTypeEnum::OVERTIME);
+                                            $set("dates.{$i}.remark", $overtime->requestdateable->reason);
+                                            $i++;                                                                                                  
                                         }else if($weekend){                                            
                                             $set("dates.{$i}.date", $date->toDateString());
                                             $set("dates.{$i}.day", 1);
@@ -217,7 +223,7 @@ class TimesheetResource extends Resource
                                             $set("dates.{$i}.date", $date->toDateString());
                                             $set("dates.{$i}.day", $workFromHome->day);
                                             $set("dates.{$i}.type", TimesheetTypeEnum::HOME);
-                                            $set("dates.{$i}.remark", $workFromHome->reason);
+                                            $set("dates.{$i}.remark", $workFromHome->requestdateable->reason);
                                             $i++;
                                         }else if($workDay){   
                                             if($switchWorkDayFromDate){
@@ -236,7 +242,7 @@ class TimesheetResource extends Resource
                                                 $set("dates.{$i}.date", $date->toDateString());
                                                 $set("dates.{$i}.day", 1);    
                                                 $set("dates.{$i}.type", TimesheetTypeEnum::OFFICE);   
-                                                $set("dates.{$i}.remark", __('msg.body.switch_working_date', ['from' => $switchWorkDayToDate->from_date->toDateString(), 'to' => $switchWorkDayToDate->to_date->toDateString(), 'reason' => $switchWorkDayToDate->reason]));
+                                                $set("dates.{$i}.remark", __('msg.body.switch_working_date', ['from' => $switchWorkDayFromDate->from_date->toDateString(), 'to' => $switchWorkDayFromDate->to_date->toDateString(), 'reason' => $switchWorkDayFromDate->reason]));
                                             }else{
                                                 $set("dates.{$i}.date", $date->toDateString());
                                                 $set("dates.{$i}.day", 1);    
