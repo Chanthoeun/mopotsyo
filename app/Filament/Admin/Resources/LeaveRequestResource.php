@@ -281,11 +281,12 @@ class LeaveRequestResource extends Resource
                                     ->directory('leave-attachments')
                                     ->acceptedFileTypes(['application/pdf'])
                                     ->visible(function(Get $get){
-                                        if($get('requestDates') && $get('leave_type_id')){
+                                        if(isRequestBackDate($get('to_date'))){
+                                            return true;
+                                        }elseif($get('requestDates') && $get('leave_type_id')){
                                             // get leave request days                                    
                                             $requestDays = getRequestDays($get('requestDates'));
                                             $leaveType = LeaveType::find($get('leave_type_id'));
-
 
                                             // check rule  
                                             if($leaveType->rules){
