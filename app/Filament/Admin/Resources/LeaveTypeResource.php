@@ -49,27 +49,33 @@ class LeaveTypeResource extends Resource
             ->schema([
                 Forms\Components\Section::make()
                     ->columns(2)
-                    ->schema([                        
-                        Forms\Components\TextInput::make('name')
-                            ->label(__('field.name'))
-                            ->required()
-                            ->unique(ignoreRecord:true)
-                            ->columnSpanFull(),
-                        Forms\Components\TextInput::make('abbr')
-                            ->label(__('field.abbr'))
-                            ->required()
-                            ->unique(ignoreRecord:true)
-                            ->maxLength(5),                        
-                        Forms\Components\ColorPicker::make('color')
-                            ->label(__('field.color'))
-                            ->required()
-                            ->unique(ignoreRecord:true),
+                    ->schema([  
+                        Forms\Components\Grid::make(3)
+                            ->schema([
+                                Forms\Components\TextInput::make('name')
+                                    ->label(__('field.name'))
+                                    ->required()
+                                    ->unique(ignoreRecord:true),
+                                Forms\Components\TextInput::make('abbr')
+                                    ->label(__('field.abbr'))
+                                    ->required()
+                                    ->unique(ignoreRecord:true)
+                                    ->maxLength(5),                        
+                                Forms\Components\ColorPicker::make('color')
+                                    ->label(__('field.color'))
+                                    ->required()
+                                    ->unique(ignoreRecord:true),
+                            ]),                    
+                        
                         Forms\Components\Toggle::make('male')
                             ->label(__('field.male'))
                             ->default(true),
                         Forms\Components\Toggle::make('female')
                             ->label(__('field.female'))
                             ->default(true),
+                        Forms\Components\Textarea::make('remark')
+                            ->label(__('field.remark'))
+                            ->columnSpanFull(),
                         Forms\Components\Section::make(__('field.balance'))
                             ->columns(2)
                             ->description(__('desc.balance'))
