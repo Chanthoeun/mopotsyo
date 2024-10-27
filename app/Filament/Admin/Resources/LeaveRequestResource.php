@@ -566,7 +566,7 @@ class LeaveRequestResource extends Resource
                         Tables\Actions\Action::make('discard') 
                             ->label(__('filament-approvals::approvals.actions.discard'))                           
                             ->visible(fn (Model $record) => (Auth::id() == $record->approvalStatus->creator->id && $record->isApprovalCompleted() && $record->isApproved()))                                                      
-                            ->hidden(fn(Model $record) => (Auth::id() != $record->approvalStatus->creator->id || $record->isDiscarded() || $record->to_date < now()))                            
+                            ->hidden(fn(Model $record) => (Auth::id() != $record->approvalStatus->creator->id || $record->isDiscarded() || $record->isRejected() || $record->to_date < now()))                            
                             ->form([
                                 Textarea::make('reason')
                                     ->label(__('field.reason'))

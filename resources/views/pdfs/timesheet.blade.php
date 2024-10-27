@@ -133,6 +133,9 @@
         .w-10{
             width:10%;   
         }
+        .w-5{
+            width:5%;   
+        }
         .logo img{
             width:120px;
             height:120px;
@@ -208,7 +211,7 @@
         </h2>      
     </div>
     <div class="w-50 float-right" style="position: absolute; bottom: 0; right: 0;">
-        <h2 class="text-right m-0 p-0">{{strtoupper(__('model.timesheet'))}}</h2>
+        <h2 class="text-right m-0 p-0">{{strtoupper(__('model.employee') . ' ' .__('model.timesheet'))}}</h2>
     </div>        
     <div style="clear: both;"></div>    
 </div>
@@ -245,9 +248,9 @@
         <thead>
             <tr>
                 <th class="w-20" colspan="2">{{__('field.day')}}</th>                
-                <th class="w-20">{{__('field.date')}}</th>                
-                <th class="w-15">{{__('field.day')}}</th>
-                <th class="w-20">{{__('field.type')}}</th>
+                <th class="w-15">{{__('field.date')}}</th>                
+                <th class="w-5">{{__('field.day')}}</th>
+                <th class="w-10">{{__('field.type')}}</th>
                 <th>{{__('field.remark')}}</th>                 
             </tr>
         </thead>
@@ -266,7 +269,7 @@
     </table>
 </div>
 <div class="mt-10">
-    <div class="w-30  float-left">
+    <div class="w-30 float-left">
         <div class="table-section bill-tbl w-100">
             <table class="table w-100">
                 <thead>
@@ -321,7 +324,7 @@
                         <td align="center">{{$item->balance}}</td>
                         @if ($item->balance > 0)
                         <td align="center">{{$user->entitlements()->where('leave_type_id', $item->id)->whereDate('end_date', '>=', now())->where('is_active', true)->first()->taken}}</td>
-                        <td align="center">{{getTakenLeave($user, $item->id, $record->from_date, $record->to_date)}}</td>
+                        <td align="center">{{getTakenLeave($user, $item->id, $record->from_date->toDateString(), $record->to_date->toDateString())}}</td>
                         <td align="center">{{$user->entitlements()->where('leave_type_id', $item->id)->whereDate('end_date', '>=', now())->where('is_active', true)->first()->remaining}}</td>    
                         @else
                         <td align="center">{{getTakenLeave($user, $item->id)}}</td>
@@ -349,7 +352,7 @@
             </tr>
         </thead>
         <tbody>
-            <tr>
+            <tr style="height: 20px;">
                 <td class="w-10">@lang('field.signature')</td>    
                 <td></td>
                 <td class="w-10">@lang('field.signature')</td>    

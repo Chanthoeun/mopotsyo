@@ -30,6 +30,7 @@ class LeaveType extends Model
         'maximum_balance',
         'option',
         'rules',
+        'remark',
     ];
 
     /**

@@ -22,6 +22,7 @@ return new class extends Migration
             $table->unsignedTinyInteger('maximum_balance')->default(0)->nullable();
             $table->json('option')->nullable();
             $table->json('rules')->nullable();
+            $table->text('remark')->nullable();
             $table->timestamps();
             $table->softDeletes();
         });
