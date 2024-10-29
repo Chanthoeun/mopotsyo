@@ -133,6 +133,9 @@
         .w-10{
             width:10%;   
         }
+        .w-7{
+            width:7%;   
+        }
         .w-5{
             width:5%;   
         }
@@ -249,7 +252,7 @@
             <tr>
                 <th class="w-20" colspan="2">{{__('field.day')}}</th>                
                 <th class="w-15">{{__('field.date')}}</th>                
-                <th class="w-5">{{__('field.day')}}</th>
+                <th class="w-7">{{__('field.day')}}</th>
                 <th class="w-10">{{__('field.type')}}</th>
                 <th>{{__('field.remark')}}</th>                 
             </tr>
