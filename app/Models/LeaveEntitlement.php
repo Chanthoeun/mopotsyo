@@ -41,7 +41,6 @@ class LeaveEntitlement extends Model
         'id' => 'integer',
         'start_date' => 'date',
         'end_date' => 'date',
-        'balance' => 'integer',
         'is_active' => 'boolean',
         'leave_type_id' => 'integer',
         'user_id' => 'integer',
@@ -65,6 +64,13 @@ class LeaveEntitlement extends Model
     public function leaveRequests(): MorphMany
     {
         return $this->morphMany(LeaveRequest::class, 'leaverequestable');
+    }
+
+    protected function balance(): Attribute
+    {
+        return Attribute::make(
+            get: fn ($value) => floatval($value),
+        );
     }
 
     protected function taken(): Attribute
