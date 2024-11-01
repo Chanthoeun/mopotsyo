@@ -17,7 +17,7 @@ return new class extends Migration
             $table->id();
             $table->date('start_date');
             $table->date('end_date');
-            $table->unsignedTinyInteger('balance')->default(0);
+            $table->decimal('balance', 4, 2)->default(0);
             $table->boolean('is_active')->default(1);
             $table->foreignId('leave_type_id')->constrained()->onDelete('restrict')->cascadeOnUpdate();
             $table->foreignId('user_id')->constrained()->onDelete('restrict')->cascadeOnUpdate();
