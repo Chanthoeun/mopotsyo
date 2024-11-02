@@ -80,9 +80,12 @@ class LeaveEntitlementResource extends Resource
                             ->label(__('model.leave_type'))
                             ->relationship('leaveType', 'name', function(Get $get, Builder $query) {
                                 if($get('user_id')){
-                                    $user = User::with('employee.contracts.contractType')->find($get('user_id'));
-                                    $contract = $user->employee->contracts->where('is_active', true)->first();
-                                    return $query->whereIn('id', $contract->contractType->leave_types)->where('balance', '>', 0)->where($user->employee->gender->value, true)->orderBy('id', 'asc');
+                                    $user = User::find($get('user_id'));
+                                    if($user->contract->contractType->leave_types){
+                                        return $query->whereIn('id', $user->contract->contractType->leave_types)->where('balance', '>', 0)->where($user->employee->gender->value, true)->orderBy('id', 'asc');
+                                    }else{
+                                        return $query->where('balance', '>', 0)->where($user->employee->gender->value, true)->orderBy('id', 'asc');
+                                    }
                                 }
                             })
                             ->live()
