@@ -21,6 +21,7 @@ return [
     'send' => 'Send',
     'download'  =>  'Download',
     'check' =>  'Check',
+    'decide' =>  'Decide',
 
     // Button title
     'label' => [
@@ -43,6 +44,7 @@ return [
         'send'      => 'Send :label',
         'download'  => 'Download :label',
         'check'     => 'Check :label',
+        'decide'    => 'Decide :label',
     ],
 
     // Button message
@@ -64,5 +66,8 @@ return [
         'submit'    => 'Would you like to submit :name?',
         'view'      => 'Would you like to view :name?',
         'send'      => 'Would you like to send :name?',
+        'download'  => 'Would you like to download :name?',
+        'check'     => 'Would you like to check :name?',
+        'decide'    => 'Would you like to decide :name?',
     ],
 ];

@@ -56,9 +56,9 @@ class LeaveEntitlementResource extends Resource
                                     $query->whereNull('resign_date');
                                     $query->whereHas('contracts', function(Builder $query) {
                                         $query->where('is_active', true);
-                                        $query->whereHas('contractType', function(Builder $query) {
-                                            $query->where('allow_leave_request', true);
-                                        });
+                                        // $query->whereHas('contractType', function(Builder $query) {
+                                        //     $query->where('allow_leave_request', true);
+                                        // });
                                     });
                                 });
                             })
@@ -93,7 +93,8 @@ class LeaveEntitlementResource extends Resource
                                 if($get('user_id') && $state){
                                     $user = User::with('employee')->find($get('user_id'));                                    
                                     $leaveType = LeaveType::find($state);
-                                    if(!empty($leaveType->balance_increment_amount) && !empty($leaveType->balance_increment_period)){
+
+                                    if(!empty($leaveType->option['balance_increment_amount']) && !empty($leaveType->option['balance_increment_period'])){
                                         $set('balance', getEntitlementBalance($user->employee->join_date, $leaveType));
                                     }else{
                                         $set('balance', $leaveType->balance);

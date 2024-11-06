@@ -116,7 +116,7 @@ class ProcessApprovalApprovedNotificationListener
                     'dates'  => $leaveRequest->days <= 2 ? $leaveRequest->requestDates->implode('date', ', ') : $leaveRequest->from_date->toDateString() .' - '. $leaveRequest->to_date->toDateString()
                 ]),
                 'action'    => [
-                    'name'  => __('btn.approve'),
+                    'name'  => __('btn.decide'),
                     'url'   => LeaveRequestResource::getUrl('view', ['record' => $leaveRequest])
                 ]
             ]);
@@ -166,7 +166,7 @@ class ProcessApprovalApprovedNotificationListener
                     'date'  => implode(', ', $overtime->requestDates->map(fn($requestDate) => ['date' => $requestDate->date->toDateString()])->pluck('date')->toArray()), 
                 ]),
                 'action'    => [
-                    'name'  => __('btn.approve'),
+                    'name'  => __('btn.decide'),
                     'url'   => OverTimeResource::getUrl('view', ['record' => $overtime])
                 ]
             ]);
@@ -215,7 +215,7 @@ class ProcessApprovalApprovedNotificationListener
                     'to'    => $switchWorkDay->to_date->toDateString(), 
                 ]),
                 'action'    => [
-                    'name'  => __('btn.approve'),
+                    'name'  => __('btn.decide'),
                     'url'   => SwitchWorkDayResource::getUrl('view', ['record' => $switchWorkDay])
                 ]
             ]);
@@ -266,7 +266,7 @@ class ProcessApprovalApprovedNotificationListener
                     'to'    => $workFromHome->to_date->toDateString(), 
                 ]),
                 'action'    => [
-                    'name'  => __('btn.approve'),
+                    'name'  => __('btn.decide'),
                     'url'   => WorkFromHomeResource::getUrl('view', ['record' => $workFromHome])
                 ]
             ]);
@@ -315,7 +315,7 @@ class ProcessApprovalApprovedNotificationListener
                     'actionedBy'=> $approved->approver_name, 
                 ]),
                 'action'    => [
-                    'name'  => __('btn.approve'),
+                    'name'  => __('btn.decide'),
                     'url'   => PurchaseRequestResource::getUrl('view', ['record' => $purchaseRequest])
                 ]
             ]);
