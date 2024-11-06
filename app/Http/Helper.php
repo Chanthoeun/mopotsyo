@@ -109,8 +109,9 @@ if(!function_exists('getEntitlementBalance')){
         $endDate  = Carbon::createFromDate(now()->year, $startDate->month, $startDate->day);
         $duration = intval($startDate->diffInYears($endDate));        
         $increment = 0;
-        if(!empty($leaveType->option) && !empty($leaveType->option->balance_increment_amount) && !empty($leaveType->option->balance_increment_period)){                                                                            
-            $increment =  intval($duration / floatval($leaveType->option->balance_increment_period));
+
+        if(!empty($leaveType->option) && !empty($leaveType->option['balance_increment_amount']) && !empty($leaveType->option['balance_increment_period'])){                                                                            
+            $increment =  intval($duration / floatval($leaveType->option['balance_increment_period']));
         }
 
         $balance = intval($leaveType->balance + $increment);
