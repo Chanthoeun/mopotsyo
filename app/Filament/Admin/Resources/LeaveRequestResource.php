@@ -279,7 +279,7 @@ class LeaveRequestResource extends Resource
                                     ->label(__('field.attachment'))
                                     ->required()
                                     ->directory('leave-attachments')
-                                    ->acceptedFileTypes(['application/pdf'])
+                                    ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/jpg' ,'application/pdf'])
                                     ->visible(function(Get $get){
                                         if(isRequestBackDate($get('to_date'))){
                                             return true;
