@@ -219,8 +219,7 @@ class TimesheetResource extends Resource
 
                                                 $set("dates.{$i}.date", $date->toDateString());
                                                 $set("dates.{$i}.day", floatval(1 - $leave->day));
-                                                $set("dates.{$i}.type", TimesheetTypeEnum::LEAVE);
-                                                $set("dates.{$i}.remark", $leave->requestdateable->leaveType->name);
+                                                $set("dates.{$i}.type", TimesheetTypeEnum::OFFICE);
                                                 $i++;
                                             }else{
                                                 $set("dates.{$i}.date", $date->toDateString());
