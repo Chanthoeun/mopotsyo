@@ -29,6 +29,7 @@ use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Actions\Action;
+use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -554,14 +555,20 @@ class LeaveRequestResource extends Resource
             ])
             ->defaultSort('created_at', 'desc')
             ->filters([
-                Tables\Filters\SelectFilter::make('leave_type_id')
-                    ->label(__('model.leave_type'))
-                    ->relationship('leaveType', 'name'),
                 Tables\Filters\SelectFilter::make('requested_by')
                     ->label(__('field.requested_by'))
-                    ->relationship('user', 'name'),
-                Tables\Filters\TrashedFilter::make()
-            ])
+                    ->relationship('user', 'name')
+                    ->preload()
+                    ->searchable()
+                    ->default(Auth::Id()),
+                Tables\Filters\SelectFilter::make('leave_type_id')
+                    ->label(__('model.leave_type'))
+                    ->relationship('leaveType', 'name')
+                    ->preload()
+                    ->searchable(),
+                Tables\Filters\TrashedFilter::make()->visible(fn() => Auth::user()->hasRole('super_admin'))
+            ], layout: FiltersLayout::AboveContent)
+            ->filtersFormColumns(3)
             ->actions(
                 ApprovalActions::make(
                     [                                               
