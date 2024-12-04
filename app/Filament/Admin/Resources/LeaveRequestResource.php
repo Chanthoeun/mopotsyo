@@ -109,6 +109,9 @@ class LeaveRequestResource extends Resource
                                                     $user = Auth::user();
                                                 }
                                                 
+                                                // check request date and time
+                                                $requestDateTime = now();
+                                               
                                                 // get leave request days                                    
                                                 $requestDays = getRequestDays($get('requestDates'));
                                                 // request days in advance
@@ -134,8 +137,9 @@ class LeaveRequestResource extends Resource
                                                     if($leaveType){
                                                         // TODO: check rule
                                                         if($leaveType->rules){
-                                                            foreach($leaveType->rules as $rule){                                            
-                                                                if(empty($rule['to_amount']) && $requestDays > $rule['from_amount'] && !empty($rule['day_in_advance']) && $inAdvance < floatval($rule['day_in_advance'] - 0.9)){
+                                                            foreach($leaveType->rules as $rule){   
+                                                                // empty($rule['to_amount']) && $requestDays > $rule['from_amount'] && !empty($rule['day_in_advance']) && $inAdvance < floatval($rule['day_in_advance'] - 0.9)      
+                                                                if($requestDays <= 1 && $requestDateTime->isBefore($get('from_date')) && $requestDateTime->isAfter(date('Y-m-d').' 16:30:00')) {
                                                                     $fail(trans_choice('msg.body.in_advance', $rule['day_in_advance'], ['days' => $rule['day_in_advance']]));
                                                                 }else if($requestDays >= $rule['from_amount'] && $requestDays <= $rule['to_amount'] && !empty($rule['day_in_advance']) && $inAdvance < floatval($rule['day_in_advance'] - 0.9)){
                                                                     $fail(trans_choice('msg.body.in_advance', $rule['day_in_advance'], ['days' => $rule['day_in_advance']]));
