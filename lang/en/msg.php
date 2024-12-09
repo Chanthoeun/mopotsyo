@@ -78,6 +78,7 @@ return [
         'working_day'           => 'Selected date must be your work day.',
         'not_working_day'       => 'Selected date must be not your work day.',
         'is_public_holiday'     => 'Selected date is public holiday.',
+        'request_days_is_zero'  => 'The request days is zero. Please check it again!',
         'switch_working_date'   => 'Switched between :from and :to because ":reason"',
         'purchase_request'      => ':name just :action a purchase request. This is a purchase number :number. Please kindly check and approve in the below link.',
         'purchase_request_approved'    => ':name just :action a purchase request. This is a purchase number :number and it was checked and approved by :actionedBy. Please kindly check and approve in the below link.',
