@@ -115,6 +115,10 @@ class LeaveRequestResource extends Resource
                                                
                                                 // get leave request days                                    
                                                 $requestDays = getRequestDays($get('requestDates'));
+                                                if($requestDays == 0){
+                                                    $fail(__('msg.body.request_days_is_zero'));
+                                                }
+
                                                 // request days in advance
                                                 $inAdvance = round(now()->diffInDays($get('from_date')), 0);
                                                 // allow accruing leave days if no rule
@@ -331,7 +335,7 @@ class LeaveRequestResource extends Resource
                                             ->seconds(false)
                                             ->live()
                                             ->afterStateUpdated(function($state, Get $get, Set $set){                                                
-                                                $set('hours', round(getHoursBetweenTwoTimes($get('start_time'), $state, app(SettingWorkingHours::class)->break_time), 1));
+                                                $set('hours', round(getHoursBetweenTwoTimes($state, $get('end_time'), app(SettingWorkingHours::class)->break_time), 1));
                                             })
                                             ->default('08:00:00'),
                                         Forms\Components\TimePicker::make('end_time')
