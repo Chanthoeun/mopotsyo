@@ -17,7 +17,7 @@ class LeaveEntitlement extends Model
 {
     use HasFactory, SoftDeletes;
 
-    protected $append = ['taken', 'remaining'];
+    protected $append = ['all_taken', 'remaining'];
     /**
      * The attributes that are mass assignable.
      *
@@ -27,6 +27,7 @@ class LeaveEntitlement extends Model
         'start_date',
         'end_date',
         'balance',
+        'taken',
         'is_active',
         'leave_type_id',
         'user_id',
@@ -73,21 +74,23 @@ class LeaveEntitlement extends Model
         );
     }
 
-    protected function taken(): Attribute
+    protected function allTaken(): Attribute
     {
         return Attribute::make(
-            get: function () {               
-                $leaveRequests = $this->user->leaveRequests()->with('requestDates')->where('leave_type_id', $this->leave_type_id)->whereHas('requestDates', function($q){
-                    $q->whereBetween('date', [$this->start_date, $this->end_date]);
-                })->whereHas('approvalStatus', static function ($q) {
-                    return $q->whereIn('status', [ApprovalActionEnum::APPROVED->value, ApprovalActionEnum::SUBMITTED->value]);
-                })->get();
+            get: function () {     
+                
+                $taken = getTakenLeave($this->user, $this->leave_type_id, $this->start_date, $this->end_date);
+                // $leaveRequests = $this->user->leaveRequests()->with('requestDates')->where('leave_type_id', $this->leave_type_id)->whereHas('requestDates', function($q){
+                //     $q->whereBetween('date', [$this->start_date, $this->end_date]);
+                // })->whereHas('approvalStatus', static function ($q) {
+                //     return $q->whereIn('status', [ApprovalActionEnum::APPROVED->value, ApprovalActionEnum::SUBMITTED->value]);
+                // })->get();
 
-                $taken = 0;
-                foreach ($leaveRequests as $leaveRequest) {
-                    $taken += floatval($leaveRequest->requestDates->sum('hours') / app(SettingWorkingHours::class)->day);
-                }
-                return $taken;
+                // $taken = 0;
+                // foreach ($leaveRequests as $leaveRequest) {
+                //     $taken += floatval($leaveRequest->requestDates->sum('hours') / app(SettingWorkingHours::class)->day);
+                // }
+                return floatval($this->taken + $taken);
             } 
         );
     }

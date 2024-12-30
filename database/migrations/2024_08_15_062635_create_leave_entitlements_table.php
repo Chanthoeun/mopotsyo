@@ -18,6 +18,7 @@ return new class extends Migration
             $table->date('start_date');
             $table->date('end_date');
             $table->decimal('balance', 4, 2)->default(0);
+            $table->decimal('taken', 4, 2)->default(0);
             $table->boolean('is_active')->default(1);
             $table->foreignId('leave_type_id')->constrained()->onDelete('restrict')->cascadeOnUpdate();
             $table->foreignId('user_id')->constrained()->onDelete('restrict')->cascadeOnUpdate();

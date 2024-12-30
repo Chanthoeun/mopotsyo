@@ -320,15 +320,24 @@
                         $leaveTypes = LeaveType::whereIn('id', $leaveTypeIds)->where($user->employee->gender->value, true)->orderBy('id', 'asc')->get();
                     @endphp
                     @foreach ($leaveTypes as $item)       
-                    @if ($item->balance > 0 || getTakenLeave($user, $item->id, $record->from_date, $record->to_date) > 0)
+                    @php
+                        $taken = getTakenLeave($user, $item->id, $record->from_date, $record->to_date); 
+                        $entitlement = $user->entitlements()->where('leave_type_id', $item->id)->whereDate('end_date', '>=', now())->where('is_active', true)->first();
+                    @endphp
+                    @if ($item->balance > 0 || $taken > 0)
                     <tr>
                         <td>{{$item->name}}</td>
                         <td align="center">{{__('field.day')}}</td>
-                        <td align="center">{{$item->balance}}</td>
+                        <td align="center">{{$entitlement?->balance}}</td>
                         @if ($item->balance > 0)
-                        <td align="center">{{$user->entitlements()->where('leave_type_id', $item->id)->whereDate('end_date', '>=', now())->where('is_active', true)->first()->taken}}</td>
-                        <td align="center">{{getTakenLeave($user, $item->id, $record->from_date->toDateString(), $record->to_date->toDateString())}}</td>
-                        <td align="center">{{$user->entitlements()->where('leave_type_id', $item->id)->whereDate('end_date', '>=', now())->where('is_active', true)->first()->remaining}}</td>    
+                        @php
+                            $allTaken = floatval($entitlement->taken + getTakenLeave($user, $item->id, $entitlement->start_date->toDateString(), $record->to_date));
+                            $takenThisMonth = getTakenLeave($user, $item->id, $record->from_date->toDateString(), $record->to_date->toDateString());
+                            $remaining = floatval($entitlement->balance - $allTaken);
+                        @endphp
+                        <td align="center">{{$allTaken}}</td>
+                        <td align="center">{{$takenThisMonth}}</td>
+                        <td align="center">{{$remaining}}</td>    
                         @else
                         <td align="center">{{getTakenLeave($user, $item->id)}}</td>
                         <td align="center">{{getTakenLeave($user, $item->id, $record->from_date, $record->to_date)}}</td>
@@ -349,9 +358,9 @@
     <table class="table w-100">
         <thead>
             <tr>
-                <th colspan="2" align="center" class="w-30">@lang('field.submitted_by')</th>
-                <th colspan="2" align="center" class="w-40">@lang('field.checked_verified_by')</th>
-                <th colspan="2" align="center" class="w-30">@lang('field.approved_by')</th>
+                <th colspan="2" align="center" width="30%" class="w-30">@lang('field.submitted_by')</th>
+                <th colspan="2" align="center" width="40%" class="w-40">@lang('field.checked_verified_by')</th>
+                <th colspan="2" align="center" width="30%" class="w-30">@lang('field.approved_by')</th>
             </tr>
         </thead>
         <tbody>

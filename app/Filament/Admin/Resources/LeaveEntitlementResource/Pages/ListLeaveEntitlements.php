@@ -8,11 +8,13 @@ use App\Models\LeaveType;
 use App\Models\User;
 use Carbon\Carbon;
 use Filament\Actions;
+use Filament\Forms\Components\DatePicker;
 use Filament\Notifications\Notification;
 use Filament\Resources\Components\Tab;
 use Filament\Resources\Pages\ListRecords;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
+use Filament\Forms\Form;
 
 class ListLeaveEntitlements extends ListRecords
 {
@@ -34,7 +36,22 @@ class ListLeaveEntitlements extends ListRecords
                 ->modalDescription(__('btn.msg.generate', ['name' => __('field.all') .' '. __('model.employees')]))
                 ->modalIcon('fas-rotate')
                 ->visible(fn () => Auth::user()->can('create', LeaveEntitlement::class))
-                ->action(function(){
+                ->form([
+                    DatePicker::make('start_date')
+                        ->label(__('field.start_date'))
+                        ->required()
+                        ->native(false)
+                        ->live()
+                        ->suffixIcon('fas-calendar')
+                        ->default(date('Y').'-01-01'),
+                    DatePicker::make('end_date')
+                        ->label(__('field.end_date'))
+                        ->required()
+                        ->native(false)
+                        ->suffixIcon('fas-calendar')
+                        ->default(date('Y').'-12-31'),
+                ])
+                ->action(function(array $data){
                     $users = User::with(['employee.contracts.contractType', 'entitlements'])->whereHas('employee', function(Builder $q) {
                         $q->whereNull('resign_date');
                         $q->whereHas('contracts', function(Builder $query) {
@@ -70,9 +87,10 @@ class ListLeaveEntitlements extends ListRecords
                                     // create new entitlement for this leave type
                                     $user->entitlements()->create([   
                                         'leave_type_id' => $leaveType->id,             
-                                        'start_date' => $startDate,
-                                        'end_date' => $endDate,
+                                        'start_date' => $data['start_date'],
+                                        'end_date' => $data['end_date'],
                                         'balance' => $balance,
+                                        'taken' => 0,
                                     ]); 
                                 }                                                
                             }

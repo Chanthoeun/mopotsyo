@@ -63,13 +63,13 @@ class LeaveCarryForwardResource extends Resource
                             }),
                         Forms\Components\Select::make('leave_entitlement_id')
                             ->label(__('model.entitlement'))
-                            ->relationship('leaveEntitlement', 'id', fn(Get $get, Builder $query) => $query->where('user_id', $get('user_id'))->where('is_active', true)->whereHas('leaveType', fn($query) => $query->where('allow_carry_forward', true)))
+                            ->relationship('leaveEntitlement', 'id', fn(Get $get, Builder $query) => $query->where('user_id', $get('user_id'))->where('is_active', true)->whereHas('leaveType', fn($query) => $query->where('option->allow_carry_forward', true)))
                             ->required()
                             ->getOptionLabelFromRecordUsing(fn(Model $record) => "{$record->leaveType->name} - {$record->start_date->toFormattedDateString()} - {$record->end_date->toFormattedDateString()} ({$record->remaining})")
                             ->live()
                             ->afterStateUpdated(function($state, Set $set){
                                 $entitlement = LeaveEntitlement::find($state);
-                                $endDate = Carbon::parse($entitlement->end_date)->add($entitlement->leaveType->carry_forward_duration)->subDay()->toFormattedDateString();
+                                $endDate = Carbon::parse($entitlement->end_date)->add($entitlement->leaveType->option['carry_forward_duration'])->subDay()->toFormattedDateString();
                                 $set('start_date', $entitlement->end_date->toFormattedDateString());                                
                                 $set('end_date', $endDate);
                                 $set('balance', $entitlement->remaining);

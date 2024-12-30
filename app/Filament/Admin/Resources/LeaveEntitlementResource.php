@@ -70,10 +70,15 @@ class LeaveEntitlementResource extends Resource
                                 $set('leave_type_id', null);
                                 $set('balance', null);
                                 if(!empty($state)){
-                                    $user = User::with('employee')->find($state);                                    
-                                    $startDate = Carbon::createFromDate(now()->year, $user->employee->join_date->month, $user->employee->join_date->day);
+                                    $user = User::with('employee')->find($state);           
+                                    if(empty($user->entitlements)){
+                                        $startDate = Carbon::createFromDate(now()->year, $user->employee->join_date->month, $user->employee->join_date->day);
+                                    }else{
+                                        $startDate = Carbon::createFromDate(date('Y'), '01', '01');
+                                    }                         
+
                                     $set('start_date', $startDate->toFormattedDateString());
-                                    $set('end_date', Carbon::parse($startDate)->addYear()->subDay()->toFormattedDateString());
+                                    $set('end_date', Carbon::createFromDate(date('Y'), '12', '31')->toFormattedDateString());
                                 }                                
                             }),
                         Forms\Components\Select::make('leave_type_id')
@@ -103,7 +108,7 @@ class LeaveEntitlementResource extends Resource
                                     $set('balance', null);
                                 }
                             }),
-                        Forms\Components\Grid::make(3)
+                        Forms\Components\Grid::make(4)
                             ->schema([
                                 Forms\Components\DatePicker::make('start_date')
                                     ->label(__('field.start_date'))
@@ -121,7 +126,12 @@ class LeaveEntitlementResource extends Resource
                                     ->suffixIcon('fas-calendar'),
                                 Forms\Components\TextInput::make('balance')
                                     ->label(__('field.balance'))
-                                    ->numeric(), 
+                                    ->numeric()
+                                    ->default(0), 
+                                Forms\Components\TextInput::make('taken')
+                                    ->label(__('field.taken'))
+                                    ->numeric()
+                                    ->default(0), 
                             ])  
                     ])               
             ]);
@@ -154,7 +164,7 @@ class LeaveEntitlementResource extends Resource
                     ->badge()
                     ->color('info')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('taken')
+                Tables\Columns\TextColumn::make('all_taken')
                     ->label(__('field.taken'))
                     ->numeric()
                     ->alignCenter()
