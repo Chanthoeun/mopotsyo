@@ -351,8 +351,13 @@ class TimesheetResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->defaultSort('created_at', 'desc')
-            ->filters([                
-                Tables\Filters\TrashedFilter::make(),
+            ->filters([        
+                Tables\Filters\SelectFilter::make('user_id')
+                    ->label(__('model.employee'))
+                    ->relationship('user', 'name', fn(Builder $query) => $query->whereHas('employee'))
+                    ->preload()
+                    ->searchable(),        
+                Tables\Filters\TrashedFilter::make()->visible(Auth::user()->hasRole(['super_admin'])),
             ])
             ->actions([
                 Tables\Actions\Action::make('downoad')
@@ -403,6 +408,13 @@ class TimesheetResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
+        $user = Auth::user();
+        if($user->hasRole(['super_admin', 'human_resource'])) {
+            return parent::getEloquentQuery()
+                ->withoutGlobalScopes([
+                    SoftDeletingScope::class,
+                ]);
+        }
         return parent::getEloquentQuery()
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
