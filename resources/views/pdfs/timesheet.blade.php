@@ -2,7 +2,7 @@
     use App\Enums\TimesheetTypeEnum;   
     use App\Models\LeaveType;
 
-    $user = auth()->user();
+    $user = $record->user;
     $leaveTypeIds = $user->contract->contractType->leave_types;
 ?>
 <!DOCTYPE html>
@@ -322,7 +322,7 @@
                     @foreach ($leaveTypes as $item)       
                     @php
                         $taken = getTakenLeave($user, $item->id, $record->from_date, $record->to_date); 
-                        $entitlement = $user->entitlements()->where('leave_type_id', $item->id)->whereDate('end_date', '>=', now())->where('is_active', true)->first();
+                        $entitlement = $user->entitlements()->where('leave_type_id', $item->id)->where('is_active', true)->first();
                     @endphp
                     @if ($item->balance > 0 || $taken > 0)
                     <tr>
@@ -330,6 +330,7 @@
                         <td align="center">{{__('field.day')}}</td>
                         <td align="center">{{$entitlement?->balance}}</td>
                         @if ($item->balance > 0)
+                        
                         @php
                             $allTaken = floatval($entitlement->taken + getTakenLeave($user, $item->id, $entitlement->start_date->toDateString(), $record->to_date));
                             $takenThisMonth = getTakenLeave($user, $item->id, $record->from_date->toDateString(), $record->to_date->toDateString());
@@ -358,43 +359,43 @@
     <table class="table w-100">
         <thead>
             <tr>
-                <th colspan="2" align="center" width="30%" class="w-30">@lang('field.submitted_by')</th>
-                <th colspan="2" align="center" width="40%" class="w-40">@lang('field.checked_verified_by')</th>
-                <th colspan="2" align="center" width="30%" class="w-30">@lang('field.approved_by')</th>
+                <th colspan="2" align="center" class="w-40">@lang('field.submitted_by')</th>
+                <th colspan="2" align="center" class="w-30">@lang('field.checked_verified_by')</th>
+                <th colspan="2" align="center" class="w-30">@lang('field.approved_by')</th>
             </tr>
         </thead>
         <tbody>
             <tr style="height: 20px;">
                 <td class="w-10">@lang('field.signature')</td>    
-                <td></td>
+                <td class="w-30"></td>
                 <td class="w-10">@lang('field.signature')</td>    
-                <td></td>
+                <td class="w-20"></td>
                 <td class="w-10">@lang('field.signature')</td>    
-                <td></td>                
+                <td class="w-30"></td>                
             </tr>                                                        
             <tr>
                 <td class="w-10">@lang('field.name')</td>    
-                <td>{{$user->full_name}}</td>
+                <td class="w-30">{{$user->full_name}}</td>
                 <td class="w-10">@lang('field.name')</td>    
-                <td></td>
+                <td class="w-20"></td>
                 <td class="w-10">@lang('field.name')</td>    
-                <td></td>                
+                <td class="w-20"></td>                
             </tr>                                                        
             <tr>
                 <td class="w-10">@lang('field.position')</td>    
-                <td>{{$user->contract->position}}</td>
+                <td class="w-30">{{$user->contract->position}}</td>
                 <td class="w-10">@lang('field.position')</td>    
-                <td></td>
+                <td class="w-20"></td>
                 <td class="w-10">@lang('field.position')</td>    
-                <td></td>                
+                <td class="w-20"></td>                
             </tr>                                                        
             <tr>
                 <td class="w-10">@lang('field.date')</td>    
-                <td></td>
+                <td class="w-30"></td>
                 <td class="w-10">@lang('field.date')</td>    
-                <td></td>
+                <td class="w-20"></td>
                 <td class="w-10">@lang('field.date')</td>    
-                <td></td>                
+                <td class="w-20"></td>                
             </tr>                                                        
         </tbody>
     </table>

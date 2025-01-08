@@ -466,6 +466,7 @@ if(!function_exists('getTakenLeave')){
                 }
             }
         }
+        
         return $taken;
     }
 }
