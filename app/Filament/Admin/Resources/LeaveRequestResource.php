@@ -112,6 +112,7 @@ class LeaveRequestResource extends Resource
                                                 
                                                 // check request date and time
                                                 $requestDateTime = now();
+                                                
                                                
                                                 // get leave request days                                    
                                                 $requestDays = getRequestDays($get('requestDates'));
@@ -144,7 +145,9 @@ class LeaveRequestResource extends Resource
                                                         if($leaveType->rules){
                                                             foreach($leaveType->rules as $rule){   
                                                                 // empty($rule['to_amount']) && $requestDays > $rule['from_amount'] && !empty($rule['day_in_advance']) && $inAdvance < floatval($rule['day_in_advance'] - 0.9)      
-                                                                if($requestDays <= 1 && $requestDateTime->isBefore($get('from_date')) && $requestDateTime->isAfter(date('Y-m-d').' 15:00:00')) {
+                                                                // $requestDateTime->isBefore($get('from_date')) && $requestDateTime->isAfter(date('Y-m-d').' 15:00:00')
+                                                                
+                                                                if($requestDays <= 1 && $requestDateTime->isSameDay($get('from_date'))) {
                                                                     $fail(trans_choice('msg.body.in_advance', $rule['day_in_advance'], ['days' => $rule['day_in_advance']]));
                                                                 }else if($requestDays >= $rule['from_amount'] && $requestDays <= $rule['to_amount'] && !empty($rule['day_in_advance']) && $inAdvance < floatval($rule['day_in_advance'] - 0.9)){
                                                                     $fail(trans_choice('msg.body.in_advance', $rule['day_in_advance'], ['days' => $rule['day_in_advance']]));

@@ -340,7 +340,7 @@ if(!function_exists('createProcessApprover')){
 if(!function_exists('isRequestBackDate')){
     function isRequestBackDate($date){
         $date = Carbon::parse($date);
-        if($date < now()){
+        if($date < now()->toDateString()){
             return true;
         }
         return false;
