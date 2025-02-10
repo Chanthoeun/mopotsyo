@@ -147,7 +147,7 @@ class LeaveRequestResource extends Resource
                                                                 // empty($rule['to_amount']) && $requestDays > $rule['from_amount'] && !empty($rule['day_in_advance']) && $inAdvance < floatval($rule['day_in_advance'] - 0.9)      
                                                                 // $requestDateTime->isBefore($get('from_date')) && $requestDateTime->isAfter(date('Y-m-d').' 15:00:00')
                                                                 
-                                                                if($requestDays <= 1 && $requestDateTime->isSameDay($get('from_date'))) {
+                                                                if(!empty($rule['day_in_advance']) && $requestDays <= 1 && $requestDateTime->isSameDay($get('from_date'))) {
                                                                     $fail(trans_choice('msg.body.in_advance', $rule['day_in_advance'], ['days' => $rule['day_in_advance']]));
                                                                 }else if($requestDays >= $rule['from_amount'] && $requestDays <= $rule['to_amount'] && !empty($rule['day_in_advance']) && $inAdvance < floatval($rule['day_in_advance'] - 0.9)){
                                                                     $fail(trans_choice('msg.body.in_advance', $rule['day_in_advance'], ['days' => $rule['day_in_advance']]));
