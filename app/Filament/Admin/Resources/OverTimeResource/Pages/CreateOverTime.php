@@ -36,10 +36,11 @@ class CreateOverTime extends CreateRecord
         $steps = $this->record->approvalFlowSteps()->whereIn('role_id', $approvers->toArray())->map(function ($item) {                    
             return $item->toApprovalStatusArray();
         })->toArray();
-        
+
         $this->record->approvalStatus()->update([
             'steps' => array_values($steps)
-         ]);                
+         ]); 
+                       
     }
 
     protected function getCreatedNotification(): ?Notification

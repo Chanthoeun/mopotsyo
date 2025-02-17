@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class LeaveCarryForward extends Model
@@ -40,6 +41,11 @@ class LeaveCarryForward extends Model
     public function leaveEntitlement(): BelongsTo
     {
         return $this->belongsTo(LeaveEntitlement::class);
+    }
+
+    public function leaveRequests(): MorphMany
+    {
+        return $this->morphMany(LeaveRequest::class, 'leaverequestable');
     }
 
     public function user(): BelongsTo
