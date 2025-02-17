@@ -16,6 +16,7 @@ use App\Settings\SettingOptions;
 use App\Settings\SettingWorkingHours;
 use Awcodes\TableRepeater\Components\TableRepeater;
 use Awcodes\TableRepeater\Header;
+use Carbon\Carbon;
 use Closure;
 use EightyNine\Approvals\Tables\Actions\RejectAction;
 use EightyNine\Approvals\Tables\Columns\ApprovalStatusColumn;
@@ -206,8 +207,8 @@ class LeaveRequestResource extends Resource
                                     ->hint(new HtmlString(Blade::render('<x-filament::loading-indicator class="h-5 w-5" wire:loading wire:target="data.from_date" />')))
                                     ->suffixIcon('fas-calendar')
                                     ->live()
-                                    ->afterStateUpdated(function($state, Get $get, Set $set, string $operation, ?Model $record){
-                                        $set("to_date", $state);
+                                    ->afterStateUpdated(function($state, Get $get, Set $set, string $operation, ?Model $record){ 
+                                        $set("to_date", $state);                                       
                                         $set("requestDates", []);
                                         if($get('leave_type_id') && $get('to_date')){
                                             if($operation == 'view'){
@@ -215,18 +216,30 @@ class LeaveRequestResource extends Resource
                                             }else{
                                                 $user = Auth::user();
                                             }
-                                            // add date to request dates list
-                                            foreach(getDateRangeBetweenTwoDates($state, $get('to_date')) as $key => $date){                                          
-                                                $workDay = $user->workDays->where('day_name.value', $date->dayOfWeek())->first();
-                                                if($workDay){
-                                                    if(dateIsNotDuplicated($user, $date) && !publicHoliday($date)){
-                                                        $set("requestDates.{$key}.date", $date->toDateString()); 
-                                                        $set("requestDates.{$key}.start_time", $workDay->start_time);
-                                                        $set("requestDates.{$key}.end_time", $workDay->end_time);
-                                                        $set("requestDates.{$key}.hours", getHoursBetweenTwoTimes($workDay->start_time, $workDay->end_time, $workDay->break_time));
-                                                    }
-                                                }                                     
-                                            }
+
+                                            // add end date
+                                            if($get('leave_type_id') == 3){
+                                                foreach(getDateRangeBetweenTwoDates($state, $get('to_date')) as $key => $date){    
+                                                    $set("requestDates.{$key}.date", $date->toDateString()); 
+                                                    $set("requestDates.{$key}.start_time", '08:00:00');
+                                                    $set("requestDates.{$key}.end_time", '17:00:00');
+                                                    $set("requestDates.{$key}.hours", 8);
+                                                }                                                       
+                                                                                              
+                                            }else{
+                                                // add date to request dates list                                                
+                                                foreach(getDateRangeBetweenTwoDates($state, $get('to_date')) as $key => $date){                                          
+                                                    $workDay = $user->workDays->where('day_name.value', $date->dayOfWeek())->first();
+                                                    if($workDay){
+                                                        if(dateIsNotDuplicated($user, $date) && !publicHoliday($date)){
+                                                            $set("requestDates.{$key}.date", $date->toDateString()); 
+                                                            $set("requestDates.{$key}.start_time", $workDay->start_time);
+                                                            $set("requestDates.{$key}.end_time", $workDay->end_time);
+                                                            $set("requestDates.{$key}.hours", getHoursBetweenTwoTimes($workDay->start_time, $workDay->end_time, $workDay->break_time));
+                                                        }
+                                                    }                                     
+                                                }
+                                            }                                            
                                         }
                                     }),                            
                                 Forms\Components\DatePicker::make('to_date')
@@ -248,17 +261,27 @@ class LeaveRequestResource extends Resource
                                             }
                                             
                                             // add date to request dates list
-                                            foreach(getDateRangeBetweenTwoDates($get('from_date'), $state) as $key => $date){                                          
-                                                $workDay = $user->workDays->where('day_name.value', $date->dayOfWeek())->first();
-                                                if($workDay){
-                                                    if(dateIsNotDuplicated($user, $date) && !publicHoliday($date)){
-                                                        $set("requestDates.{$key}.date", $date->toDateString()); 
-                                                        $set("requestDates.{$key}.start_time", $workDay->start_time);
-                                                        $set("requestDates.{$key}.end_time", $workDay->end_time);
-                                                        $set("requestDates.{$key}.hours", getHoursBetweenTwoTimes($workDay->start_time, $workDay->end_time, $workDay->break_time));
-                                                    }
-                                                }                                     
+                                            if($get('leave_type_id') != 3){
+                                                foreach(getDateRangeBetweenTwoDates($get('from_date'), $state) as $key => $date){                                                                                       
+                                                    $workDay = $user->workDays->where('day_name.value', $date->dayOfWeek())->first();                                                
+                                                    if($workDay){
+                                                        if(dateIsNotDuplicated($user, $date) && !publicHoliday($date)){
+                                                            $set("requestDates.{$key}.date", $date->toDateString()); 
+                                                            $set("requestDates.{$key}.start_time", $workDay->start_time);
+                                                            $set("requestDates.{$key}.end_time", $workDay->end_time);
+                                                            $set("requestDates.{$key}.hours", getHoursBetweenTwoTimes($workDay->start_time, $workDay->end_time, $workDay->break_time));
+                                                        }                                                        
+                                                    }                                                          
+                                                }
+                                            }else{
+                                                foreach(getDateRangeBetweenTwoDates($get('from_date'), $state) as $key => $date){   
+                                                    $set("requestDates.{$key}.date", $date->toDateString()); 
+                                                    $set("requestDates.{$key}.start_time", '08:00:00');
+                                                    $set("requestDates.{$key}.end_time", '17:00:00');
+                                                    $set("requestDates.{$key}.hours", 8);
+                                                }
                                             }
+                                            
                                         }
                                     }),
                                 Forms\Components\Textarea::make('reason')
