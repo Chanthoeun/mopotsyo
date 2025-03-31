@@ -139,6 +139,12 @@
         .w-5{
             width:5%;   
         }
+        .hg-15{
+            height:15px;
+        }
+        .hg-30{
+            height:30px;
+        }
         .logo img{
             width:120px;
             height:120px;
@@ -365,37 +371,37 @@
             </tr>
         </thead>
         <tbody>
-            <tr style="height: 20px;">
-                <td class="w-10">@lang('field.signature')</td>    
-                <td class="w-30"></td>
-                <td class="w-10">@lang('field.signature')</td>    
-                <td class="w-20"></td>
-                <td class="w-10">@lang('field.signature')</td>    
-                <td class="w-30"></td>                
+            <tr>
+                <td class="w-10 hg-30">@lang('field.signature')</td>    
+                <td class="w-30 hg-30"></td>
+                <td class="w-10 hg-30">@lang('field.signature')</td>    
+                <td class="w-20 hg-30"></td>
+                <td class="w-10 hg-30">@lang('field.signature')</td>    
+                <td class="w-30 hg-30"></td>                
             </tr>                                                        
             <tr>
-                <td class="w-10">@lang('field.name')</td>    
-                <td class="w-30">{{$user->full_name}}</td>
-                <td class="w-10">@lang('field.name')</td>    
-                <td class="w-20"></td>
-                <td class="w-10">@lang('field.name')</td>    
-                <td class="w-20"></td>                
+                <td class="w-10 hg-30">@lang('field.name')</td>    
+                <td class="w-30 hg-30">{{$user->full_name}}</td>
+                <td class="w-10 hg-30">@lang('field.name')</td>    
+                <td class="w-20 hg-30"></td>
+                <td class="w-10 hg-30">@lang('field.name')</td>    
+                <td class="w-20 hg-30"></td>                
             </tr>                                                        
             <tr>
-                <td class="w-10">@lang('field.position')</td>    
-                <td class="w-30">{{$user->contract->position}}</td>
-                <td class="w-10">@lang('field.position')</td>    
-                <td class="w-20"></td>
-                <td class="w-10">@lang('field.position')</td>    
-                <td class="w-20"></td>                
+                <td class="w-10 hg-30">@lang('field.position')</td>    
+                <td class="w-30 hg-30">{{$user->contract->position}}</td>
+                <td class="w-10 hg-30">@lang('field.position')</td>    
+                <td class="w-20 hg-30"></td>
+                <td class="w-10 hg-30">@lang('field.position')</td>    
+                <td class="w-20 hg-30"></td>                
             </tr>                                                        
             <tr>
-                <td class="w-10">@lang('field.date')</td>    
-                <td class="w-30"></td>
-                <td class="w-10">@lang('field.date')</td>    
-                <td class="w-20"></td>
-                <td class="w-10">@lang('field.date')</td>    
-                <td class="w-20"></td>                
+                <td class="w-10 hg-30">@lang('field.date')</td>    
+                <td class="w-30 hg-30"></td>
+                <td class="w-10 hg-30">@lang('field.date')</td>    
+                <td class="w-20 hg-30"></td>
+                <td class="w-10 hg-30">@lang('field.date')</td>    
+                <td class="w-20 hg-30"></td>                
             </tr>                                                        
         </tbody>
     </table>
