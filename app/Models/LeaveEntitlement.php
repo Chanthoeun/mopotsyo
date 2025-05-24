@@ -45,6 +45,7 @@ class LeaveEntitlement extends Model
         'is_active' => 'boolean',
         'leave_type_id' => 'integer',
         'user_id' => 'integer',
+        'taken' => 'float',
     ];
 
     public function leaveType(): BelongsTo
@@ -90,6 +91,14 @@ class LeaveEntitlement extends Model
                 // foreach ($leaveRequests as $leaveRequest) {
                 //     $taken += floatval($leaveRequest->requestDates->sum('hours') / app(SettingWorkingHours::class)->day);
                 // }
+                if($this->taken == null){
+                    return floatval($taken);
+                }
+
+                if($this->take == $this->balance){
+                    return floatval($this->taken);
+                }
+
                 return floatval($this->taken + $taken);
             } 
         );

@@ -223,7 +223,7 @@ class LeaveRequestResource extends Resource
                                                         $set("requestDates.{$key}.date", $date->toDateString()); 
                                                         $set("requestDates.{$key}.start_time", $workDay->start_time);
                                                         $set("requestDates.{$key}.end_time", $workDay->end_time);
-                                                        $set("requestDates.{$key}.hours", getHoursBetweenTwoTimes($workDay->start_time, $workDay->end_time, $workDay->break_time));
+                                                        $set("requestDates.{$key}.hours", getHoursBetweenTwoTimes($workDay->start_time, $workDay->end_time, $workDay->break_time, $date));
                                                     }
                                                 }                                     
                                             }
@@ -255,7 +255,7 @@ class LeaveRequestResource extends Resource
                                                         $set("requestDates.{$key}.date", $date->toDateString()); 
                                                         $set("requestDates.{$key}.start_time", $workDay->start_time);
                                                         $set("requestDates.{$key}.end_time", $workDay->end_time);
-                                                        $set("requestDates.{$key}.hours", getHoursBetweenTwoTimes($workDay->start_time, $workDay->end_time, $workDay->break_time));
+                                                        $set("requestDates.{$key}.hours", getHoursBetweenTwoTimes($workDay->start_time, $workDay->end_time, $workDay->break_time, $date));
                                                     }
                                                 }                                     
                                             }
@@ -338,7 +338,7 @@ class LeaveRequestResource extends Resource
                                             ->seconds(false)
                                             ->live()
                                             ->afterStateUpdated(function($state, Get $get, Set $set){                                                
-                                                $set('hours', round(getHoursBetweenTwoTimes($state, $get('end_time'), app(SettingWorkingHours::class)->break_time), 1));
+                                                $set('hours', round(getHoursBetweenTwoTimes($state, $get('end_time'), app(SettingWorkingHours::class)->break_time, $get('date')), 1));
                                             })
                                             ->default('08:00:00'),
                                         Forms\Components\TimePicker::make('end_time')
@@ -347,7 +347,7 @@ class LeaveRequestResource extends Resource
                                             ->seconds(false)
                                             ->live()
                                             ->afterStateUpdated(function($state, Get $get, Set $set){                                                
-                                                $set('hours', round(getHoursBetweenTwoTimes($get('start_time'), $state, app(SettingWorkingHours::class)->break_time), 1));
+                                                $set('hours', round(getHoursBetweenTwoTimes($get('start_time'), $state, app(SettingWorkingHours::class)->break_time, $get('date')), 1));
                                             })
                                             ->default('17:00:00'),
                                         Forms\Components\TextInput::make('hours')

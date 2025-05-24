@@ -91,10 +91,18 @@ if(!function_exists('decimalToTime')){
 }
 
 if(!function_exists('getHoursBetweenTwoTimes')){
-    function getHoursBetweenTwoTimes($stat_time, $end_time, $break_time = 0){        
-        $startTime  = Carbon::parse($stat_time);
-        $endTime    = Carbon::parse($end_time);        
+    function getHoursBetweenTwoTimes($stat_time, $end_time, $break_time = 0, $date = null) : float {   
+        if($date != null){
+            $stat_time = Carbon::parse($date)->format('Y-m-d') . ' ' . $stat_time;
+            $end_time = Carbon::parse($date)->format('Y-m-d') . ' ' . $end_time;
+        }else{
+            $stat_time = now()->format('Y-m-d') . ' ' . $stat_time;
+            $end_time = now()->format('Y-m-d') . ' ' . $end_time;
+        }
+        $startTime  = Carbon::parse($stat_time)->timezone(config('app.timezone'));
+        $endTime    = Carbon::parse($end_time)->timezone(config('app.timezone'));        
         $hours = $startTime->floatDiffInHours($endTime);
+
         if(!empty($break_time) && $hours > 4){
             return floatval($hours - $break_time);
         }

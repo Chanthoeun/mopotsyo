@@ -199,7 +199,9 @@ class LeaveEntitlementResource extends Resource
             ->filters([
                 Tables\Filters\SelectFilter::make('user_id')
                     ->label(__('model.employee'))
-                    ->relationship('user', 'name', fn(Builder $query) => $query->whereHas('entitlements')),
+                    ->relationship('user', 'name', fn(Builder $query) => $query->whereHas('entitlements'))
+                    ->searchable()
+                    ->preload(),
                 Tables\Filters\TrashedFilter::make(),
             ])
             ->actions([

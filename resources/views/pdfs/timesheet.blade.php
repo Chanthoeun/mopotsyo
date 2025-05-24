@@ -229,25 +229,18 @@
     <table class="table w-100">
         <tbody>
             <tr>
-                <td class="w-25" align="left">{{__('model.department')}}</td>                
-                <td colspan="3" align="left">{{$record->user->contract->department->name}}</td>                                                                
+                <td align="left">{{__('model.department')}}</td>                
+                <td align="left">{{$record->user->contract->department->name}}</td>  
+                <td align="left">{{__('field.name')}}</td>                
+                <td align="left">{{$record->user->full_name}}</td>                                                                         
             </tr>
             <tr>
-                <td class="w-25" align="left">{{__('field.name')}}</td>                
-                <td class="w-40" align="left">{{$record->user->full_name}}</td>                                
-                <td class="w-20" align="right">{{__('field.year')}}</td>                
-                <td class="w-15" align="center">{{$record->to_date->year}}</td>                                
+                <td align="left">{{__('field.position')}}</td>                
+                <td align="left">{{$record->user->contract->position}}</td> 
+                <td align="left">{{__('field.month') .' - '. __('field.year')}}</td>                
+                <td align="left">{{$record->to_date->monthName .' - '. $record->to_date->year}}</td>                   
             </tr>
-            <tr>
-                <td class="w-25" align="left">{{__('field.position')}}</td>                
-                <td class="w-40" align="left">{{$record->user->contract->position}}</td>                                
-                <td class="w-20" align="right">{{__('field.month')}}</td>                
-                <td class="w-15" align="center">{{$record->to_date->monthName}}</td>                                 
-            </tr>
-            <tr>                               
-                <td colspan="3" align="right">Timesheet No</td>                
-                <td class="w-15" align="center">{{$record->user->timesheets->count()}}</td>                                 
-            </tr>
+            
         </tbody>
     </table>
 </div>
@@ -352,8 +345,21 @@
                         @endif                        
                     </tr>  
                     @endif             
-                                                        
-                    @endforeach                                                        
+                                        
+                    @endforeach 
+                    <?php
+                        $carryForward = $user->carryForwards()->whereDate('end_date', '>=', now())->first();
+                    ?>
+                    @if ($carryForward)
+                    <tr>
+                        <td>@lang('model.carry_forward')</td>
+                        <td align="center">{{__('field.day')}}</td>
+                        <td align="center">{{floatval($carryForward->balance)}}</td>
+                        <td align="center">0</td>
+                        <td align="center">0</td>
+                        <td align="center">0</td>
+                    </tr> 
+                    @endif                                                      
                 </tbody>
             </table>
         </div>

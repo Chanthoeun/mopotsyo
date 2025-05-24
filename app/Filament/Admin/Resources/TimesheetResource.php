@@ -324,8 +324,7 @@ class TimesheetResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('name')
-                    ->label(__('field.name'))
-                    ->searchable(),
+                    ->label(__('field.name')),
                 Tables\Columns\TextColumn::make('from_date')
                     ->label(__('field.from_date'))
                     ->date()
