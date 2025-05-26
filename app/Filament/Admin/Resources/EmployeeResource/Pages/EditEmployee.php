@@ -14,14 +14,13 @@ class EditEmployee extends EditRecord
 
     protected function getHeaderActions(): array
     {
-        $existingActions = [
+
+        return [
             Actions\DeleteAction::make(),
             Actions\ForceDeleteAction::make(),
             Actions\RestoreAction::make(),
             Actions\LocaleSwitcher::make(),
         ];
-
-        return array_merge($existingActions, $this->getNavigationActions());
     }
 
     protected function getRedirectUrl(): string
