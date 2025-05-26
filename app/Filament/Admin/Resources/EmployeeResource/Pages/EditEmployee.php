@@ -5,12 +5,10 @@ namespace App\Filament\Admin\Resources\EmployeeResource\Pages;
 use App\Filament\Admin\Resources\EmployeeResource;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
-use JoseEspinal\RecordNavigation\Traits\HasRecordNavigation;
 
 class EditEmployee extends EditRecord
 {
     use EditRecord\Concerns\Translatable;
-    use HasRecordNavigation;
 
     protected static string $resource = EmployeeResource::class;
 
