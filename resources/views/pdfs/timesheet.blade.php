@@ -229,10 +229,10 @@
     <table class="table w-100">
         <tbody>
             <tr>
-                <td align="left">{{__('model.department')}}</td>                
-                <td align="left">{{$record->user->contract->department->name}}</td>  
                 <td align="left">{{__('field.name')}}</td>                
-                <td align="left">{{$record->user->full_name}}</td>                                                                         
+                <td align="left">{{$record->user->full_name}}</td>
+                <td align="left">{{__('model.department')}}</td>                
+                <td align="left">{{$record->user->contract->department->name}}</td>                                                                                           
             </tr>
             <tr>
                 <td align="left">{{__('field.position')}}</td>                
