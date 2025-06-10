@@ -17,7 +17,7 @@ class LeaveCarryForwardPolicy
     {
         if($user->hasRole('super_admin')) return true;
 
-        return $user->has_carry_forward;
+        //return $user->has_carry_forward;
 
         return $user->can('view_any_leave::carry::forward');
     }
@@ -29,9 +29,7 @@ class LeaveCarryForwardPolicy
     {
         if($user->hasRole('super_admin')) return true;
 
-        
-
-        if($user->has_carry_forward == true) return true;
+        //if($user->has_carry_forward == true) return true;
 
         return $user->can('view_leave::carry::forward');
     }
