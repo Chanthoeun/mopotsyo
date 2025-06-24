@@ -167,6 +167,7 @@ return [
     'holiday_duplicated_date'   => 'Holiday and Duplicated Date',
     'is_back_date'  => 'Back Date',
     'model_type'    => 'Model Type',
+    'steps'     => 'Steps',
 
     // day
     'days' => [
@@ -194,6 +195,8 @@ return [
         'rejected'      => 'Rejected',
         'discarded'     => 'Discarded',
         'returned'      => 'Returned',
+        'pending'       => 'Pending',
+        'created'       => 'Created',
     ],
 
     // Options

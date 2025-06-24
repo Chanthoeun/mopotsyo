@@ -18,6 +18,8 @@ return new class extends Migration
             $table->date('start_date')->nullable();
             $table->date('end_date')->nullable();
             $table->decimal('balance')->default(0);
+            $table->decimal('taken')->default(0);
+            $table->decimal('remaining')->default(0);
             $table->foreignId('leave_entitlement_id')->constrained()->onDelete('restrict')->cascadeOnUpdate();
             $table->foreignId('user_id')->constrained()->onDelete('restrict')->cascadeOnUpdate();
             $table->timestamps();

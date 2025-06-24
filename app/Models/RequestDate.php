@@ -6,6 +6,8 @@ use App\Settings\SettingWorkingHours;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class RequestDate extends Model
@@ -39,6 +41,11 @@ class RequestDate extends Model
     public function requestdateable(): MorphTo
     {
         return $this->morphTo();
+    }
+
+    public function leaveCarryForward(): BelongsTo
+    {
+        return $this->belongsTo(LeaveCarryForward::class);
     }
 
     protected function date(): Attribute

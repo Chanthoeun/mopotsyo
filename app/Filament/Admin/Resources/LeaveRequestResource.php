@@ -5,6 +5,7 @@ namespace App\Filament\Admin\Resources;
 use App\Actions\ApprovalActions;
 use App\Filament\Admin\Resources\LeaveRequestResource\Pages;
 use App\Filament\Admin\Resources\LeaveRequestResource\RelationManagers;
+use App\Models\LeaveCarryForward;
 use App\Models\LeaveEntitlement;
 use App\Models\LeaveRequest;
 use App\Models\LeaveRequestRule;
@@ -14,6 +15,7 @@ use App\Models\User;
 use App\Notifications\SendLeaveRequestNotification;
 use App\Settings\SettingOptions;
 use App\Settings\SettingWorkingHours;
+use Attribute;
 use Awcodes\TableRepeater\Components\TableRepeater;
 use Awcodes\TableRepeater\Header;
 use Closure;
@@ -325,6 +327,7 @@ class LeaveRequestResource extends Resource
                                         Header::make(__('field.start_time'))->width('140px'),
                                         Header::make(__('field.end_time'))->width('140px'),
                                         Header::make(__('field.hours'))->width('50px'),
+                                        Header::make(__('model.carry_forwards'))->width('100px'),
                                     ])
                                     ->schema([
                                         Forms\Components\DatePicker::make('date')
@@ -355,6 +358,19 @@ class LeaveRequestResource extends Resource
                                             ->required()
                                             ->readOnly()
                                             ->default(0),
+                                        Forms\Components\CheckboxList::make('leaveCarryForwards')
+                                            ->hiddenLabel()
+                                            ->visible(function(Get $get){
+                                                if($get('../../leave_type_id') == 1){
+                                                    return true;
+                                                }
+                                                return false;
+                                            })
+                                            ->options(LeaveCarryForward::where('end_date' , '>=', now())->get()->pluck('balance', 'id')->toArray())
+                                            // ->relationship( titleAttribute: 'balance', modifyQueryUsing: function(Builder $query){
+                                            //     return $query->where('end_date', '>=', now());
+                                            // })
+                                            ->getOptionLabelFromRecordUsing(fn (Model $record) => "{$record->remaining}"),
                                     ]),                                 
                                 Forms\Components\Placeholder::make('total')
                                     ->label(__('field.label.total', ['label' => __('model.leave_request')]))

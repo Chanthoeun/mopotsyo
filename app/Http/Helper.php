@@ -6,7 +6,6 @@
 // use App\Models\HR\Employee;
 // use App\Models\User;
 
-use App\Enums\ActionStatusEnum;
 use App\Models\EmployeeContract;
 use App\Models\LeaveRequest;
 use App\Models\ProcessApprover;
@@ -21,6 +20,7 @@ use Carbon\CarbonPeriod;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use RingleSoft\LaravelProcessApproval\Enums\ApprovalActionEnum;
+use RingleSoft\LaravelProcessApproval\Enums\ApprovalStatusEnum;
 
 // use Illuminate\Support\Collection;
 
@@ -450,7 +450,7 @@ if(!function_exists('getTakenLeave')){
                 return $q->whereIn('status', [ApprovalActionEnum::APPROVED->value, ApprovalActionEnum::SUBMITTED->value]);
             })->get();                  
             foreach($leaves as $leave){
-                $taken += floatval($leave->requestDates()->sum('hours') / app(SettingWorkingHours::class)->day);
+                $taken += floatval($leave->requestDates->sum('hours') / app(SettingWorkingHours::class)->day);
             }
         }else{
             $entitlement = $user->entitlements()->where('leave_type_id', $leaveType)->whereDate('end_date', '>=', now())->where('is_active', true)->first();
@@ -460,17 +460,17 @@ if(!function_exists('getTakenLeave')){
                 $leaves = $user->leaveRequests()->where('leave_type_id', $leaveType)->whereHas('requestDates', function($q) use($from_date, $to_date){
                     $q->whereBetween('date', [$from_date, $to_date]);
                 })->whereBetween('to_date', [$entitlement->start_date, $entitlement->end_date])->whereHas('approvalStatus', static function ($q) {
-                    return $q->whereIn('status', [ApprovalActionEnum::APPROVED->value, ApprovalActionEnum::SUBMITTED->value]);
+                    return $q->whereIn('status', [ApprovalStatusEnum::APPROVED->value, ApprovalStatusEnum::PENDING->value, ApprovalActionEnum::SUBMITTED->value]);
                 })->get();       
                 foreach($leaves as $leave){
-                    $taken += floatval($leave->requestDates()->sum('hours') / app(SettingWorkingHours::class)->day);
+                    $taken += floatval($leave->requestDates->sum('hours') / app(SettingWorkingHours::class)->day);
                 }
             }else{
                 $leaves = $user->leaveRequests()->where('leave_type_id', $leaveType)->whereHas('approvalStatus', static function ($q) {
-                    return $q->whereIn('status', [ApprovalActionEnum::APPROVED->value, ApprovalActionEnum::SUBMITTED->value]);
+                    return $q->whereIn('status', [ApprovalActionEnum::APPROVED->value, ApprovalStatusEnum::PENDING->value, ApprovalActionEnum::SUBMITTED->value]);
                 })->get();       
                 foreach($leaves as $leave){
-                    $taken += floatval($leave->requestDates()->sum('hours') / app(SettingWorkingHours::class)->day);
+                    $taken += floatval($leave->requestDates->sum('hours') / app(SettingWorkingHours::class)->day);
                 }
             }
         }

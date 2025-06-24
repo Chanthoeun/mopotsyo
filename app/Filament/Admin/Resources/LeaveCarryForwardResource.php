@@ -70,7 +70,7 @@ class LeaveCarryForwardResource extends Resource
                             ->afterStateUpdated(function($state, Set $set){
                                 $entitlement = LeaveEntitlement::find($state);
                                 $endDate = Carbon::parse($entitlement->end_date)->add($entitlement->leaveType->option['carry_forward_duration'])->subDay()->toFormattedDateString();
-                                $set('start_date', $entitlement->end_date->toFormattedDateString());                                
+                                $set('start_date', $entitlement->end_date->addDay()->toFormattedDateString());                                
                                 $set('end_date', $endDate);
                                 $set('balance', $entitlement->remaining);
                             }),

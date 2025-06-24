@@ -68,4 +68,6 @@ return [
     'purchase_requests'    => 'Purchase Requests',    
     'approver'     => 'Approver',
     'approvers'    => 'Approvers',    
+    'process_approval_status'     => 'Process Approval Status',
+    'process_approval_statuses'    => 'Process Approval Statuses',
 ];

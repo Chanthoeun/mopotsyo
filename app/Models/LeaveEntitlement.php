@@ -81,16 +81,7 @@ class LeaveEntitlement extends Model
             get: function () {     
                 
                 $taken = getTakenLeave($this->user, $this->leave_type_id, $this->start_date, $this->end_date);
-                // $leaveRequests = $this->user->leaveRequests()->with('requestDates')->where('leave_type_id', $this->leave_type_id)->whereHas('requestDates', function($q){
-                //     $q->whereBetween('date', [$this->start_date, $this->end_date]);
-                // })->whereHas('approvalStatus', static function ($q) {
-                //     return $q->whereIn('status', [ApprovalActionEnum::APPROVED->value, ApprovalActionEnum::SUBMITTED->value]);
-                // })->get();
-
-                // $taken = 0;
-                // foreach ($leaveRequests as $leaveRequest) {
-                //     $taken += floatval($leaveRequest->requestDates->sum('hours') / app(SettingWorkingHours::class)->day);
-                // }
+                
                 if($this->taken == null){
                     return floatval($taken);
                 }
@@ -107,7 +98,7 @@ class LeaveEntitlement extends Model
     protected function remaining(): Attribute
     {
         return Attribute::make(
-            get: fn () => floatval($this->balance - $this->taken),
+            get: fn () => floatval($this->balance - $this->allTaken),
         );
     }
 
