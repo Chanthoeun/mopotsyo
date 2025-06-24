@@ -269,7 +269,7 @@ if(!function_exists('getRequestDays')){
 }
 
 if(!function_exists('getOvertimeDays')){
-    function getOvertimeDays($user, array $overtimeIds = null){
+    function getOvertimeDays($user, $overtimeIds = null){
         if($overtimeIds == null){
             $overtimes = $user->overtimes()->whereDate('expiry_date', '>=', now())->where('unused', true)->get();
         }else{
@@ -387,7 +387,7 @@ if(!function_exists('isOnLeave')){
         $leave = RequestDate::with('requestdateable')->where('requestdateable_type', 'App\Models\LeaveRequest')->whereDate('date', $date)->whereHas('requestdateable', function(Builder $query) use($user) {
             $query->where('user_id', $user->id);
             $query->whereHas('approvalStatus', static function ($q) {
-                return $q->whereIn('status', [ApprovalActionEnum::APPROVED->value, ApprovalActionEnum::SUBMITTED->value]);
+                return $q->whereIn('status', [ApprovalStatusEnum::APPROVED->value, ApprovalStatusEnum::PENDING->value, ApprovalStatusEnum::SUBMITTED->value]);
             });
         })->first();    
         return $leave ?? false;
@@ -399,7 +399,7 @@ if(!function_exists('isOvertime')){
         $overtime = RequestDate::with('requestdateable')->where('requestdateable_type', 'App\Models\OverTime')->whereDate('date', $date)->whereHas('requestdateable', function(Builder $query) use($user) {
             $query->where('user_id', $user->id);
             $query->whereHas('approvalStatus', static function ($q) {
-                return $q->where('status', ApprovalActionEnum::APPROVED->value);
+                return $q->where('status', ApprovalStatusEnum::APPROVED->value);
             });
         })->first();    
         return $overtime ?? false;
@@ -411,7 +411,7 @@ if(!function_exists('isWorkFromHome')){
         $workFromHome = RequestDate::with('requestdateable')->where('requestdateable_type', 'App\Models\WorkFromHome')->whereDate('date', $date)->whereHas('requestdateable', function(Builder $query) use($user) {
             $query->where('user_id', $user->id);
             $query->whereHas('approvalStatus', static function ($q) {
-                return $q->where('status', ApprovalActionEnum::APPROVED->value);
+                return $q->where('status', ApprovalStatusEnum::APPROVED->value);
             });
         })->first();
         return $workFromHome ?? false;        
@@ -447,10 +447,14 @@ if(!function_exists('getTakenLeave')){
             $leaves = $user->leaveRequests()->with('requestDates')->where('leave_type_id', $leaveType)->whereHas('requestDates', function($q) use($from_date, $to_date){
                 $q->whereBetween('date', [$from_date, $to_date]);
             })->whereHas('approvalStatus', static function ($q) {
-                return $q->whereIn('status', [ApprovalActionEnum::APPROVED->value, ApprovalActionEnum::SUBMITTED->value]);
-            })->get();                  
+                return $q->whereIn('status', [ApprovalStatusEnum::APPROVED->value, ApprovalStatusEnum::PENDING->value, ApprovalStatusEnum::SUBMITTED->value]);
+            })->get();         
+                    
             foreach($leaves as $leave){
-                $taken += floatval($leave->requestDates->sum('hours') / app(SettingWorkingHours::class)->day);
+                $requestDates = $leave->requestDates()->whereBetween('date', [$from_date, $to_date])->get();
+                foreach($requestDates as $requestDate){
+                    $taken += floatval($requestDate->hours / app(SettingWorkingHours::class)->day);
+                }            
             }
         }else{
             $entitlement = $user->entitlements()->where('leave_type_id', $leaveType)->whereDate('end_date', '>=', now())->where('is_active', true)->first();
@@ -463,14 +467,22 @@ if(!function_exists('getTakenLeave')){
                     return $q->whereIn('status', [ApprovalStatusEnum::APPROVED->value, ApprovalStatusEnum::PENDING->value, ApprovalActionEnum::SUBMITTED->value]);
                 })->get();       
                 foreach($leaves as $leave){
-                    $taken += floatval($leave->requestDates->sum('hours') / app(SettingWorkingHours::class)->day);
+                    $requestDates = $leave->requestDates()->whereBetween('date', [$from_date, $to_date])->get();
+                    foreach($requestDates as $requestDate){
+                        $taken += floatval($requestDate->hours / app(SettingWorkingHours::class)->day);
+                    } 
+                    //$taken += floatval($leave->requestDates->sum('hours') / app(SettingWorkingHours::class)->day);
                 }
             }else{
                 $leaves = $user->leaveRequests()->where('leave_type_id', $leaveType)->whereHas('approvalStatus', static function ($q) {
                     return $q->whereIn('status', [ApprovalActionEnum::APPROVED->value, ApprovalStatusEnum::PENDING->value, ApprovalActionEnum::SUBMITTED->value]);
                 })->get();       
                 foreach($leaves as $leave){
-                    $taken += floatval($leave->requestDates->sum('hours') / app(SettingWorkingHours::class)->day);
+                    $requestDates = $leave->requestDates()->whereBetween('date', [$from_date, $to_date])->get();
+                    foreach($requestDates as $requestDate){
+                        $taken += floatval($requestDate->hours / app(SettingWorkingHours::class)->day);
+                    } 
+                    //$taken += floatval($leave->requestDates->sum('hours') / app(SettingWorkingHours::class)->day);
                 }
             }
         }

@@ -319,19 +319,17 @@
                         $leaveTypes = LeaveType::whereIn('id', $leaveTypeIds)->where($user->employee->gender->value, true)->orderBy('id', 'asc')->get();
                     @endphp
                     @foreach ($leaveTypes as $item)       
-                    @php
-                        $taken = getTakenLeave($user, $item->id, $record->from_date, $record->to_date); 
+                    @php                        
                         $entitlement = $user->entitlements()->where('leave_type_id', $item->id)->where('is_active', true)->first();
                     @endphp
-                    @if ($item->balance > 0 || $taken > 0)
+                    @if ($item->balance > 0)
                     <tr>
                         <td>{{$item->name}}</td>
                         <td align="center">{{__('field.day')}}</td>
                         <td align="center">{{$entitlement?->balance}}</td>
-                        @if ($item->balance > 0)
-                        
+                        @if ($item->balance > 0)                        
                         @php
-                            $allTaken = floatval($entitlement->taken + getTakenLeave($user, $item->id, $entitlement->start_date->toDateString(), $record->to_date));
+                            $allTaken = $entitlement->all_taken;
                             $takenThisMonth = getTakenLeave($user, $item->id, $record->from_date->toDateString(), $record->to_date->toDateString());
                             $remaining = floatval($entitlement->balance - $allTaken);
                         @endphp
