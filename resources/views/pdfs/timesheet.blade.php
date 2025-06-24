@@ -320,7 +320,7 @@
                     @endphp
                     @foreach ($leaveTypes as $item)       
                     @php                        
-                        $entitlement = $user->entitlements()->where('leave_type_id', $item->id)->where('is_active', true)->first();
+                        $entitlement = $user->entitlements()->where('leave_type_id', $item->id)->whereDate('start_date', '<=', $record->from_date->toDateString())->whereDate('end_date', '>=', $record->to_date->toDateString())->first();                                       
                     @endphp
                     @if ($item->balance > 0)
                     <tr>
