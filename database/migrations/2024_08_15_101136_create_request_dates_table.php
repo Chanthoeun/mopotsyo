@@ -19,8 +19,7 @@ return new class extends Migration
             $table->time('start_time')->nullable();
             $table->time('end_time')->nullable();
             $table->decimal('hours', 5, 2)->unsigned()->default(0);
-            $table->morphs('requestdateable');
-            $table->foreignId('leave_carry_forward_id')->nullable()->constrained()->onDelete('restrict')->cascadeOnUpdate();
+            $table->morphs('requestdateable');            
             $table->timestamps();
         });
 

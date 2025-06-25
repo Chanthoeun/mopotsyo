@@ -4,6 +4,7 @@ namespace App\Filament\Admin\Resources\LeaveRequestResource\Pages;
 
 use App\Filament\Admin\Resources\LeaveRequestResource;
 use App\Models\Department;
+use App\Models\LeaveCarryForward;
 use App\Models\LeaveRequest;
 use App\Models\LeaveRequestRule;
 use App\Models\LeaveType;
@@ -67,7 +68,16 @@ class CreateLeaveRequest extends CreateRecord
         
         $this->record->approvalStatus()->update([
             'steps' => array_values($steps)
-         ]);    
+         ]); 
+         
+        // check Carry Forward add add leave to carry forward
+        foreach($this->record->requestDates->where('leave_type_id' == 1) as $requestDate)
+        {
+        $carryForward = LeaveCarryForward::where('user_id', $this->record->user->id)->whereBetween()->first();
+
+        }
+
+        
     }
 
     protected function getCreatedNotification(): ?Notification
