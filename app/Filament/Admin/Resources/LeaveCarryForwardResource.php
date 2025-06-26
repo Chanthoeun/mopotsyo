@@ -69,7 +69,7 @@ class LeaveCarryForwardResource extends Resource
                             ->live()
                             ->afterStateUpdated(function($state, Set $set){
                                 $entitlement = LeaveEntitlement::find($state);
-                                $endDate = Carbon::parse($entitlement->end_date)->add($entitlement->leaveType->option['carry_forward_duration'])->subDay()->toFormattedDateString();
+                                $endDate = Carbon::parse($entitlement->end_date)->add($entitlement->leaveType->option['carry_forward_duration'])->toFormattedDateString();
                                 $set('start_date', $entitlement->end_date->addDay()->toFormattedDateString());                                
                                 $set('end_date', $endDate);
                                 $set('balance', $entitlement->remaining);
@@ -123,6 +123,24 @@ class LeaveCarryForwardResource extends Resource
                     ->color('info')
                     ->alignCenter()
                     ->sortable(),                
+                Tables\Columns\TextColumn::make('taken')
+                    ->label(__('field.taken'))
+                    ->numeric()
+                    ->badge()
+                    ->color('danger')
+                    ->alignCenter()
+                    ->sortable(),                
+                Tables\Columns\TextColumn::make('remaining')
+                    ->label(__('field.remaining'))
+                    ->numeric()
+                    ->badge()
+                    ->color('success')
+                    ->alignCenter()
+                    ->sortable(),                
+                Tables\Columns\IconColumn::make('is_active')
+                    ->label(__('field.is_active'))
+                    ->boolean()
+                    ->alignCenter(),                
                 Tables\Columns\TextColumn::make('created_at')
                     ->label(__('field.created_at'))
                     ->dateTime()
@@ -163,7 +181,7 @@ class LeaveCarryForwardResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            RelationManagers\RequestDatesRelationManager::class,
         ];
     }
 

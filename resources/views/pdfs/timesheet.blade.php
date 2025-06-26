@@ -320,7 +320,7 @@
                     @endphp
                     @foreach ($leaveTypes as $item)       
                     @php                        
-                        $entitlement = $user->entitlements()->where('leave_type_id', $item->id)->whereDate('start_date', '<=', $record->from_date->toDateString())->whereDate('end_date', '>=', $record->to_date->toDateString())->first();                                       
+                        $entitlement = $user->entitlements()->where('leave_type_id', $item->id)->whereDate('start_date', '<=', $record->from_date->toDateString())->whereDate('end_date', '>=', $record->to_date->toDateString())->first();                                                               
                     @endphp
                     @if ($item->balance > 0)
                     <tr>
@@ -328,10 +328,10 @@
                         <td align="center">{{__('field.day')}}</td>
                         <td align="center">{{$entitlement?->balance}}</td>
                         @if ($item->balance > 0)                        
-                        @php
-                            $allTaken = $entitlement->all_taken;
+                        @php        
+                            $allTaken = $entitlement->all_taken ?? 0;
                             $takenThisMonth = getTakenLeave($user, $item->id, $record->from_date->toDateString(), $record->to_date->toDateString());
-                            $remaining = floatval($entitlement->balance - $allTaken);
+                            $remaining = $entitlement->remaining ?? 0;
                         @endphp
                         <td align="center">{{$allTaken}}</td>
                         <td align="center">{{$takenThisMonth}}</td>
@@ -346,16 +346,15 @@
                                         
                     @endforeach 
                     <?php
-                        $carryForward = $user->carryForwards()->whereDate('end_date', '>=', now())->first();
+                        $carryForward = $user->carryForwards()->whereYear('created_at', $record->from_date->year)->latest()->first();
                     ?>
                     @if ($carryForward)
                     <tr>
                         <td>@lang('model.carry_forward')</td>
                         <td align="center">{{__('field.day')}}</td>
                         <td align="center">{{floatval($carryForward->balance)}}</td>
-                        <td align="center">0</td>
-                        <td align="center">0</td>
-                        <td align="center">0</td>
+                        <td align="center" colspan=2>{{floatval($carryForward->taken)}}</td>
+                        <td align="center">{{floatval($carryForward->remaining)}}</td>                        
                     </tr> 
                     @endif                                                      
                 </tbody>

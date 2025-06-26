@@ -22,6 +22,9 @@ return [
     'download'  =>  'Download',
     'check' =>  'Check',
     'decide' =>  'Decide',
+    'sync'  =>  'Sync',
+
+
 
     // Button title
     'label' => [
@@ -45,6 +48,7 @@ return [
         'download'  => 'Download :label',
         'check'     => 'Check :label',
         'decide'    => 'Decide :label',
+        'sync'      => 'Sync :label',
     ],
 
     // Button message
@@ -69,5 +73,6 @@ return [
         'download'  => 'Would you like to download :name?',
         'check'     => 'Would you like to check :name?',
         'decide'    => 'Would you like to decide :name?',
+        'sync'      => 'Would you like to sync :name?',
     ],
 ];

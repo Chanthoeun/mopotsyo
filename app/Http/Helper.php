@@ -449,9 +449,9 @@ if(!function_exists('getTakenLeave')){
             })->whereHas('approvalStatus', static function ($q) {
                 return $q->whereIn('status', [ApprovalStatusEnum::APPROVED->value, ApprovalStatusEnum::PENDING->value, ApprovalStatusEnum::SUBMITTED->value]);
             })->get();         
-                    
+            // dd($leaves);
             foreach($leaves as $leave){
-                $requestDates = $leave->requestDates()->whereBetween('date', [$from_date, $to_date])->get();
+                $requestDates = $leave->requestDates()->whereBetween('date', [$from_date, $to_date])->where('leave_carry_forward_id', null)->get();
                 foreach($requestDates as $requestDate){
                     $taken += floatval($requestDate->hours / app(SettingWorkingHours::class)->day);
                 }            
@@ -467,7 +467,7 @@ if(!function_exists('getTakenLeave')){
                     return $q->whereIn('status', [ApprovalStatusEnum::APPROVED->value, ApprovalStatusEnum::PENDING->value, ApprovalActionEnum::SUBMITTED->value]);
                 })->get();       
                 foreach($leaves as $leave){
-                    $requestDates = $leave->requestDates()->whereBetween('date', [$from_date, $to_date])->get();
+                    $requestDates = $leave->requestDates()->whereBetween('date', [$from_date, $to_date])->where('leave_carry_forward_id', null)->get();
                     foreach($requestDates as $requestDate){
                         $taken += floatval($requestDate->hours / app(SettingWorkingHours::class)->day);
                     } 
@@ -478,7 +478,7 @@ if(!function_exists('getTakenLeave')){
                     return $q->whereIn('status', [ApprovalActionEnum::APPROVED->value, ApprovalStatusEnum::PENDING->value, ApprovalActionEnum::SUBMITTED->value]);
                 })->get();       
                 foreach($leaves as $leave){
-                    $requestDates = $leave->requestDates()->whereBetween('date', [$from_date, $to_date])->get();
+                    $requestDates = $leave->requestDates()->whereBetween('date', [$from_date, $to_date])->where('leave_carry_forward_id', null)->get();
                     foreach($requestDates as $requestDate){
                         $taken += floatval($requestDate->hours / app(SettingWorkingHours::class)->day);
                     } 

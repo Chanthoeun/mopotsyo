@@ -14,6 +14,7 @@ class LeaveCarryForward extends Model
 {
     use HasFactory, SoftDeletes;
 
+    protected $append = ['taken', 'remaining', 'is_active'];
     /**
      * The attributes that are mass assignable.
      *
@@ -22,9 +23,7 @@ class LeaveCarryForward extends Model
     protected $fillable = [
         'start_date',
         'end_date',
-        'balance',
-        'taken',
-        'remaining',
+        'balance',        
         'leave_entitlement_id',
         'user_id',
     ];
@@ -86,4 +85,10 @@ class LeaveCarryForward extends Model
         );
     }
 
+    protected function isActive(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->end_date >= now() ? true : false,
+        );
+    }
 }

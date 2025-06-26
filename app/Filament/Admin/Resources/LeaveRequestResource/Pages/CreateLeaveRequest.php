@@ -73,11 +73,12 @@ class CreateLeaveRequest extends CreateRecord
         // check Carry Forward add add leave to carry forward
         foreach($this->record->requestDates->where('leave_type_id' == 1) as $requestDate)
         {
-        $carryForward = LeaveCarryForward::where('user_id', $this->record->user->id)->whereBetween()->first();
-
-        }
-
-        
+            $carryForward = LeaveCarryForward::where('user_id', $this->record->user_id)->whereDate('start_date', '<=', $requestDate->date)->whereDate('end_date', '>=', $requestDate->date)->first();
+            if($carryForward && $carryForward->is_active == true && $carryForward->remaining > 0){
+                $requestDate->leave_carry_forward_id = $carryForward->id;
+                $requestDate->save();
+            }
+        }        
     }
 
     protected function getCreatedNotification(): ?Notification

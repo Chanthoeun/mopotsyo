@@ -196,6 +196,7 @@ class LeaveEntitlementResource extends Resource
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
+            ->defaultSort('created_at', 'desc')
             ->filters([
                 Tables\Filters\SelectFilter::make('user_id')
                     ->label(__('model.employee'))
