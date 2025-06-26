@@ -4,6 +4,7 @@ namespace App\Filament\Admin\Resources;
 
 use App\Filament\Admin\Resources\LeaveCarryForwardResource\Pages;
 use App\Filament\Admin\Resources\LeaveCarryForwardResource\RelationManagers;
+use App\Filament\Admin\Resources\LeaveCarryForwardResource\RelationManagers\RequestDatesRelationManager;
 use App\Models\LeaveCarryForward;
 use App\Models\LeaveEntitlement;
 use Carbon\Carbon;
@@ -181,7 +182,7 @@ class LeaveCarryForwardResource extends Resource
     public static function getRelations(): array
     {
         return [
-            RelationManagers\RequestDatesRelationManager::class,
+            RequestDatesRelationManager::class,
         ];
     }
 
