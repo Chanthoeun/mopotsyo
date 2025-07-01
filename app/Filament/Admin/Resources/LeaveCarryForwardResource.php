@@ -158,7 +158,13 @@ class LeaveCarryForwardResource extends Resource
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
+            ->defaultSort('created_at', 'desc')
             ->filters([
+                Tables\Filters\SelectFilter::make('requested_by')
+                    ->label(__('field.requested_by'))
+                    ->relationship('user', 'name')
+                    ->preload()
+                    ->searchable(),
                 Tables\Filters\TrashedFilter::make(),
             ])
             ->actions([

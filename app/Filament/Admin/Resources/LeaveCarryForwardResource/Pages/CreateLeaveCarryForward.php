@@ -27,12 +27,18 @@ class CreateLeaveCarryForward extends CreateRecord
         })->whereHas('approvalStatus', static function ($q) {
             return $q->whereIn('status', [ApprovalStatusEnum::APPROVED->value, ApprovalStatusEnum::PENDING->value, ApprovalStatusEnum::SUBMITTED->value]);
         })->get();
-        
+
+        $remaining = $this->record->remaining;        
         foreach($leaves as $leave){
             $requestDates = $leave->requestDates()->whereBetween('date', [$from_date, $to_date])->get();
             foreach($requestDates as $requestDate){ 
-                $requestDate->leave_carry_forward_id = $this->record->id;
-                $requestDate->save();
+                if($remaining > 0 && $requestDate->leave_carry_forward_id == null)
+                {
+                    $requestDate->leave_carry_forward_id = $this->record->id;
+                    $requestDate->save();
+
+                    $remaining = floatval($remaining - $requestDate->day);
+                }
             }
         }
     }

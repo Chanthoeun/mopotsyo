@@ -23,6 +23,8 @@ return [
     'check' =>  'Check',
     'decide' =>  'Decide',
     'sync'  =>  'Sync',
+    'clear' =>  'Clear',
+
 
 
 
@@ -49,6 +51,7 @@ return [
         'check'     => 'Check :label',
         'decide'    => 'Decide :label',
         'sync'      => 'Sync :label',
+        'clear'     => 'Clear :label'
     ],
 
     // Button message
@@ -74,5 +77,6 @@ return [
         'check'     => 'Would you like to check :name?',
         'decide'    => 'Would you like to decide :name?',
         'sync'      => 'Would you like to sync :name?',
+        'clear'     => 'Would you like to clear :name?'
     ],
 ];
