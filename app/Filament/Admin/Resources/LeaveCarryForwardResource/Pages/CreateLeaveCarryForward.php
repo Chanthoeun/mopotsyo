@@ -32,7 +32,7 @@ class CreateLeaveCarryForward extends CreateRecord
         foreach($leaves as $leave){
             $requestDates = $leave->requestDates()->whereBetween('date', [$from_date, $to_date])->get();
             foreach($requestDates as $requestDate){ 
-                if($remaining > 0 && $requestDate->leave_carry_forward_id == null)
+                if($remaining > 0 && $remaining >= $requestDate->day && $requestDate->leave_carry_forward_id == null)
                 {
                     $requestDate->leave_carry_forward_id = $this->record->id;
                     $requestDate->save();
