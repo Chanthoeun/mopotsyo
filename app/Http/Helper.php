@@ -491,6 +491,15 @@ if(!function_exists('getTakenLeave')){
     }
 }
 
+if(!function_exists('getCarryForwardTaken')){
+    function getCarryForwardTaken($carryForward, $from_date, $to_date){
+        
+        $carryForwardHours = $carryForward->requestDates()->whereBetween('date', [$from_date, $to_date])->sum('hours');
+
+        return floatval($carryForwardHours / app(SettingWorkingHours::class)->day);
+    }
+}
+
 if(!function_exists('generatePrNo')){
     function generatePrNo(){
         return 'PR'.date('Ym').'-'.str_pad(PurchaseRequest::count() + 1, 5, '0', STR_PAD_LEFT);
