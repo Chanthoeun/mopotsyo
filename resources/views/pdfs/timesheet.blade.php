@@ -329,7 +329,7 @@
                         <td align="center">{{$entitlement?->balance}}</td>
                         @if ($item->balance > 0)                        
                         @php        
-                            $allTaken = getTakenLeave($user, $item->id, $entitlement->start_date->toDateString(), $record->to_date->toDateString());                            
+                            $allTaken = floatval($entitlement->taken + getTakenLeave($user, $item->id, $entitlement->start_date->toDateString(), $record->to_date->toDateString()));                            
                             $takenThisMonth = getTakenLeave($user, $item->id, $record->from_date->toDateString(), $record->to_date->toDateString());
                             $remaining = floatval($entitlement->balance - $allTaken);
                         @endphp
