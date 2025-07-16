@@ -65,6 +65,7 @@ class UserResource extends Resource implements HasShieldPermissions
                             ->hiddenLabel()
                             ->placeholder(__('field.user.username'))
                             ->required()
+                            ->unique(ignoreRecord: true)
                             ->maxLength(50),
                         Forms\Components\TextInput::make('email')
                             ->hiddenLabel()

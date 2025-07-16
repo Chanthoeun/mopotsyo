@@ -20,6 +20,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Facades\Auth;
 use RingleSoft\LaravelProcessApproval\Events\ProcessApprovedEvent;
+use RingleSoft\LaravelProcessApproval\Enums\ApprovalStatusEnum;
 
 class ProcessApprovalApprovedNotificationListener
 {
@@ -70,7 +71,8 @@ class ProcessApprovalApprovedNotificationListener
             ]);
         }
 
-        $receiver = $leaveRequest->approvalStatus->creator;
+        $approvalStatus = $leaveRequest->approvalStatus;
+        $receiver = $approvalStatus->creator;
         $message = collect([
             'subject' => __('mail.subject', ['name' => __('msg.label.completed', ['label' => $leaveRequest->leaveType->name])]),
             'greeting' => __('mail.greeting', ['name' => $receiver->name]),
@@ -85,6 +87,12 @@ class ProcessApprovalApprovedNotificationListener
                 'url'   => LeaveRequestResource::getUrl('view', ['record' => $leaveRequest])
             ]
         ]);
+
+        // if leave request is completed
+        if($leaveRequest->isApprovalCompleted() && $approvalStatus->status == ApprovalStatusEnum::PENDING){
+            $approvalStatus->status = ApprovalStatusEnum::APPROVED;
+            $approvalStatus->save();
+        } 
 
         // cc approver
         $ccEmails = [];
@@ -127,7 +135,8 @@ class ProcessApprovalApprovedNotificationListener
     }
     
     protected function overtimeApprovedCompleted(OverTime $overtime){
-        $receiver = $overtime->approvalStatus->creator;
+        $approvalStatus = $overtime->approvalStatus;
+        $receiver = $approvalStatus->creator;
         $message = collect([
             'subject' => __('mail.subject', ['name' => __('msg.label.completed', ['label' => __('model.overtime')])]),
             'greeting' => __('mail.greeting', ['name' => $receiver->name]),
@@ -140,6 +149,12 @@ class ProcessApprovalApprovedNotificationListener
                 'url'   => OverTimeResource::getUrl('view', ['record' => $overtime])
             ]
         ]);
+
+        // if overtime request is completed
+        if($overtime->isApprovalCompleted() && $approvalStatus->status == ApprovalStatusEnum::PENDING){
+            $approvalStatus->status = ApprovalStatusEnum::APPROVED;
+            $approvalStatus->save();
+        } 
 
         // cc approver
         $ccEmails = [];
@@ -177,7 +192,8 @@ class ProcessApprovalApprovedNotificationListener
     }
     
     protected function switchWorkDayApprovedCompleted(SwitchWorkDay $switchWorkDay){
-        $receiver = $switchWorkDay->approvalStatus->creator;
+        $approvalStatus = $switchWorkDay->approvalStatus;
+        $receiver = $approvalStatus->creator;
         $message = collect([
             'subject' => __('mail.subject', ['name' => __('msg.label.completed', ['label' => __('model.switch_work_day')])]),
             'greeting' => __('mail.greeting', ['name' => $receiver->name]),
@@ -190,6 +206,12 @@ class ProcessApprovalApprovedNotificationListener
                 'url'   => SwitchWorkDayResource::getUrl('view', ['record' => $switchWorkDay])
             ]
         ]);
+
+        // if switch work day request is completed
+        if($switchWorkDay->isApprovalCompleted() && $approvalStatus->status == ApprovalStatusEnum::PENDING){
+            $approvalStatus->status = ApprovalStatusEnum::APPROVED;
+            $approvalStatus->save();
+        }
 
         // cc approver
         $ccEmails = [];
@@ -226,7 +248,8 @@ class ProcessApprovalApprovedNotificationListener
     }
 
     protected function workFromHomeApprovedCompleted(WorkFromHome $workFromHome){
-        $receiver = $workFromHome->approvalStatus->creator;
+        $approvalStatus = $workFromHome->approvalStatus;
+        $receiver = $approvalStatus->creator;
         $message = collect([
             'subject' => __('mail.subject', ['name' => __('msg.label.completed', ['label' => __('model.work_from_home')])]),
             'greeting' => __('mail.greeting', ['name' => $receiver->name]),
@@ -240,6 +263,12 @@ class ProcessApprovalApprovedNotificationListener
                 'url'   => WorkFromHomeResource::getUrl('view', ['record' => $workFromHome])
             ]
         ]);
+
+        // if work from home request is completed
+        if($workFromHome->isApprovalCompleted() && $approvalStatus->status == ApprovalStatusEnum::PENDING){
+            $approvalStatus->status = ApprovalStatusEnum::APPROVED;
+            $approvalStatus->save();
+        }
 
         // cc approver
         $ccEmails = [];
@@ -277,7 +306,8 @@ class ProcessApprovalApprovedNotificationListener
     }
 
     protected function purchaseRequestApprovedCompleted(PurchaseRequest $purchaseRequest){
-        $receiver = $purchaseRequest->approvalStatus->creator;
+        $approvalStatus = $purchaseRequest->approvalStatus;
+        $receiver = $approvalStatus->creator;
         $message = collect([
             'subject' => __('mail.subject', ['name' => __('msg.label.completed', ['label' => __('model.purchase_request')])]),
             'greeting' => __('mail.greeting', ['name' => $receiver->name]),
@@ -289,6 +319,12 @@ class ProcessApprovalApprovedNotificationListener
                 'url'   => PurchaseRequestResource::getUrl('view', ['record' => $purchaseRequest])
             ]
         ]);
+
+        // if purchase request is completed
+        if($purchaseRequest->isApprovalCompleted() && $approvalStatus->status == ApprovalStatusEnum::PENDING){
+            $approvalStatus->status = ApprovalStatusEnum::APPROVED;
+            $approvalStatus->save();
+        }
 
         // cc approver
         $ccEmails = [];

@@ -8,6 +8,7 @@ return [
     'resources' => [
         'enabled' => true,
         'log_name' => 'Resource',
+        'navigation_group' => 'nav.log',
         'logger' => \Z3d0X\FilamentLogger\Loggers\ResourceLogger::class,
         'color' => 'success',
         'exclude' => [
