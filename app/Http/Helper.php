@@ -191,7 +191,7 @@ if(! function_exists('getDateRangeBetweenTwoDates')){
 if(!function_exists('dateIsNotDuplicated')){
     function dateIsNotDuplicated($user, $date){
         $leaveRequests = LeaveRequest::where('user_id', $user->id)->whereHas('approvalStatus', static function ($q) use ($user) {
-            return $q->where('creator_id', $user->id)->where('status', ApprovalActionEnum::APPROVED->value)->orWhere('status', ApprovalActionEnum::SUBMITTED->value)->orWhere('status', ApprovalActionEnum::CREATED->value);
+            return $q->where('creator_id', $user->id)->whereIn('status', [ApprovalStatusEnum::APPROVED->value, ApprovalStatusEnum::PENDING->value, ApprovalStatusEnum::SUBMITTED->value, ApprovalStatusEnum::CREATED->value]);
         })->get();
 
         foreach($leaveRequests as $leaveRequest){
@@ -209,7 +209,7 @@ if(!function_exists('dateIsNotDuplicated')){
 if(!function_exists('getLeaveDuplicatedDate')){
     function getLeaveDuplicatedDate($user, $date){
         $leaveRequests = LeaveRequest::where('user_id', $user->id)->whereHas('approvalStatus', static function ($q) use ($user) {
-            return $q->where('creator_id', $user->id)->where('status', ApprovalActionEnum::APPROVED->value)->orWhere('status', ApprovalActionEnum::SUBMITTED->value)->orWhere('status', ApprovalActionEnum::CREATED->value);
+            return $q->where('creator_id', $user->id)->whereIn('status', [ApprovalStatusEnum::APPROVED->value, ApprovalStatusEnum::PENDING->value, ApprovalStatusEnum::SUBMITTED->value, ApprovalStatusEnum::CREATED->value]);
         })->get();
 
         foreach($leaveRequests as $leaveRequest){
@@ -464,7 +464,7 @@ if(!function_exists('getTakenLeave')){
                 $leaves = $user->leaveRequests()->where('leave_type_id', $leaveType)->whereHas('requestDates', function($q) use($from_date, $to_date){
                     $q->whereBetween('date', [$from_date, $to_date]);
                 })->whereBetween('to_date', [$entitlement->start_date, $entitlement->end_date])->whereHas('approvalStatus', static function ($q) {
-                    return $q->whereIn('status', [ApprovalStatusEnum::APPROVED->value, ApprovalStatusEnum::PENDING->value, ApprovalActionEnum::SUBMITTED->value]);
+                    return $q->whereIn('status', [ApprovalStatusEnum::APPROVED->value, ApprovalStatusEnum::PENDING->value, ApprovalStatusEnum::SUBMITTED->value]);
                 })->get();       
                 foreach($leaves as $leave){
                     $requestDates = $leave->requestDates()->whereBetween('date', [$from_date, $to_date])->where('leave_carry_forward_id', null)->get();
@@ -475,7 +475,7 @@ if(!function_exists('getTakenLeave')){
                 }
             }else{
                 $leaves = $user->leaveRequests()->where('leave_type_id', $leaveType)->whereHas('approvalStatus', static function ($q) {
-                    return $q->whereIn('status', [ApprovalActionEnum::APPROVED->value, ApprovalStatusEnum::PENDING->value, ApprovalActionEnum::SUBMITTED->value]);
+                    return $q->whereIn('status', [ApprovalStatusEnum::APPROVED->value, ApprovalStatusEnum::PENDING->value, ApprovalStatusEnum::SUBMITTED->value]);
                 })->get();       
                 foreach($leaves as $leave){
                     $requestDates = $leave->requestDates()->whereBetween('date', [$from_date, $to_date])->where('leave_carry_forward_id', null)->get();

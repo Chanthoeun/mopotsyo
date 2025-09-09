@@ -2,3 +2,7 @@
 @import '/vendor/awcodes/filament-table-repeater/resources/css/plugin.css';
 
 @config 'tailwind.config.js';
+
+.fi-simple-header .fi-logo {
+    height: 8rem !important;
+}

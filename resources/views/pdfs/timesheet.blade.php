@@ -320,27 +320,34 @@
                     @endphp
                     @foreach ($leaveTypes as $item)       
                     @php                        
-                        $entitlement = $user->entitlements()->where('leave_type_id', $item->id)->whereDate('start_date', '<=', $record->from_date->toDateString())->whereDate('end_date', '>=', $record->to_date->toDateString())->first();                                                               
+                        // Find an entitlement that is active during the timesheet period, not one that necessarily contains the whole period.
+                        // This finds any entitlement that overlaps with the timesheet's date range.
+                        $entitlement = $user->entitlements()
+                            ->where('leave_type_id', $item->id)
+                            ->where('is_active', true)
+                            ->where('start_date', '<=', $record->to_date->toDateString())
+                            ->where('end_date', '>=', $record->from_date->toDateString())
+                            ->latest('start_date')->first();
                     @endphp
                     @if ($item->balance > 0)
                     <tr>
                         <td>{{$item->name}}</td>
                         <td align="center">{{__('field.day')}}</td>
                         <td align="center">{{$entitlement?->balance}}</td>
-                        @if ($item->balance > 0)                        
-                        @php        
-                            $allTaken = floatval($entitlement->taken + getTakenLeave($user, $item->id, $entitlement->start_date->toDateString(), $record->to_date->toDateString()));                            
-                            $takenThisMonth = getTakenLeave($user, $item->id, $record->from_date->toDateString(), $record->to_date->toDateString());
-                            $remaining = floatval($entitlement->balance - $allTaken);
-                        @endphp
-                        <td align="center">{{$allTaken}}</td>
-                        <td align="center">{{$takenThisMonth}}</td>
-                        <td align="center">{{$remaining}}</td>    
+                        @if($entitlement)
+                            @php
+                                $allTaken = floatval(getTakenLeave($user, $item->id, $entitlement->start_date->toDateString(), $entitlement->end_date->toDateString()));
+                                $takenThisMonth = getTakenLeave($user, $item->id, $record->from_date->toDateString(), $record->to_date->toDateString());
+                                $remaining = floatval($entitlement->balance - $allTaken);
+                            @endphp
+                            <td align="center">{{$allTaken}}</td>
+                            <td align="center">{{$takenThisMonth}}</td>
+                            <td align="center">{{$remaining}}</td>
                         @else
-                        <td align="center">{{getTakenLeave($user, $item->id)}}</td>
-                        <td align="center">{{getTakenLeave($user, $item->id, $record->from_date, $record->to_date)}}</td>
-                        <td align="center">0</td>
-                        @endif                        
+                            <td align="center">{{getTakenLeave($user, $item->id)}}</td>
+                            <td align="center">{{getTakenLeave($user, $item->id, $record->from_date, $record->to_date)}}</td>
+                            <td align="center">0</td>
+                        @endif
                     </tr>  
                     @endif             
                                         

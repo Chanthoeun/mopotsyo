@@ -80,17 +80,17 @@ class LeaveEntitlement extends Model
         return Attribute::make(
             get: function () {     
                 
-                $taken = getTakenLeave($this->user, $this->leave_type_id, $this->start_date, $this->end_date);
+                $systemTaken = getTakenLeave($this->user, $this->leave_type_id, $this->start_date, $this->end_date);
                 
                 if($this->taken == null){
-                    return floatval($taken);
+                    return floatval($systemTaken);
                 }
 
-                if($this->take == $this->balance){
+                if($this->taken >= $this->balance){
                     return floatval($this->taken);
                 }
 
-                return floatval($this->taken + $taken);
+                return floatval($this->taken + $systemTaken);
             } 
         );
     }

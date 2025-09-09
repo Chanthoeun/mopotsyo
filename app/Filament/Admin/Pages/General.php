@@ -54,7 +54,7 @@ class General extends SettingsPage
                                     ->label(__('field.telephone'))
                                     ->required()
                                     ->prefixIcon('fas-phone')
-                                    ->defaultCountry('kh'),
+                                    ->defaultCountry('KHM'),
                                 Forms\Components\TextInput::make('email')
                                     ->label(__('field.email'))
                                     ->required()
