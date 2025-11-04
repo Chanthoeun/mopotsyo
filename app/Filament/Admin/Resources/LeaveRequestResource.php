@@ -340,8 +340,8 @@ class LeaveRequestResource extends Resource
                                             ->required()
                                             ->seconds(false)
                                             ->live()
-                                            ->afterStateUpdated(function($state, Get $get, Set $set){                                                
-                                                $set('hours', round(getHoursBetweenTwoTimes($state, $get('end_time'), app(SettingWorkingHours::class)->break_time, $get('date')), 1));
+                                            ->afterStateUpdated(function($state, Get $get, Set $set){
+                                                $set('hours', getHoursBetweenTwoTimes($state, $get('end_time'), app(SettingWorkingHours::class)->break_time, $get('date')));
                                             })
                                             ->default('08:00:00'),
                                         Forms\Components\TimePicker::make('end_time')
@@ -349,8 +349,8 @@ class LeaveRequestResource extends Resource
                                             ->required()
                                             ->seconds(false)
                                             ->live()
-                                            ->afterStateUpdated(function($state, Get $get, Set $set){                                                
-                                                $set('hours', round(getHoursBetweenTwoTimes($get('start_time'), $state, app(SettingWorkingHours::class)->break_time, $get('date')), 1));
+                                            ->afterStateUpdated(function($state, Get $get, Set $set){
+                                                $set('hours', getHoursBetweenTwoTimes($get('start_time'), $state, app(SettingWorkingHours::class)->break_time, $get('date')));
                                             })
                                             ->default('17:00:00'),
                                         Forms\Components\TextInput::make('hours')
@@ -438,7 +438,7 @@ class LeaveRequestResource extends Resource
                                             $user = Auth::user();
                                         }
                                         if(!empty($get('leave_type_id'))){
-                                            return $user->entitlements->where('is_active', true)->where('leave_type_id', $get('leave_type_id'))->first()->taken ?? 0;                                            
+                                            return $user->entitlements->where('is_active', true)->where('leave_type_id', $get('leave_type_id'))->first()->all_taken ?? 0;                                            
                                         }
                                     } ),
                                 Forms\Components\Placeholder::make('remaining')

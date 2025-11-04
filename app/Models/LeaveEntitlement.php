@@ -81,6 +81,7 @@ class LeaveEntitlement extends Model
             get: function () {     
                 
                 $systemTaken = getTakenLeave($this->user, $this->leave_type_id, $this->start_date, $this->end_date);
+
                 
                 if($this->taken == null){
                     return floatval($systemTaken);

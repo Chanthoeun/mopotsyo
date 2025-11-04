@@ -441,53 +441,34 @@ if(!function_exists('isSwitchWorkDayToDate')){
 
 if(!function_exists('getTakenLeave')){
     function getTakenLeave($user, $leaveType, $from_date = null, $to_date = null): float
-    {        
-        $taken = 0;
-        if($from_date && $to_date){
-            $leaves = $user->leaveRequests()->with('requestDates')->where('leave_type_id', $leaveType)->whereHas('requestDates', function($q) use($from_date, $to_date){
-                $q->whereBetween('date', [$from_date, $to_date]);
-            })->whereHas('approvalStatus', static function ($q) {
-                return $q->whereIn('status', [ApprovalStatusEnum::APPROVED->value, ApprovalStatusEnum::PENDING->value, ApprovalStatusEnum::SUBMITTED->value]);
-            })->get();         
-            // dd($leaves);
-            foreach($leaves as $leave){
-                $requestDates = $leave->requestDates()->whereBetween('date', [$from_date, $to_date])->where('leave_carry_forward_id', null)->get();
-                foreach($requestDates as $requestDate){
-                    $taken += floatval($requestDate->hours / app(SettingWorkingHours::class)->day);
-                }            
+    {
+        if (!$from_date || !$to_date) {
+            $entitlement = $user->entitlements()
+                ->where('leave_type_id', $leaveType)
+                ->where('is_active', true)
+                ->latest('start_date')
+                ->first();
+
+            if (!$entitlement) {
+                return 0.0;
             }
-        }else{
-            $entitlement = $user->entitlements()->where('leave_type_id', $leaveType)->whereDate('end_date', '>=', now())->where('is_active', true)->first();
-            if($entitlement){
-                $from_date = $entitlement->start_date;
-                $to_date = $entitlement->end_date;
-                $leaves = $user->leaveRequests()->where('leave_type_id', $leaveType)->whereHas('requestDates', function($q) use($from_date, $to_date){
-                    $q->whereBetween('date', [$from_date, $to_date]);
-                })->whereBetween('to_date', [$entitlement->start_date, $entitlement->end_date])->whereHas('approvalStatus', static function ($q) {
-                    return $q->whereIn('status', [ApprovalStatusEnum::APPROVED->value, ApprovalStatusEnum::PENDING->value, ApprovalStatusEnum::SUBMITTED->value]);
-                })->get();       
-                foreach($leaves as $leave){
-                    $requestDates = $leave->requestDates()->whereBetween('date', [$from_date, $to_date])->where('leave_carry_forward_id', null)->get();
-                    foreach($requestDates as $requestDate){
-                        $taken += floatval($requestDate->hours / app(SettingWorkingHours::class)->day);
-                    } 
-                    //$taken += floatval($leave->requestDates->sum('hours') / app(SettingWorkingHours::class)->day);
-                }
-            }else{
-                $leaves = $user->leaveRequests()->where('leave_type_id', $leaveType)->whereHas('approvalStatus', static function ($q) {
-                    return $q->whereIn('status', [ApprovalStatusEnum::APPROVED->value, ApprovalStatusEnum::PENDING->value, ApprovalStatusEnum::SUBMITTED->value]);
-                })->get();       
-                foreach($leaves as $leave){
-                    $requestDates = $leave->requestDates()->whereBetween('date', [$from_date, $to_date])->where('leave_carry_forward_id', null)->get();
-                    foreach($requestDates as $requestDate){
-                        $taken += floatval($requestDate->hours / app(SettingWorkingHours::class)->day);
-                    } 
-                    //$taken += floatval($leave->requestDates->sum('hours') / app(SettingWorkingHours::class)->day);
-                }
-            }
+
+            $from_date = $entitlement->start_date;
+            $to_date = $entitlement->end_date;
         }
-        
-        return $taken;
+
+
+        $totalHours = LeaveRequest::where('user_id', $user->id)
+            ->where('leave_type_id', $leaveType)
+            ->whereHas('approvalStatus', function ($query) {
+                $query->whereIn('status', [ApprovalStatusEnum::APPROVED->value, ApprovalStatusEnum::PENDING->value, ApprovalStatusEnum::SUBMITTED->value]);
+            })
+            ->withSum(['requestDates' => function ($query) use ($from_date, $to_date) {
+                $query->whereBetween('date', [$from_date, $to_date])
+                      ->whereNull('leave_carry_forward_id');
+            }], 'hours')->get()->sum('request_dates_sum_hours');
+
+        return floatval($totalHours / app(SettingWorkingHours::class)->day);
     }
 }
 

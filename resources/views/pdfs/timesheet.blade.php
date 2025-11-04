@@ -316,50 +316,51 @@
                 </thead>
                 <tbody>
                     @php
-                        $leaveTypes = LeaveType::whereIn('id', $leaveTypeIds)->where($user->employee->gender->value, true)->orderBy('id', 'asc')->get();
+                        $leaveTypes = \App\Models\LeaveType::whereIn('id', $leaveTypeIds)
+                            ->where($user->employee->gender->value, true)
+                            ->where('balance', '>', 0)
+                            ->orderBy('id', 'asc')
+                            ->get();
                     @endphp
-                    @foreach ($leaveTypes as $item)       
-                    @php                        
-                        // Find an entitlement that is active during the timesheet period, not one that necessarily contains the whole period.
-                        // This finds any entitlement that overlaps with the timesheet's date range.
-                        $entitlement = $user->entitlements()
-                            ->where('leave_type_id', $item->id)
-                            ->where('is_active', true)
-                            ->where('start_date', '<=', $record->to_date->toDateString())
-                            ->where('end_date', '>=', $record->from_date->toDateString())
-                            ->latest('start_date')->first();
+                    @foreach ($leaveTypes as $leaveType)
+                        @php
+                            // Find the active entitlement for the timesheet's period.
+                            $entitlement = $user->entitlements()
+                                ->where('leave_type_id', $leaveType->id)
+                                ->where('is_active', true)
+                                ->where('start_date', '<=', $record->from_date)
+                                ->where('end_date', '>=', $record->from_date)
+                                ->first();
+
+                            $allowance = 0;
+                            $allTaken = 0;
+                            $takenThisMonth = 0;
+                            $remaining = 0;
+
+                            if ($entitlement) {
+                                $allowance = (float) $entitlement->balance;
+                                $allTaken = (float) $entitlement->taken + (float) getTakenLeave($user, $leaveType->id, $entitlement->start_date, $entitlement->end_date);
+                                $takenThisMonth = (float) getTakenLeave($user, $leaveType->id, $record->from_date, $record->to_date);
+                                $remaining = $allowance - $allTaken;
+                            }
+                        @endphp
+                        <tr>
+                            <td>{{ $leaveType->name }}</td>
+                            <td align="center">{{ __('field.day') }}</td>
+                            <td align="center">{{ $allowance > 0 ? $allowance : 0 }}</td>
+                            <td align="center">{{ $allTaken > 0 ? $allTaken : 0 }}</td>
+                            <td align="center">{{ $takenThisMonth > 0 ? $takenThisMonth : 0 }}</td>
+                            <td align="center">{{ $allowance > 0 ? $remaining : 0 }}</td>
+                        </tr>
+                    @endforeach
+                    @php
+                        $carryForward = $user->carryForwards()->whereYear('created_at', $record->from_date->year)->latest()->first();
                     @endphp
-                    @if ($item->balance > 0)
-                    <tr>
-                        <td>{{$item->name}}</td>
-                        <td align="center">{{__('field.day')}}</td>
-                        <td align="center">{{$entitlement?->balance}}</td>
-                        @if($entitlement)
-                            @php
-                                $allTaken = floatval(getTakenLeave($user, $item->id, $entitlement->start_date->toDateString(), $entitlement->end_date->toDateString()));
-                                $takenThisMonth = getTakenLeave($user, $item->id, $record->from_date->toDateString(), $record->to_date->toDateString());
-                                $remaining = floatval($entitlement->balance - $allTaken);
-                            @endphp
-                            <td align="center">{{$allTaken}}</td>
-                            <td align="center">{{$takenThisMonth}}</td>
-                            <td align="center">{{$remaining}}</td>
-                        @else
-                            <td align="center">{{getTakenLeave($user, $item->id)}}</td>
-                            <td align="center">{{getTakenLeave($user, $item->id, $record->from_date, $record->to_date)}}</td>
-                            <td align="center">0</td>
-                        @endif
-                    </tr>  
-                    @endif             
-                                        
-                    @endforeach 
-                    <?php
-                        $carryForward = $user->carryForwards()->whereYear('created_at', $record->from_date->year)->latest()->first();                        
-                    ?>
                     @if ($carryForward)
-                    <?php 
-                        $cfTaken = getCarryForwardTaken($carryForward, $carryForward->start_date, $record->to_date);
-                        $cfRemaining = floatval($carryForward->balance - $cfTaken);
-                    ?>
+                    @php
+                        $cfTaken = (float) getCarryForwardTaken($carryForward, $carryForward->start_date, $record->to_date);
+                        $cfRemaining = (float) $carryForward->balance - $cfTaken;
+                    @endphp
                     <tr>
                         <td>@lang('model.carry_forward')</td>
                         <td align="center">{{__('field.day')}}</td>

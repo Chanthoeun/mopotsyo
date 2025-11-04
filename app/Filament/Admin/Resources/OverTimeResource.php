@@ -98,16 +98,16 @@ class OverTimeResource extends Resource
                                     ->required()
                                     ->seconds(false)
                                     ->live()
-                                    ->afterStateUpdated(function($state, Get $get, Set $set){   
-                                        $set('hours', round(getHoursBetweenTwoTimes($state, $get('end_time'), app(SettingWorkingHours::class)->break_time), 1));                                            
+                                    ->afterStateUpdated(function($state, Get $get, Set $set){
+                                        $set('hours', getHoursBetweenTwoTimes($state, $get('end_time'), app(SettingWorkingHours::class)->break_time));
                                     }),
                                 Forms\Components\TimePicker::make('end_time')
                                     ->hiddenLabel()                                            
                                     ->required()
                                     ->seconds(false)
                                     ->live()
-                                    ->afterStateUpdated(function($state, Get $get, Set $set){    
-                                        $set('hours', round(getHoursBetweenTwoTimes($get('start_time'), $state, app(SettingWorkingHours::class)->break_time), 1));                                        
+                                    ->afterStateUpdated(function($state, Get $get, Set $set){
+                                        $set('hours', getHoursBetweenTwoTimes($get('start_time'), $state, app(SettingWorkingHours::class)->break_time));
                                     }),
                                 Forms\Components\TextInput::make('hours')
                                     ->hiddenLabel()                                            

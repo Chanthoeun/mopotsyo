@@ -168,8 +168,8 @@ class WorkFromHomeResource extends Resource
                                     ->required()
                                     ->seconds(false)
                                     ->live()
-                                    ->afterStateUpdated(function($state, Get $get, Set $set){                                                
-                                        $set('hours', round(getHoursBetweenTwoTimes($state, $get('end_time'), app(SettingWorkingHours::class)->break_time, $get('date')), 1));
+                                            ->afterStateUpdated(function($state, Get $get, Set $set){
+                                                $set('hours', getHoursBetweenTwoTimes($state, $get('end_time'), app(SettingWorkingHours::class)->break_time, $get('date')));
                                     })
                                     ->default('08:00:00'),
                                 Forms\Components\TimePicker::make('end_time')
@@ -177,8 +177,8 @@ class WorkFromHomeResource extends Resource
                                     ->required()
                                     ->seconds(false)
                                     ->live()
-                                    ->afterStateUpdated(function($state, Get $get, Set $set){                                                
-                                        $set('hours', round(getHoursBetweenTwoTimes($get('start_time'), $state, app(SettingWorkingHours::class)->break_time, $get('date')), 1));
+                                            ->afterStateUpdated(function($state, Get $get, Set $set){
+                                                $set('hours', getHoursBetweenTwoTimes($get('start_time'), $state, app(SettingWorkingHours::class)->break_time, $get('date')));
                                     })
                                     ->default('17:00:00'),
                                 Forms\Components\TextInput::make('hours')
