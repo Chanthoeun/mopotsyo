@@ -40,27 +40,31 @@ class ProcessApprovalApprovedNotificationListener
     {        
         $approved = $event->approval;
         $approvable = $approved->approvable;            
-        if($approvable->isApprovalCompleted() && get_class($approvable) == LeaveRequest::class){
-            $this->leaveRequestApprovedCompleted($approvable);
-        }else if($approvable->isApprovalCompleted() && get_class($approvable) == OverTime::class){
-            $this->overtimeApprovedCompleted($approvable, $approved);
-        }else if($approvable->isApprovalCompleted() && get_class($approvable) == SwitchWorkDay::class){
-            $this->switchWorkDayApprovedCompleted($approvable, $approved);
-        }else if($approvable->isApprovalCompleted() && get_class($approvable) == WorkFromHome::class){
-            $this->workFromHomeApprovedCompleted($approvable, $approved);
-        }else if($approvable->isApprovalCompleted() && get_class($approvable) == PurchaseRequest::class){
-            $this->purchaseRequestApprovedCompleted($approvable, $approved);
-        }else if(!$approvable->isApprovalCompleted() && get_class($approvable) == LeaveRequest::class){
-            $this->leaveRequestApproved($approvable);
-        }else if(!$approvable->isApprovalCompleted() && get_class($approvable) == OverTime::class) {
-            $this->overtimeApproved($approvable, $approved);
-        }else if(!$approvable->isApprovalCompleted() && get_class($approvable) == SwitchWorkDay::class) {
-            $this->switchWorkDayApproved($approvable, $approved);
-        }else if(!$approvable->isApprovalCompleted() && get_class($approvable) == WorkFromHome::class) {
-            $this->workFromHomeApproved($approvable, $approved);
-        }else if(!$approvable->isApprovalCompleted() && get_class($approvable) == PurchaseRequest::class) {
-            $this->purchaseRequestApproved($approvable, $approved);
-        }                     
+
+        if ($approvable->isApprovalCompleted()) {
+            // The approval process is complete.
+            // Manually update status if it's still pending. This is a good failsafe.
+            if ($approvable->approvalStatus->status === ApprovalStatusEnum::PENDING) {
+                $approvable->approvalStatus->update(['status' => ApprovalStatusEnum::APPROVED]);
+            }
+
+            match (get_class($approvable)) {
+                LeaveRequest::class => $this->leaveRequestApprovedCompleted($approvable),
+                OverTime::class => $this->overtimeApprovedCompleted($approvable),
+                SwitchWorkDay::class => $this->switchWorkDayApprovedCompleted($approvable),
+                WorkFromHome::class => $this->workFromHomeApprovedCompleted($approvable),
+                PurchaseRequest::class => $this->purchaseRequestApprovedCompleted($approvable),
+            };
+        } else {
+            // The approval process is not yet complete, notify the next approver.
+            match (get_class($approvable)) {
+                LeaveRequest::class => $this->leaveRequestApproved($approvable),
+                OverTime::class => $this->overtimeApproved($approvable),
+                SwitchWorkDay::class => $this->switchWorkDayApproved($approvable),
+                WorkFromHome::class => $this->workFromHomeApproved($approvable),
+                PurchaseRequest::class => $this->purchaseRequestApproved($approvable, $approved),
+            };
+        }
     }
 
     protected function leaveRequestApprovedCompleted(LeaveRequest $leaveRequest){
@@ -87,12 +91,6 @@ class ProcessApprovalApprovedNotificationListener
                 'url'   => LeaveRequestResource::getUrl('view', ['record' => $leaveRequest])
             ]
         ]);
-
-        // if leave request is completed
-        if($leaveRequest->isApprovalCompleted() && $approvalStatus->status == ApprovalStatusEnum::PENDING){
-            $approvalStatus->status = ApprovalStatusEnum::APPROVED;
-            $approvalStatus->save();
-        } 
 
         // cc approver
         $ccEmails = [];
@@ -150,12 +148,6 @@ class ProcessApprovalApprovedNotificationListener
             ]
         ]);
 
-        // if overtime request is completed
-        if($overtime->isApprovalCompleted() && $approvalStatus->status == ApprovalStatusEnum::PENDING){
-            $approvalStatus->status = ApprovalStatusEnum::APPROVED;
-            $approvalStatus->save();
-        } 
-
         // cc approver
         $ccEmails = [];
         $ccs = collect(app(SettingOptions::class)->cc_emails)->where('model_type', $overtime::getApprovableType())->first();
@@ -206,12 +198,6 @@ class ProcessApprovalApprovedNotificationListener
                 'url'   => SwitchWorkDayResource::getUrl('view', ['record' => $switchWorkDay])
             ]
         ]);
-
-        // if switch work day request is completed
-        if($switchWorkDay->isApprovalCompleted() && $approvalStatus->status == ApprovalStatusEnum::PENDING){
-            $approvalStatus->status = ApprovalStatusEnum::APPROVED;
-            $approvalStatus->save();
-        }
 
         // cc approver
         $ccEmails = [];
@@ -264,12 +250,6 @@ class ProcessApprovalApprovedNotificationListener
             ]
         ]);
 
-        // if work from home request is completed
-        if($workFromHome->isApprovalCompleted() && $approvalStatus->status == ApprovalStatusEnum::PENDING){
-            $approvalStatus->status = ApprovalStatusEnum::APPROVED;
-            $approvalStatus->save();
-        }
-
         // cc approver
         $ccEmails = [];
         $ccs = collect(app(SettingOptions::class)->cc_emails)->where('model_type', $workFromHome::getApprovableType())->first();
@@ -319,12 +299,6 @@ class ProcessApprovalApprovedNotificationListener
                 'url'   => PurchaseRequestResource::getUrl('view', ['record' => $purchaseRequest])
             ]
         ]);
-
-        // if purchase request is completed
-        if($purchaseRequest->isApprovalCompleted() && $approvalStatus->status == ApprovalStatusEnum::PENDING){
-            $approvalStatus->status = ApprovalStatusEnum::APPROVED;
-            $approvalStatus->save();
-        }
 
         // cc approver
         $ccEmails = [];

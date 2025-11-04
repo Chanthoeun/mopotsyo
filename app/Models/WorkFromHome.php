@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\HasCustomApproval;
 use App\Settings\SettingWorkingHours;
 use EightyNine\Approvals\Models\ApprovableModel;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -13,7 +14,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class WorkFromHome extends ApprovableModel
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, HasCustomApproval;
 
     /**
      * The attributes that are mass assignable.

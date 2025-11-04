@@ -2,6 +2,11 @@
 
 namespace App\Listeners;
 
+/**
+ * This listener handles notifications for various types of approval processes
+ * including leave requests, overtime, switch work days, work from home, and purchase requests.
+ */
+
 use App\Filament\Admin\Resources\LeaveRequestResource;
 use App\Filament\Admin\Resources\OverTimeResource;
 use App\Filament\Admin\Resources\PurchaseRequestResource;
@@ -22,6 +27,7 @@ use RingleSoft\LaravelProcessApproval\Events\ProcessSubmittedEvent;
 class ProcessApprovalSubmittedNotificationListener
 {
     use SendNotification;
+
     /**
      * Create the event listener.
      */
@@ -31,30 +37,36 @@ class ProcessApprovalSubmittedNotificationListener
     }
 
     /**
-     * Handle the event.
+     * Handle the process submitted event.
+     * Routes the approval request to the appropriate handler based on the request type.
+     *
+     * @param ProcessSubmittedEvent $event The event containing the approvable model
      */
     public function handle(ProcessSubmittedEvent $event): void
     {
-        $approvable = $event->approvable;   
-        if(get_class($approvable) == LeaveRequest::class){
-            $this->leaveRequestSubmitted($approvable);
-        }else if(get_class($approvable) == OverTime::class){
-            $this->overTimeSubmitted($approvable);
-        }else if(get_class($approvable) == SwitchWorkDay::class){
-            $this->switchWorkDaySubmitted($approvable);
-        }else if(get_class($approvable) == WorkFromHome::class){
-            $this->workFromHomeSubmitted($approvable);
-        }else if(get_class($approvable) == PurchaseRequest::class){
-            $this->purchaseRequestSubmitted($approvable);
-        }
+        $approvable = $event->approvable;
+        // Use a match expression for cleaner dispatching based on approvable type.
+        match (get_class($approvable)) {
+            LeaveRequest::class => $this->leaveRequestSubmitted($approvable),
+            OverTime::class => $this->overtimeSubmitted($approvable),
+            SwitchWorkDay::class => $this->switchWorkDaySubmitted($approvable),
+            WorkFromHome::class => $this->workFromHomeSubmitted($approvable),
+            PurchaseRequest::class => $this->purchaseRequestSubmitted($approvable),
+            default => null, // Handle unknown approvable types gracefully.
+        };
     }
 
+    /**
+     * Handle notification for submitted leave requests.
+     * Sends a notification to the next approver in the workflow.
+     *
+     * @param LeaveRequest $leaveRequest The submitted leave request
+     */
     protected function leaveRequestSubmitted(LeaveRequest $leaveRequest)
     {
-        $nextStep = $leaveRequest->nextApprovalStep();
-        $approval = $leaveRequest->user->approvers->where('model_type', get_class($leaveRequest))->where('role_id', $nextStep->role_id)->first();
-        if($approval){
-            $approver = $approval->approver;
+        // Get the next approver in the workflow.
+        $approver = $this->getNextApprover($leaveRequest);
+        if ($approver) {
             $message = collect([
                 'subject' => __('mail.subject', ['name' => __('btn.label.request', ['label' => $leaveRequest->leaveType->name])]),
                 'greeting' => __('mail.greeting', ['name' => $approver->name]),
@@ -75,12 +87,17 @@ class ProcessApprovalSubmittedNotificationListener
         }
     }
 
-    protected function overtimeSubmitted(OverTime $overtime)
+    /**
+     * Handle notification for submitted overtime requests.
+     * Sends a notification to the next approver in the workflow.
+     *
+     * @param OverTime $overtime The submitted overtime request
+     */
+    protected function overtimeSubmitted(OverTime $overtime): void
     {
-        $nextStep = $overtime->nextApprovalStep();
-        $approval = $overtime->user->approvers->where('model_type', get_class($overtime))->where('role_id', $nextStep->role_id)->first();
-        if($approval){
-            $approver = $approval->approver;
+        // Get the next approver in the workflow.
+        $approver = $this->getNextApprover($overtime);
+        if ($approver) {
             $message = collect([
                 'subject' => __('mail.subject', ['name' => __('btn.label.request', ['label' => __('model.overtime')])]),
                 'greeting' => __('mail.greeting', ['name' => $approver->name]),
@@ -101,12 +118,17 @@ class ProcessApprovalSubmittedNotificationListener
         }
     }
 
-    protected function switchWorkDaySubmitted(SwitchWorkDay $switchWorkDay)
+    /**
+     * Handle notification for submitted switch work day requests.
+     * Sends a notification to the next approver in the workflow.
+     *
+     * @param SwitchWorkDay $switchWorkDay The submitted switch work day request
+     */
+    protected function switchWorkDaySubmitted(SwitchWorkDay $switchWorkDay): void
     {
-        $nextStep = $switchWorkDay->nextApprovalStep();
-        $approval = $switchWorkDay->user->approvers->where('model_type', get_class($switchWorkDay))->where('role_id', $nextStep->role_id)->first();
-        if($approval){
-            $approver = $approval->approver;
+        // Get the next approver in the workflow.
+        $approver = $this->getNextApprover($switchWorkDay);
+        if ($approver) {
             $message = collect([
                 'subject' => __('mail.subject', ['name' => __('btn.label.request', ['label' => __('model.switch_work_day')])]),
                 'greeting' => __('mail.greeting', ['name' => $approver->name]),
@@ -127,12 +149,17 @@ class ProcessApprovalSubmittedNotificationListener
         
     }
 
-    protected function workFromHomeSubmitted(WorkFromHome $workFromHome)
+    /**
+     * Handle notification for submitted work from home requests.
+     * Sends a notification to the next approver in the workflow.
+     *
+     * @param WorkFromHome $workFromHome The submitted work from home request
+     */
+    protected function workFromHomeSubmitted(WorkFromHome $workFromHome): void
     {
-        $nextStep = $workFromHome->nextApprovalStep();
-        $approval = $workFromHome->user->approvers->where('model_type', get_class($workFromHome))->where('role_id', $nextStep->role_id)->first();
-        if($approval){
-            $approver = $approval->approver;
+        // Get the next approver in the workflow.
+        $approver = $this->getNextApprover($workFromHome);
+        if ($approver) {
             $message = collect([
                 'subject' => __('mail.subject', ['name' => __('btn.label.request', ['label' => __('model.work_from_home')])]),
                 'greeting' => __('mail.greeting', ['name' => $approver->name]),
@@ -153,12 +180,17 @@ class ProcessApprovalSubmittedNotificationListener
         }
     }
 
-    protected function purchaseRequestSubmitted(PurchaseRequest $purchaseRequest)
+    /**
+     * Handle notification for submitted purchase requests.
+     * Sends a notification to the next approver in the workflow.
+     *
+     * @param PurchaseRequest $purchaseRequest The submitted purchase request
+     */
+    protected function purchaseRequestSubmitted(PurchaseRequest $purchaseRequest): void
     {
-        $nextStep = $purchaseRequest->nextApprovalStep();
-        $approval = $purchaseRequest->user->approvers->where('model_type', get_class($purchaseRequest))->where('role_id', $nextStep->role_id)->first();
-        if($approval){
-            $approver = $approval->approver;
+        // Get the next approver in the workflow.
+        $approver = $this->getNextApprover($purchaseRequest);
+        if ($approver) {
             $message = collect([
                 'subject' => __('mail.subject', ['name' => __('btn.label.request', ['label' => __('model.purchase_request')])]),
                 'greeting' => __('mail.greeting', ['name' => $approver->name]),
@@ -176,5 +208,23 @@ class ProcessApprovalSubmittedNotificationListener
             // send notification
             $this->sendNotification($approver, $message, comment: $purchaseRequest->purpose);
         }
+    }
+
+    /**
+     * Get the next approver for a given approvable model.
+     *
+     * @param mixed $approvable The model instance that is approvable.
+     * @return User|null The next approver user model, or null if not found.
+     */
+    private function getNextApprover(mixed $approvable): ?User
+    {
+        $nextStep = $approvable->nextApprovalStep();
+        if (!$nextStep) {
+            return null;
+        }
+
+        $approval = $approvable->user->approvers->where('model_type', get_class($approvable))->where('role_id', $nextStep->role_id)->first();
+
+        return $approval?->approver;
     }
 }

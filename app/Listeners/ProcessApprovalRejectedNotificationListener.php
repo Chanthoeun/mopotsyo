@@ -70,7 +70,14 @@ class ProcessApprovalRejectedNotificationListener
         $this->sendNotification($receiver, $message, comment: $rejected->comment);
     }
 
-    protected function overtimeRejected(OverTime $overtime, $rejected){
+    /**
+     * Handles the notification for a rejected OverTime request.
+     *
+     * @param OverTime $overtime The rejected overtime request model.
+     * @param \RingleSoft\LaravelProcessApproval\Models\ProcessApproval $rejected The approval record indicating the rejection.
+     */
+    protected function overtimeRejected(OverTime $overtime, \RingleSoft\LaravelProcessApproval\Models\ProcessApproval $rejected): void
+    {
         $receiver = $overtime->approvalStatus->creator;
         $message = collect([
             'subject' => __('mail.subject', ['name' => __('msg.label.rejected', ['label' => __('model.overtime')])]),
@@ -90,7 +97,14 @@ class ProcessApprovalRejectedNotificationListener
         $this->sendNotification($receiver, $message, comment: $rejected->comment);
     }
 
-    protected function switchWorkDayRejected(SwitchWorkDay $switchWorkDay, $rejected){
+    /**
+     * Handles the notification for a rejected SwitchWorkDay request.
+     *
+     * @param SwitchWorkDay $switchWorkDay The rejected switch work day request model.
+     * @param \RingleSoft\LaravelProcessApproval\Models\ProcessApproval $rejected The approval record indicating the rejection.
+     */
+    protected function switchWorkDayRejected(SwitchWorkDay $switchWorkDay, \RingleSoft\LaravelProcessApproval\Models\ProcessApproval $rejected): void
+    {
         $receiver = $switchWorkDay->approvalStatus->creator;
         $message = collect([
             'subject' => __('mail.subject', ['name' => __('msg.label.rejected', ['label' => __('model.switch_work_day')])]),
@@ -110,7 +124,14 @@ class ProcessApprovalRejectedNotificationListener
         $this->sendNotification($receiver, $message, comment: $rejected->comment);
     }
 
-    protected function workFromHomeRejected(WorkFromHome $workFromHome, $rejected){
+    /**
+     * Handles the notification for a rejected WorkFromHome request.
+     *
+     * @param WorkFromHome $workFromHome The rejected work from home request model.
+     * @param \RingleSoft\LaravelProcessApproval\Models\ProcessApproval $rejected The approval record indicating the rejection.
+     */
+    protected function workFromHomeRejected(WorkFromHome $workFromHome, \RingleSoft\LaravelProcessApproval\Models\ProcessApproval $rejected): void
+    {
         $receiver = $workFromHome->approvalStatus->creator;
         $message = collect([
             'subject' => __('mail.subject', ['name' => __('msg.label.rejected', ['label' => __('model.work_from_home')])]),
@@ -131,10 +152,17 @@ class ProcessApprovalRejectedNotificationListener
         $this->sendNotification($receiver, $message, comment: $rejected->comment);
     }
 
-    protected function purchaseRequestRejected(PurchaseRequest $purchaseRequest, $rejected){
+    /**
+     * Handles the notification for a rejected PurchaseRequest.
+     *
+     * @param PurchaseRequest $purchaseRequest The rejected purchase request model.
+     * @param \RingleSoft\LaravelProcessApproval\Models\ProcessApproval $rejected The approval record indicating the rejection.
+     */
+    protected function purchaseRequestRejected(PurchaseRequest $purchaseRequest, \RingleSoft\LaravelProcessApproval\Models\ProcessApproval $rejected): void
+    {
         $receiver = $purchaseRequest->approvalStatus->creator;
         $message = collect([
-            'subject' => __('mail.subject', ['name' => __('msg.label.rejected', ['label' => __('model.work_from_home')])]),
+            'subject' => __('mail.subject', ['name' => __('msg.label.rejected', ['label' => __('model.purchase_request')])]),
             'greeting' => __('mail.greeting', ['name' => $receiver->name]),
             'body' => __('msg.body.purchase_request_rejected', [    
                 'number'  => strtoupper($purchaseRequest->pr_no), 

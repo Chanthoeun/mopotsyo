@@ -37,6 +37,7 @@ class CreateLeaveRequest extends CreateRecord
     protected function afterCreate(): void
     {
         $approvers = $this->record->user->approvers->where('model_type', LeaveRequest::class);
+        $roles = [];
         if($approvers->count() == 1){
             $approvers = $approvers->pluck('role_id');
         }else{
@@ -62,13 +63,19 @@ class CreateLeaveRequest extends CreateRecord
         }
         
         
-        $steps = $this->record->approvalFlowSteps()->whereIn('role_id', $approvers->toArray())->map(function ($item) {                    
-            return $item->toApprovalStatusArray();
+        $allSteps = $this->record->approvalFlowSteps();
+        $approverRoleIds = $approvers->toArray();
+
+        $steps = $allSteps->map(function ($item) use ($approverRoleIds) {
+            $stepArray = $item->toApprovalStatusArray();
+            // Mark step as active if its role is in the determined list of approvers
+            $stepArray['active'] = in_array($item->role_id, $approverRoleIds);
+            return $stepArray;
         })->toArray();
         
         $this->record->approvalStatus()->update([
             'steps' => array_values($steps)
-         ]); 
+         ]);
          
         // check Carry Forward add add leave to carry forward
         foreach($this->record->requestDates->where('leave_type_id' == 1) as $requestDate)

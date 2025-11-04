@@ -26,6 +26,11 @@ use Yebor974\Filament\RenewPassword\Contracts\RenewPasswordContract;
 use Yebor974\Filament\RenewPassword\RenewPasswordPlugin;
 use Yebor974\Filament\RenewPassword\Traits\RenewPassword;
 
+/**
+ * @mixin \Spatie\Permission\Traits\HasRoles
+ * @mixin \Illuminate\Database\Eloquent\Builder
+ */
+
 class User extends Authenticatable implements FilamentUser, RenewPasswordContract, HasName
 {
     use Bannable, HasRoles, HasFactory, Notifiable, AuthenticationLoggable, SoftDeletes, HasTranslations, RenewPassword;

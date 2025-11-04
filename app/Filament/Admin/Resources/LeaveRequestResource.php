@@ -6,16 +6,10 @@ use App\Actions\ApprovalActions;
 use App\Filament\Admin\Resources\LeaveRequestResource\Pages;
 use App\Filament\Admin\Resources\LeaveRequestResource\RelationManagers;
 use App\Models\LeaveCarryForward;
-use App\Models\LeaveEntitlement;
 use App\Models\LeaveRequest;
-use App\Models\LeaveRequestRule;
 use App\Models\LeaveType;
-use App\Models\OverTime;
-use App\Models\User;
-use App\Notifications\SendLeaveRequestNotification;
 use App\Settings\SettingOptions;
 use App\Settings\SettingWorkingHours;
-use Attribute;
 use Awcodes\TableRepeater\Components\TableRepeater;
 use Awcodes\TableRepeater\Header;
 use Closure;
@@ -26,11 +20,9 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
 use Filament\Forms\Set;
-use Filament\Notifications\Actions\Action as ActionsAction;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
-use Filament\Tables\Actions\Action;
 use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
@@ -42,6 +34,7 @@ use Illuminate\Support\HtmlString;
 use RingleSoft\LaravelProcessApproval\Enums\ApprovalStatusEnum;
 use RingleSoft\LaravelProcessApproval\Events\ProcessDiscardedEvent;
 use RingleSoft\LaravelProcessApproval\Models\ProcessApproval;
+
 
 class LeaveRequestResource extends Resource
 {

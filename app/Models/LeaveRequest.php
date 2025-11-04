@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\HasCustomApproval;
 use App\Enums\ApprovalStatuEnum;
 use App\Settings\SettingWorkingHours;
 use EightyNine\Approvals\Models\ApprovableModel;
@@ -15,11 +16,12 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use RingleSoft\LaravelProcessApproval\Enums\ApprovalActionEnum;
 use RingleSoft\LaravelProcessApproval\Enums\ApprovalStatusEnum;
 
 class LeaveRequest extends ApprovableModel
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, HasCustomApproval;
     /**
      * The attributes that are mass assignable.
      *

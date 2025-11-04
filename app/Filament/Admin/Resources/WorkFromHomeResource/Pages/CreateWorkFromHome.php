@@ -28,6 +28,7 @@ class CreateWorkFromHome extends CreateRecord
     protected function afterCreate(): void
     {
         $approvers = $this->record->user->approvers->where('model_type', WorkFromHome::class);
+        $roles = [];
         if($approvers->count() == 1){
             $approvers = $approvers->pluck('role_id');
         }else{
@@ -38,7 +39,7 @@ class CreateWorkFromHome extends CreateRecord
                     }else if($this->record->days >= $rule['from_amount'] && empty($rule['to_amount'])){
                         $roles = $rule['roles'];
                     }
-                }
+                }                
                 $approvers = $this->record->user->approvers->where('model_type', WorkFromHome::class)->whereIn('role_id', $roles);
                 if($approvers->count() == 0){
                     $approvers[] = $this->record->user->approvers->where('model_type', WorkFromHome::class)->first()->role_id;
@@ -50,12 +51,18 @@ class CreateWorkFromHome extends CreateRecord
             }
         }
         
-        $steps = $this->record->approvalFlowSteps()->whereIn('role_id', $approvers->toArray())->map(function ($item) {                    
-            return $item->toApprovalStatusArray();
+        $allSteps = $this->record->approvalFlowSteps();
+        $approverRoleIds = $approvers->toArray();
+
+        $steps = $allSteps->map(function ($item) use ($approverRoleIds) {
+            $stepArray = $item->toApprovalStatusArray();
+            // Mark step as active if its role is in the determined list of approvers
+            $stepArray['active'] = in_array($item->role_id, $approverRoleIds);
+            return $stepArray;
         })->toArray();
         
         $this->record->approvalStatus()->update([
             'steps' => array_values($steps)
-        ]);                      
+        ]);
     }
 }
