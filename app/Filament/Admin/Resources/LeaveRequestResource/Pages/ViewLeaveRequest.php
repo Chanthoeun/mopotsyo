@@ -51,7 +51,7 @@ class ViewLeaveRequest extends ViewRecord
                     'approval_action' => ApprovalStatusEnum::DISCARDED,
                     'comment' => $data['reason'],
                     'user_id' => Auth::id(),
-                    'approver_name' => Auth::user()->full_name1
+                    'approver_name' => Auth::user()->full_name
                 ]);
 
                 ProcessDiscardedEvent::dispatch($approval);
