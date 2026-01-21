@@ -68,47 +68,47 @@ class WorkFromHomeResource extends Resource
                             ->native(false)
                             ->closeOnDateSelection()
                             ->hint(new HtmlString(Blade::render('<x-filament::loading-indicator class="h-5 w-5" wire:loading wire:target="data.from_date" />')))
-                            ->afterStateUpdated(function($state, Set $set) {
+                            ->afterStateUpdated(function ($state, Set $set) {
                                 $toDate = $state;
                                 $set('to_date', $toDate);
-                                
+
                                 $set("requestDates", []);
                                 $user = Auth::user();
-                                                    
+
                                 // add date to request dates list
-                                foreach(getDateRangeBetweenTwoDates($state, $toDate) as $key => $date){                                          
+                                foreach (getDateRangeBetweenTwoDates($state, $toDate) as $key => $date) {
                                     $workDay = $user->workDays->where('day_name.value', $date->dayOfWeek())->first();
-                                    if($workDay){
-                                        if(!publicHoliday($date)){
-                                            $set("requestDates.{$key}.date", $date->toDateString()); 
+                                    if ($workDay) {
+                                        if (!publicHoliday($date)) {
+                                            $set("requestDates.{$key}.date", $date->toDateString());
                                             $set("requestDates.{$key}.start_time", $workDay->start_time);
                                             $set("requestDates.{$key}.end_time", $workDay->end_time);
                                             $set("requestDates.{$key}.hours", getHoursBetweenTwoTimes($workDay->start_time, $workDay->end_time, $workDay->break_time));
                                         }
-                                    }                                     
+                                    }
                                 }
                             })
                             ->rules([
                                 function (Get $get) {
-                                    return function (string $attribute, $value, Closure $fail) use($get) {
-                                        if($get('requestDates')){
+                                    return function (string $attribute, $value, Closure $fail) use ($get) {
+                                        if ($get('requestDates')) {
                                             $user = Auth::user();
                                             // get leave request days                                    
                                             $requestDays = getRequestDays($get('requestDates'));
 
                                             // request days in advance
                                             $inAdvance = round(now()->diffInDays($get('from_date')), 0);
-                                            
-                                            if(app(SettingOptions::class)->work_from_home_rules){
-                                                foreach(app(SettingOptions::class)->work_from_home_rules as $rule){                                                    
-                                                    if(empty($rule['to_amount']) && $requestDays > $rule['from_amount'] && !empty($rule['day_in_advance']) && $inAdvance < $rule['day_in_advance']){
+
+                                            if (app(SettingOptions::class)->work_from_home_rules) {
+                                                foreach (app(SettingOptions::class)->work_from_home_rules as $rule) {
+                                                    if (empty($rule['to_amount']) && $requestDays > $rule['from_amount'] && !empty($rule['day_in_advance']) && $inAdvance < $rule['day_in_advance']) {
                                                         $fail(trans_choice('msg.body.in_advance', $rule['day_in_advance'], ['days' => $rule['day_in_advance']]));
-                                                    }else if($requestDays >= $rule['from_amount'] && $requestDays <= $rule['to_amount'] && !empty($rule['day_in_advance']) && $inAdvance < $rule['day_in_advance']){
+                                                    } else if ($requestDays >= $rule['from_amount'] && $requestDays <= $rule['to_amount'] && !empty($rule['day_in_advance']) && $inAdvance < $rule['day_in_advance']) {
                                                         $fail(trans_choice('msg.body.in_advance', $rule['day_in_advance'], ['days' => $rule['day_in_advance']]));
                                                     }
                                                 }
                                             }
-                                        }                                                                               
+                                        }
                                     };
                                 },
                             ]),
@@ -119,22 +119,22 @@ class WorkFromHomeResource extends Resource
                             ->native(false)
                             ->closeOnDateSelection()
                             ->hint(new HtmlString(Blade::render('<x-filament::loading-indicator class="h-5 w-5" wire:loading wire:target="data.to_date" />')))
-                            ->afterStateUpdated(function($state, Get $get, Set $set) {
-                                if($get('from_date')){
+                            ->afterStateUpdated(function ($state, Get $get, Set $set) {
+                                if ($get('from_date')) {
                                     $set("requestDates", []);
                                     $user = Auth::user();
-                                                        
+
                                     // add date to request dates list
-                                    foreach(getDateRangeBetweenTwoDates($get('from_date'), $state) as $key => $date){                                          
+                                    foreach (getDateRangeBetweenTwoDates($get('from_date'), $state) as $key => $date) {
                                         $workDay = $user->workDays->where('day_name.value', $date->dayOfWeek())->first();
-                                        if($workDay){
-                                            if(!publicHoliday($date)){
-                                                $set("requestDates.{$key}.date", $date->toDateString()); 
+                                        if ($workDay) {
+                                            if (!publicHoliday($date)) {
+                                                $set("requestDates.{$key}.date", $date->toDateString());
                                                 $set("requestDates.{$key}.start_time", $workDay->start_time);
                                                 $set("requestDates.{$key}.end_time", $workDay->end_time);
                                                 $set("requestDates.{$key}.hours", getHoursBetweenTwoTimes($workDay->start_time, $workDay->end_time, $workDay->break_time));
                                             }
-                                        }                                     
+                                        }
                                     }
                                 }
                             }),
@@ -145,11 +145,11 @@ class WorkFromHomeResource extends Resource
                         TableRepeater::make('requestDates')
                             ->label(__('field.request_dates'))
                             ->relationship()
-                            ->required()                                                                        
-                            ->addable(false)  
+                            ->required()
+                            ->addable(false)
                             ->deletable(false)
-                            ->defaultItems(0)   
-                            ->live()                           
+                            ->defaultItems(0)
+                            ->live()
                             ->columnSpanFull()
                             ->headers([
                                 Header::make(__('field.date'))->width('150px'),
@@ -162,38 +162,38 @@ class WorkFromHomeResource extends Resource
                                     ->hiddenLabel()
                                     ->placeholder(__('field.select_date'))
                                     ->required()
-                                    ->native(false),                              
+                                    ->native(false),
                                 Forms\Components\TimePicker::make('start_time')
-                                    ->hiddenLabel()                                            
+                                    ->hiddenLabel()
                                     ->required()
                                     ->seconds(false)
                                     ->live()
-                                            ->afterStateUpdated(function($state, Get $get, Set $set){
-                                                $set('hours', getHoursBetweenTwoTimes($state, $get('end_time'), app(SettingWorkingHours::class)->break_time, $get('date')));
+                                    ->afterStateUpdated(function ($state, Get $get, Set $set) {
+                                        $set('hours', getHoursBetweenTwoTimes($state, $get('end_time'), app(SettingWorkingHours::class)->break_time, $get('date')));
                                     })
                                     ->default('08:00:00'),
                                 Forms\Components\TimePicker::make('end_time')
-                                    ->hiddenLabel()                                            
+                                    ->hiddenLabel()
                                     ->required()
                                     ->seconds(false)
                                     ->live()
-                                            ->afterStateUpdated(function($state, Get $get, Set $set){
-                                                $set('hours', getHoursBetweenTwoTimes($get('start_time'), $state, app(SettingWorkingHours::class)->break_time, $get('date')));
+                                    ->afterStateUpdated(function ($state, Get $get, Set $set) {
+                                        $set('hours', getHoursBetweenTwoTimes($get('start_time'), $state, app(SettingWorkingHours::class)->break_time, $get('date')));
                                     })
                                     ->default('17:00:00'),
                                 Forms\Components\TextInput::make('hours')
-                                    ->hiddenLabel()                                            
+                                    ->hiddenLabel()
                                     ->required()
                                     ->readOnly()
                                     ->default(0),
-                            ]),                                 
+                            ]),
                         Forms\Components\Placeholder::make('total')
                             ->label(__('field.label.total', ['label' => __('model.work_from_home')]))
                             ->inlineLabel()
                             ->columnSpanFull()
-                            ->content(function(Get $get, Set $set): string {
+                            ->content(function (Get $get, Set $set): string {
                                 // variable to hold the total price
-                                $total = getRequestDays($get('requestDates'));                           
+                                $total = getRequestDays($get('requestDates'));
                                 return strtolower(trans_choice('field.days_with_count', $total, ['count' => $total]));
                             }),
                     ])
@@ -217,7 +217,7 @@ class WorkFromHomeResource extends Resource
                     ->date()
                     ->sortable(),
                 ApprovalStatusColumn::make("approvalStatus.status")
-                    ->label(__('field.status')),                
+                    ->label(__('field.status')),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label(__('field.created_at'))
                     ->dateTime()
@@ -243,11 +243,11 @@ class WorkFromHomeResource extends Resource
             ])
             ->actions(
                 ApprovalActions::make(
-                    [                                               
-                        Tables\Actions\Action::make('discard') 
-                            ->label(__('filament-approvals::approvals.actions.discard'))                           
-                            ->visible(fn (Model $record) => (Auth::id() == $record->approvalStatus->creator->id && $record->isApprovalCompleted() && $record->isApproved()))                                                      
-                            ->hidden(fn(Model $record) => (Auth::id() != $record->approvalStatus->creator->id || $record->isDiscarded()))                            
+                    [
+                        Tables\Actions\Action::make('discard')
+                            ->label(__('filament-approvals::approvals.actions.discard'))
+                            ->visible(fn(Model $record) => (Auth::id() == $record->approvalStatus->creator->id && $record->isApprovalCompleted() && $record->isApproved()))
+                            ->hidden(fn(Model $record) => (Auth::id() != $record->approvalStatus->creator->id || $record->isDiscarded()))
                             ->form([
                                 Textarea::make('reason')
                                     ->label(__('field.reason'))
@@ -283,7 +283,7 @@ class WorkFromHomeResource extends Resource
                                     ->send();
                             }),
                     ],
-                    [                            
+                    [
                         Tables\Actions\ActionGroup::make([
                             Tables\Actions\EditAction::make(),
                             Tables\Actions\DeleteAction::make(),
@@ -316,6 +316,7 @@ class WorkFromHomeResource extends Resource
         return parent::getEloquentQuery()
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
-            ]);
+            ])
+            ->with(['user', 'approvalStatus']);
     }
 }

@@ -83,27 +83,32 @@ class LeaveRequest extends ApprovableModel
     protected function requested(): Attribute
     {
         return Attribute::make(
-            get: fn () => $this->user ? $this->user->full_name : $this->createdBy()->full_name,
+            get: fn() => $this->user ? $this->user->full_name : $this->createdBy()->full_name,
         );
     }
 
     protected function days(): Attribute
     {
         return Attribute::make(
-            get: fn () => floatval($this->requestDates()->sum('hours') / app(SettingWorkingHours::class)->day),
+            get: function () {
+                if ($this->relationLoaded('requestDates')) {
+                    return floatval($this->requestDates->sum('hours') / app(SettingWorkingHours::class)->day);
+                }
+                return floatval($this->requestDates()->sum('hours') / app(SettingWorkingHours::class)->day);
+            },
         );
     }
 
     protected function approvers(): Attribute
     {
         return Attribute::make(
-            get: function() {
+            get: function () {
                 $approvers = collect();
-                foreach($this->processApprovers as $approver){
-                    if($approver->user_id){
+                foreach ($this->processApprovers as $approver) {
+                    if ($approver->user_id) {
                         $approvers->push($approver->user);
-                    }else{
-                        foreach(User::role($approver->role_id)->get() as $user){
+                    } else {
+                        foreach (User::role($approver->role_id)->get() as $user) {
                             $approvers->push($user);
                         }
                     }
@@ -117,9 +122,9 @@ class LeaveRequest extends ApprovableModel
     protected function backDate(): Attribute
     {
         return Attribute::make(
-            get: fn () => $this->from_date < $this->created_at ? true : false,
+            get: fn() => $this->from_date < $this->created_at ? true : false,
         );
     }
-    
-    
+
+
 }

@@ -103,6 +103,9 @@ class Employee extends Model
     {
         return Attribute::make(
             get: function () {
+                if ($this->relationLoaded('contracts')) {
+                    return $this->contracts->where('is_active', true)->first();
+                }
                 return $this->contracts()->where('is_active', true)->first();
             },
         );

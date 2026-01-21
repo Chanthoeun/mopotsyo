@@ -62,10 +62,10 @@ class OverTimeResource extends Resource
                         TableRepeater::make('requestDates')
                             ->label(__('field.working_dates'))
                             ->relationship()
-                            ->required()       
-                            ->addActionLabel(__('btn.label.add', ['label' => __('field.date')]))                                                                 
-                            ->defaultItems(1)   
-                            ->live()                           
+                            ->required()
+                            ->addActionLabel(__('btn.label.add', ['label' => __('field.date')]))
+                            ->defaultItems(1)
+                            ->live()
                             ->columnSpanFull()
                             ->headers([
                                 Header::make(__('field.date'))->width('150px'),
@@ -84,43 +84,43 @@ class OverTimeResource extends Resource
                                     ->live()
                                     ->rules([
                                         function (Get $get) {
-                                            return function (string $attribute, $value, Closure $fail) use($get) {
-                                                if($get('start_time') && $get('end_time')){
-                                                    if(isWorkHour(Auth::user(), $value, $get('start_time')) == true){
-                                                        $fail(__('msg.body.is_working_hour'));   
+                                            return function (string $attribute, $value, Closure $fail) use ($get) {
+                                                if ($get('start_time') && $get('end_time')) {
+                                                    if (isWorkHour(Auth::user(), $value, $get('start_time')) == true) {
+                                                        $fail(__('msg.body.is_working_hour'));
                                                     }
-                                                }                                                                               
+                                                }
                                             };
                                         },
-                                    ]),                              
+                                    ]),
                                 Forms\Components\TimePicker::make('start_time')
-                                    ->hiddenLabel()                                            
+                                    ->hiddenLabel()
                                     ->required()
                                     ->seconds(false)
                                     ->live()
-                                    ->afterStateUpdated(function($state, Get $get, Set $set){
+                                    ->afterStateUpdated(function ($state, Get $get, Set $set) {
                                         $set('hours', getHoursBetweenTwoTimes($state, $get('end_time'), app(SettingWorkingHours::class)->break_time));
                                     }),
                                 Forms\Components\TimePicker::make('end_time')
-                                    ->hiddenLabel()                                            
+                                    ->hiddenLabel()
                                     ->required()
                                     ->seconds(false)
                                     ->live()
-                                    ->afterStateUpdated(function($state, Get $get, Set $set){
+                                    ->afterStateUpdated(function ($state, Get $get, Set $set) {
                                         $set('hours', getHoursBetweenTwoTimes($get('start_time'), $state, app(SettingWorkingHours::class)->break_time));
                                     }),
                                 Forms\Components\TextInput::make('hours')
-                                    ->hiddenLabel()                                            
+                                    ->hiddenLabel()
                                     ->required()
                                     ->readOnly()
                                     ->numeric()
                                     ->default(0.00)
                                     ->rules([
                                         function (Get $get) {
-                                            return function (string $attribute, $value, Closure $fail) use($get) {
-                                                if($value <= 0){
+                                            return function (string $attribute, $value, Closure $fail) use ($get) {
+                                                if ($value <= 0) {
                                                     $fail(__('msg.body.is_not_correct'));
-                                                }                                                                               
+                                                }
                                             };
                                         },
                                     ]),
@@ -130,7 +130,7 @@ class OverTimeResource extends Resource
                             ->required()
                             ->columnSpanFull(),
                     ])
-                
+
             ]);
     }
 
@@ -169,7 +169,7 @@ class OverTimeResource extends Resource
                     ->boolean()
                     ->alignCenter(),
                 ApprovalStatusColumn::make("approvalStatus.status")
-                    ->label(__('field.status')), 
+                    ->label(__('field.status')),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label(__('field.created_at'))
                     ->dateTime()
@@ -195,11 +195,11 @@ class OverTimeResource extends Resource
             ])
             ->actions(
                 ApprovalActions::make(
-                    [                                               
-                        Tables\Actions\Action::make('discard') 
-                            ->label(__('filament-approvals::approvals.actions.discard'))                           
-                            ->visible(fn (Model $record) => (Auth::id() == $record->approvalStatus->creator->id && $record->isApprovalCompleted() && $record->isApproved()))                                                      
-                            ->hidden(fn(Model $record) => (Auth::id() != $record->approvalStatus->creator->id || $record->isDiscarded()))                            
+                    [
+                        Tables\Actions\Action::make('discard')
+                            ->label(__('filament-approvals::approvals.actions.discard'))
+                            ->visible(fn(Model $record) => (Auth::id() == $record->approvalStatus->creator->id && $record->isApprovalCompleted() && $record->isApproved()))
+                            ->hidden(fn(Model $record) => (Auth::id() != $record->approvalStatus->creator->id || $record->isDiscarded()))
                             ->form([
                                 Textarea::make('reason')
                                     ->label(__('field.reason'))
@@ -235,7 +235,7 @@ class OverTimeResource extends Resource
                                     ->send();
                             }),
                     ],
-                    [                            
+                    [
                         Tables\Actions\ActionGroup::make([
                             Tables\Actions\EditAction::make(),
                             Tables\Actions\DeleteAction::make(),
@@ -268,6 +268,7 @@ class OverTimeResource extends Resource
         return parent::getEloquentQuery()
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
-            ]);
+            ])
+            ->with(['user']);
     }
 }

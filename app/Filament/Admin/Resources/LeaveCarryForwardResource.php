@@ -56,11 +56,11 @@ class LeaveCarryForwardResource extends Resource
                             ->preload()
                             ->searchable()
                             ->live()
-                            ->afterStateUpdated(function($state, Set $set){
+                            ->afterStateUpdated(function ($state, Set $set) {
                                 $set('leave_entitlement_id', null);
                                 $set('start_date', null);
                                 $set('end_date', null);
-                                $set('balance', null);                                                               
+                                $set('balance', null);
                             }),
                         Forms\Components\Select::make('leave_entitlement_id')
                             ->label(__('model.entitlement'))
@@ -68,10 +68,10 @@ class LeaveCarryForwardResource extends Resource
                             ->required()
                             ->getOptionLabelFromRecordUsing(fn(Model $record) => "{$record->leaveType->name} - {$record->start_date->toFormattedDateString()} - {$record->end_date->toFormattedDateString()} ({$record->remaining})")
                             ->live()
-                            ->afterStateUpdated(function($state, Set $set){
+                            ->afterStateUpdated(function ($state, Set $set) {
                                 $entitlement = LeaveEntitlement::find($state);
                                 $endDate = Carbon::parse($entitlement->end_date)->add($entitlement->leaveType->option['carry_forward_duration'])->toFormattedDateString();
-                                $set('start_date', $entitlement->end_date->addDay()->toFormattedDateString());                                
+                                $set('start_date', $entitlement->end_date->addDay()->toFormattedDateString());
                                 $set('end_date', $endDate);
                                 $set('balance', $entitlement->remaining);
                             }),
@@ -92,7 +92,7 @@ class LeaveCarryForwardResource extends Resource
                                     ->default(0.00),
                             ])
                     ])
-                
+
             ]);
     }
 
@@ -108,7 +108,7 @@ class LeaveCarryForwardResource extends Resource
                     ->label(__('model.entitlement'))
                     ->numeric()
                     ->sortable()
-                    ->formatStateUsing(fn (Model $record): string => "{$record->leaveEntitlement->leaveType->name} ({$record->leaveEntitlement->start_date->toFormattedDateString()} - {$record->leaveEntitlement->end_date->toFormattedDateString()})"),
+                    ->formatStateUsing(fn(Model $record): string => "{$record->leaveEntitlement->leaveType->name} ({$record->leaveEntitlement->start_date->toFormattedDateString()} - {$record->leaveEntitlement->end_date->toFormattedDateString()})"),
                 Tables\Columns\TextColumn::make('start_date')
                     ->label(__('field.start_date'))
                     ->date()
@@ -123,25 +123,25 @@ class LeaveCarryForwardResource extends Resource
                     ->badge()
                     ->color('info')
                     ->alignCenter()
-                    ->sortable(),                
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('taken')
                     ->label(__('field.taken'))
                     ->numeric()
                     ->badge()
                     ->color('danger')
                     ->alignCenter()
-                    ->sortable(),                
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('remaining')
                     ->label(__('field.remaining'))
                     ->numeric()
                     ->badge()
                     ->color('success')
                     ->alignCenter()
-                    ->sortable(),                
+                    ->sortable(),
                 Tables\Columns\IconColumn::make('is_active')
                     ->label(__('field.is_active'))
                     ->boolean()
-                    ->alignCenter(),                
+                    ->alignCenter(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label(__('field.created_at'))
                     ->dateTime()
@@ -201,11 +201,12 @@ class LeaveCarryForwardResource extends Resource
         ];
     }
 
-    // public static function getEloquentQuery(): Builder
-    // {
-    //     return parent::getEloquentQuery()
-    //         ->withoutGlobalScopes([
-    //             SoftDeletingScope::class,
-    //         ]);
-    // }
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->withoutGlobalScopes([
+                SoftDeletingScope::class,
+            ])
+            ->with(['user', 'leaveType']);
+    }
 }

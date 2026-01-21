@@ -58,7 +58,7 @@ class LocationResource extends Resource
                             ->searchable(),
                         Forms\Components\TextInput::make('code')
                             ->label(__('field.code'))
-                            ->unique(ignoreRecord: true)                            
+                            ->unique(ignoreRecord: true)
                             ->maxLength(10),
                         Forms\Components\TextInput::make('name')
                             ->label(__('field.name'))
@@ -70,7 +70,7 @@ class LocationResource extends Resource
                         Forms\Components\TextInput::make('note')
                             ->label(__('field.note')),
                     ])
-                
+
             ]);
     }
 
@@ -87,14 +87,14 @@ class LocationResource extends Resource
                 Tables\Columns\TextColumn::make('parent.name')
                     ->label(__('field.parent'))
                     ->numeric()
-                    ->sortable(),            
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('reference')
-                    ->label(__('field.reference'))                    
-                    ->searchable(),            
+                    ->label(__('field.reference'))
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('note')
                     ->label(__('field.note'))
                     ->searchable()
-                    ->toggleable(isToggledHiddenByDefault: true),            
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label(__('field.created_at'))
                     ->dateTime()
@@ -150,6 +150,7 @@ class LocationResource extends Resource
         return parent::getEloquentQuery()
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
-            ]);
+            ])
+            ->with(['parent', 'locationType']);
     }
 }

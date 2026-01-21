@@ -24,47 +24,49 @@ use RingleSoft\LaravelProcessApproval\Enums\ApprovalStatusEnum;
 
 // use Illuminate\Support\Collection;
 
-if(!function_exists('getSubordinators')){
-    function getSubordinators(User $user){
+if (!function_exists('getSubordinators')) {
+    function getSubordinators(User $user)
+    {
         $subordinators = collect();
 
         // get direct supervisor
-        $dirctContracts = EmployeeContract::with('employee')->where('is_active', true)->where('supervisor_id', $user->id)->get();        
-        foreach($dirctContracts as $contract){            
+        $dirctContracts = EmployeeContract::with('employee')->where('is_active', true)->where('supervisor_id', $user->id)->get();
+        foreach ($dirctContracts as $contract) {
             $subordinators->push($contract->employee->user_id);
         }
 
         // get from department supervisor
-        $departmentUsers = User::whereNot('id', $user->id)->whereHas('employee', function(Builder $query) use ($user) {
-            $query->whereHas('contracts', function(Builder $query) use ($user) {
+        $departmentUsers = User::whereNot('id', $user->id)->whereHas('employee', function (Builder $query) use ($user) {
+            $query->whereHas('contracts', function (Builder $query) use ($user) {
                 $query->whereIn('department_id', $user->departments->pluck('id'));
                 $query->where('is_active', true);
             });
         })->get();
 
-        foreach($departmentUsers as $user){
+        foreach ($departmentUsers as $user) {
             $subordinators->push($user->id);
-        }        
+        }
 
         return $subordinators->unique();
-    }                
+    }
 }
 
-if(!function_exists('getAcronym')){
-    function getAcronym($string){        
+if (!function_exists('getAcronym')) {
+    function getAcronym($string)
+    {
         $words = explode(" ", $string);
         $acronym = "";
 
         foreach ($words as $w) {
             $acronym .= mb_substr($w, 0, 1);
         }
-        
+
         $acronym = preg_replace('/[^A-Za-z0-9\-]/', '', $acronym); // Removes special chars.
         return $acronym;
     }
 }
 
-if(!function_exists('decimalToTime')){
+if (!function_exists('decimalToTime')) {
     /**
      * Convert decimal time into time in the format hh:mm:ss
      *
@@ -72,38 +74,39 @@ if(!function_exists('decimalToTime')){
      *
      * @return string $time The converted time value.
      */
-    function decimalToTime($decimal) {
+    function decimalToTime($decimal)
+    {
         $h = intval($decimal);
         $m = round((((($decimal - $h) / 100.0) * 60.0) * 100), 0);
-        if ($m == 60)
-        {
+        if ($m == 60) {
             $h++;
             $m = 0;
         }
-        if($m == 0){
+        if ($m == 0) {
             $retval = sprintf("%2dh", $h);
-        }else{
+        } else {
             $retval = sprintf("%2dh : %02dmin", $h, $m);
         }
-        
+
         return $retval;
     }
 }
 
-if(!function_exists('getHoursBetweenTwoTimes')){
-    function getHoursBetweenTwoTimes($stat_time, $end_time, $break_time = 0, $date = null) : float {   
-        if($date != null){
+if (!function_exists('getHoursBetweenTwoTimes')) {
+    function getHoursBetweenTwoTimes($stat_time, $end_time, $break_time = 0, $date = null): float
+    {
+        if ($date != null) {
             $stat_time = Carbon::parse($date)->format('Y-m-d') . ' ' . $stat_time;
             $end_time = Carbon::parse($date)->format('Y-m-d') . ' ' . $end_time;
-        }else{
+        } else {
             $stat_time = now()->format('Y-m-d') . ' ' . $stat_time;
             $end_time = now()->format('Y-m-d') . ' ' . $end_time;
         }
-        $startTime  = Carbon::parse($stat_time)->timezone(config('app.timezone'));
-        $endTime    = Carbon::parse($end_time)->timezone(config('app.timezone'));        
+        $startTime = Carbon::parse($stat_time)->timezone(config('app.timezone'));
+        $endTime = Carbon::parse($end_time)->timezone(config('app.timezone'));
         $hours = $startTime->floatDiffInHours($endTime);
 
-        if(!empty($break_time) && $hours > 4){
+        if (!empty($break_time) && $hours > 4) {
             return floatval($hours - $break_time);
         }
 
@@ -111,46 +114,49 @@ if(!function_exists('getHoursBetweenTwoTimes')){
     }
 }
 
-if(!function_exists('getEntitlementBalance')){
-    function getEntitlementBalance($jointDate, $leaveType) : int {
+if (!function_exists('getEntitlementBalance')) {
+    function getEntitlementBalance($jointDate, $leaveType): int
+    {
         $startDate = Carbon::parse($jointDate);
-        $endDate  = Carbon::createFromDate(now()->year, $startDate->month, $startDate->day);
-        $duration = intval($startDate->diffInYears($endDate));        
+        $endDate = Carbon::createFromDate(now()->year, $startDate->month, $startDate->day);
+        $duration = intval($startDate->diffInYears($endDate));
         $increment = 0;
 
-        if(!empty($leaveType->option) && !empty($leaveType->option['balance_increment_amount']) && !empty($leaveType->option['balance_increment_period'])){                                                                            
-            $increment =  intval($duration / floatval($leaveType->option['balance_increment_period']));
+        if (!empty($leaveType->option) && !empty($leaveType->option['balance_increment_amount']) && !empty($leaveType->option['balance_increment_period'])) {
+            $increment = intval($duration / floatval($leaveType->option['balance_increment_period']));
         }
 
         $balance = intval($leaveType->balance + $increment);
 
-        if(!empty($leaveType->maximum_balance) && $leaveType->maximum_balance > $balance){
+        if (!empty($leaveType->maximum_balance) && $leaveType->maximum_balance > $balance) {
             return $balance;
         }
-        
+
         return $leaveType->maximum_balance;
     }
 }
 
-if(!function_exists('getDayOfWeek')){
-    function getDayOfWeek($date) : int {
+if (!function_exists('getDayOfWeek')) {
+    function getDayOfWeek($date): int
+    {
         return Carbon::parse($date)->dayOfWeek();
     }
 }
 
-if(!function_exists('isWorkHour')){
-    function isWorkHour($user, $date, $request_time): bool{  
-        if(publicHoliday($date)){
+if (!function_exists('isWorkHour')) {
+    function isWorkHour($user, $date, $request_time): bool
+    {
+        if (publicHoliday($date)) {
             return false;
         }
-        
-        foreach($user->workDays as $workDay){
+
+        foreach ($user->workDays as $workDay) {
             $startWorkHour = Carbon::parse($workDay->start_time);
             $endWorkHour = Carbon::parse($workDay->end_time);
-            $requestTime = Carbon::parse($request_time); 
-            $dayOfWeek = Carbon::parse($date)->dayOfWeek();   
-            
-            if($workDay->day_name->value == $dayOfWeek && $requestTime->isBetween($startWorkHour, $endWorkHour, true)){
+            $requestTime = Carbon::parse($request_time);
+            $dayOfWeek = Carbon::parse($date)->dayOfWeek();
+
+            if ($workDay->day_name->value == $dayOfWeek && $requestTime->isBetween($startWorkHour, $endWorkHour, true)) {
                 return true;
             }
         }
@@ -158,67 +164,75 @@ if(!function_exists('isWorkHour')){
     }
 }
 
-if(!function_exists('getDayName')){
-    function getDayName($date){
+if (!function_exists('getDayName')) {
+    function getDayName($date)
+    {
         return Carbon::parse($date)->locale(config('app.locale'))->dayName;
     }
 }
 
-if(!function_exists('weekend')){
-    function weekend($date): bool | string {
+if (!function_exists('weekend')) {
+    function weekend($date): bool|string
+    {
         $date = Carbon::parse($date);
-        if($date->isWeekend()){
+        if ($date->isWeekend()) {
             return $date->locale(config('app.locale'))->dayName;
         }
         return false;
     }
 }
-if(!function_exists('publicHoliday')){
-    function publicHoliday($date): bool | object{        
-        return PublicHoliday::whereDate('date', $date)->first() ?? false;
+if (!function_exists('publicHoliday')) {
+    function publicHoliday($date): bool|object
+    {
+        static $holidays = null;
+        if ($holidays === null) {
+            $holidays = PublicHoliday::all()->keyBy(fn($h) => Carbon::parse($h->date)->toDateString());
+        }
+        $dateStr = ($date instanceof Carbon) ? $date->toDateString() : Carbon::parse($date)->toDateString();
+        return $holidays->get($dateStr) ?? false;
     }
 }
 
-if(! function_exists('getDateRangeBetweenTwoDates')){
+if (!function_exists('getDateRangeBetweenTwoDates')) {
     function getDateRangeBetweenTwoDates($startDate, $endDate)
     {
         $period = CarbonPeriod::create($startDate, $endDate);
 
-        return $period->toArray();        
+        return $period->toArray();
     }
 }
 
-if(!function_exists('dateIsNotDuplicated')){
-    function dateIsNotDuplicated($user, $date){
+if (!function_exists('dateIsNotDuplicated')) {
+    function dateIsNotDuplicated($user, $date)
+    {
         $leaveRequests = LeaveRequest::where('user_id', $user->id)->whereHas('approvalStatus', static function ($q) use ($user) {
             return $q->where('creator_id', $user->id)->whereIn('status', [ApprovalStatusEnum::APPROVED->value, ApprovalStatusEnum::PENDING->value, ApprovalStatusEnum::SUBMITTED->value, ApprovalStatusEnum::CREATED->value]);
         })->get();
 
-        foreach($leaveRequests as $leaveRequest){
-            foreach($leaveRequest->requestDates as $requestDate)
-            {
-                if($requestDate->date == $date){
+        foreach ($leaveRequests as $leaveRequest) {
+            foreach ($leaveRequest->requestDates as $requestDate) {
+                if ($requestDate->date == $date) {
                     return false;
                 }
-            }           
+            }
         }
         return true;
     }
 }
 
-if(!function_exists('getLeaveDuplicatedDate')){
-    function getLeaveDuplicatedDate($user, $date){
+if (!function_exists('getLeaveDuplicatedDate')) {
+    function getLeaveDuplicatedDate($user, $date)
+    {
         $leaveRequests = LeaveRequest::where('user_id', $user->id)->whereHas('approvalStatus', static function ($q) use ($user) {
             return $q->where('creator_id', $user->id)->whereIn('status', [ApprovalStatusEnum::APPROVED->value, ApprovalStatusEnum::PENDING->value, ApprovalStatusEnum::SUBMITTED->value, ApprovalStatusEnum::CREATED->value]);
         })->get();
 
-        foreach($leaveRequests as $leaveRequest){
-            foreach($leaveRequest->requestDates as $requestDate)
-            {
-                if($requestDate->date == $date){
+        foreach ($leaveRequests as $leaveRequest) {
+            foreach ($leaveRequest->requestDates as $requestDate) {
+                if ($requestDate->date == $date) {
                     return $requestDate;
                 }
-            }           
+            }
         }
         return null;
     }
@@ -226,58 +240,61 @@ if(!function_exists('getLeaveDuplicatedDate')){
 
 
 
-if(!function_exists('calculateAccrud'))
-{
-    function calculateAccrud($balance, $startDate, $endDate): float{
-        $from   = Carbon::parse($startDate, config('app.timezone'));
-        $to     = Carbon::parse($endDate, config('app.timezone'));
-        $days   = $from->diffInDays($to);
+if (!function_exists('calculateAccrud')) {
+    function calculateAccrud($balance, $startDate, $endDate): float
+    {
+        $from = Carbon::parse($startDate, config('app.timezone'));
+        $to = Carbon::parse($endDate, config('app.timezone'));
+        $days = $from->diffInDays($to);
 
-        if($days > 0)
-        {
-            $perDay = ($balance / getDaysOfTheYear(now()->year));  
+        if ($days > 0) {
+            $perDay = ($balance / getDaysOfTheYear(now()->year));
             $accrued = round(($days * $perDay), 2);
             return $accrued;
-        }   
+        }
         return 0;
     }
 }
 
-if(!function_exists('getDaysOfTheYear')){
-    function getDaysOfTheYear($year){        
+if (!function_exists('getDaysOfTheYear')) {
+    function getDaysOfTheYear($year)
+    {
         $startDateOfTheYear = Carbon::createFromDate($year, 1, 1);
-        $endDateOfTheYear   = Carbon::createFromDate($year, 12, 31);
+        $endDateOfTheYear = Carbon::createFromDate($year, 12, 31);
         return $startDateOfTheYear->diffInDays($endDateOfTheYear);
     }
 }
 
-if(!function_exists('getDaysFromHours')){
-    function getDaysFromHours($user_id, $hours) : float {
+if (!function_exists('getDaysFromHours')) {
+    function getDaysFromHours($user_id, $hours): float
+    {
         $user = User::with('profile.shift')->find($user_id);
         return round($hours / $user->profile->shift->work_hours, 1);
     }
 }
 
-if(!function_exists('getRequestDays')){
-    function getRequestDays($requestDates){
+if (!function_exists('getRequestDays')) {
+    function getRequestDays($requestDates)
+    {
         $requestDays = 0;
-        foreach($requestDates as $requestDate){
+        foreach ($requestDates as $requestDate) {
             $requestDays += $requestDate['hours'];
         }
         return floatval($requestDays / app(SettingWorkingHours::class)->day);
     }
 }
 
-if(!function_exists('getOvertimeDays')){
-    function getOvertimeDays($user, $overtimeIds = null){
-        if($overtimeIds == null){
+if (!function_exists('getOvertimeDays')) {
+    function getOvertimeDays($user, $overtimeIds = null)
+    {
+        if ($overtimeIds == null) {
             $overtimes = $user->overtimes()->whereDate('expiry_date', '>=', now())->where('unused', true)->get();
-        }else{
-            $overtimes = $user->overtimes()->whereIn('id',$overtimeIds)->whereDate('expiry_date', '>=', now())->where('unused', true)->get();
+        } else {
+            $overtimes = $user->overtimes()->whereIn('id', $overtimeIds)->whereDate('expiry_date', '>=', now())->where('unused', true)->get();
         }
-        
+
         $overtimeHours = 0;
-        foreach($overtimes as $overtime){
+        foreach ($overtimes as $overtime) {
             $overtimeHours += $overtime->hours;
         }
         return floatval($overtimeHours / app(SettingWorkingHours::class)->day);
@@ -285,70 +302,72 @@ if(!function_exists('getOvertimeDays')){
 }
 
 
-if(!function_exists('createProcessApprover')){   
-    function createProcessApprover(Model $model, $step = null){
-        $user = $model->approvalStatus->creator;         
-        if($step != null){
-            if($user->supervisor && $user->supervisor->hasRole($step->role_id)){
+if (!function_exists('createProcessApprover')) {
+    function createProcessApprover(Model $model, $step = null)
+    {
+        $user = $model->approvalStatus->creator;
+        if ($step != null) {
+            if ($user->supervisor && $user->supervisor->hasRole($step->role_id)) {
                 ProcessApprover::create([
-                    'step_id'           => $step->id,
-                    'modelable_type'    => get_class($model),
-                    'modelable_id'      => $model->id,
-                    'role_id'           => $step->role_id,
-                    'approver_id'       => $user->supervisor->id
-                ]);                        
-            }else if($user->department_head && $user->department_head->hasRole($step->role_id)){
+                    'step_id' => $step->id,
+                    'modelable_type' => get_class($model),
+                    'modelable_id' => $model->id,
+                    'role_id' => $step->role_id,
+                    'approver_id' => $user->supervisor->id
+                ]);
+            } else if ($user->department_head && $user->department_head->hasRole($step->role_id)) {
                 ProcessApprover::create([
-                    'step_id'           => $step->id,
-                    'modelable_type'    => get_class($model),
-                    'modelable_id'      => $model->id,
-                    'role_id'           => $step->role_id,
-                    'approver_id'       => $user->department_head->id
-                ]);                            
-            }else{
+                    'step_id' => $step->id,
+                    'modelable_type' => get_class($model),
+                    'modelable_id' => $model->id,
+                    'role_id' => $step->role_id,
+                    'approver_id' => $user->department_head->id
+                ]);
+            } else {
                 ProcessApprover::create([
-                    'step_id'           => $step->id,
-                    'modelable_type'    => get_class($model),
-                    'modelable_id'      => $model->id,
-                    'role_id'           => $step->role_id
-                ]);                            
-            } 
-        }else{
-            foreach($model->approvalFlowSteps() as $step){
-                if($user->supervisor && $user->supervisor->hasRole($step->role_id)){
+                    'step_id' => $step->id,
+                    'modelable_type' => get_class($model),
+                    'modelable_id' => $model->id,
+                    'role_id' => $step->role_id
+                ]);
+            }
+        } else {
+            foreach ($model->approvalFlowSteps() as $step) {
+                if ($user->supervisor && $user->supervisor->hasRole($step->role_id)) {
                     ProcessApprover::create([
-                        'step_id'           => $step->id,
-                        'modelable_type'    => get_class($model),
-                        'modelable_id'      => $model->id,
-                        'role_id'           => $step->role_id,
-                        'approver_id'       => $user->supervisor->id
-                    ]);                        
-                }else if($user->department_head && $user->department_head->hasRole($step->role_id)){
+                        'step_id' => $step->id,
+                        'modelable_type' => get_class($model),
+                        'modelable_id' => $model->id,
+                        'role_id' => $step->role_id,
+                        'approver_id' => $user->supervisor->id
+                    ]);
+                } else if ($user->department_head && $user->department_head->hasRole($step->role_id)) {
                     ProcessApprover::create([
-                        'step_id'           => $step->id,
-                        'modelable_type'    => get_class($model),
-                        'modelable_id'      => $model->id,
-                        'role_id'           => $step->role_id,
-                        'approver_id'       => $user->department_head->id
-                    ]);                            
-                }else{
+                        'step_id' => $step->id,
+                        'modelable_type' => get_class($model),
+                        'modelable_id' => $model->id,
+                        'role_id' => $step->role_id,
+                        'approver_id' => $user->department_head->id
+                    ]);
+                } else {
                     ProcessApprover::create([
-                        'step_id'           => $step->id,
-                        'modelable_type'    => get_class($model),
-                        'modelable_id'      => $model->id,
-                        'role_id'           => $step->role_id
-                    ]);                            
-                } 
+                        'step_id' => $step->id,
+                        'modelable_type' => get_class($model),
+                        'modelable_id' => $model->id,
+                        'role_id' => $step->role_id
+                    ]);
+                }
             }
         }
-        
+
     }
 }
 
-if(!function_exists('isRequestBackDate')){
-    function isRequestBackDate($date){
+if (!function_exists('isRequestBackDate')) {
+    function isRequestBackDate($date)
+    {
         $date = Carbon::parse($date);
-        if($date < now()->toDateString()){
+        if ($date < now()->toDateString()) {
             return true;
         }
         return false;
@@ -374,7 +393,7 @@ if(!function_exists('isRequestBackDate')){
 //         $dt = strtotime($date == false ? date('Y-m-d') : $date);
 //         $firstDate = date ('Y-m-d', strtotime ('first day of this month', $dt));
 //         $lastDate = date ('Y-m-d', strtotime ('last day of this month', $dt));
-        
+
 //         return getDateRangeBetweenTwoDates($firstDate, $lastDate);
 //     }
 // }
@@ -382,64 +401,103 @@ if(!function_exists('isRequestBackDate')){
 
 
 
-if(!function_exists('isOnLeave')){
-    function isOnLeave($user, $date): bool | object{        
-        $leave = RequestDate::with('requestdateable')->where('requestdateable_type', 'App\Models\LeaveRequest')->whereDate('date', $date)->whereHas('requestdateable', function(Builder $query) use($user) {
-            $query->where('user_id', $user->id);
-            $query->whereHas('approvalStatus', static function ($q) {
-                return $q->whereIn('status', [ApprovalStatusEnum::APPROVED->value, ApprovalStatusEnum::PENDING->value, ApprovalStatusEnum::SUBMITTED->value]);
-            });
-        })->first();    
-        return $leave ?? false;
-    }
-}
-
-if(!function_exists('isOvertime')){
-    function isOvertime($user, $date): bool | object{        
-        $overtime = RequestDate::with('requestdateable')->where('requestdateable_type', 'App\Models\OverTime')->whereDate('date', $date)->whereHas('requestdateable', function(Builder $query) use($user) {
-            $query->where('user_id', $user->id);
-            $query->whereHas('approvalStatus', static function ($q) {
-                return $q->where('status', ApprovalStatusEnum::APPROVED->value);
-            });
-        })->first();    
-        return $overtime ?? false;
-    }
-}
-
-if(!function_exists('isWorkFromHome')){
-    function isWorkFromHome($user, $date): bool | object{
-        $workFromHome = RequestDate::with('requestdateable')->where('requestdateable_type', 'App\Models\WorkFromHome')->whereDate('date', $date)->whereHas('requestdateable', function(Builder $query) use($user) {
-            $query->where('user_id', $user->id);
-            $query->whereHas('approvalStatus', static function ($q) {
-                return $q->where('status', ApprovalStatusEnum::APPROVED->value);
-            });
-        })->first();
-        return $workFromHome ?? false;        
-    }
-}
-
-if(!function_exists('isWorkDay')){
-    function isWorkDay($user, $date): bool | object
-    {        
-        return $user->workDays->where('day_name.value', getDayOfWeek($date))->first() ?? false;    
-    }
-}
-
-if(!function_exists('isSwitchWorkDay')){
-    function isSwitchWorkDay($user, $date): bool | object
+if (!function_exists('isOnLeave')) {
+    function isOnLeave($user, $date): bool|object
     {
-        return $user->switchWorkDays()->whereDate('from_date', $date)->first() ?? false;
+        static $results = [];
+        $userId = $user->id;
+        if (!isset($results[$userId])) {
+            $results[$userId] = RequestDate::with('requestdateable.leaveType')
+                ->where('requestdateable_type', 'App\Models\LeaveRequest')
+                ->whereHas('requestdateable', function (Builder $query) use ($userId) {
+                    $query->where('user_id', $userId);
+                    $query->whereHas('approvalStatus', static function ($q) {
+                        return $q->whereIn('status', [ApprovalStatusEnum::APPROVED->value, ApprovalStatusEnum::PENDING->value, ApprovalStatusEnum::SUBMITTED->value]);
+                    });
+                })->get()->keyBy(fn($rd) => Carbon::parse($rd->date)->toDateString());
+        }
+        $dateStr = ($date instanceof Carbon) ? $date->toDateString() : Carbon::parse($date)->toDateString();
+        return $results[$userId]->get($dateStr) ?? false;
     }
 }
 
-if(!function_exists('isSwitchWorkDayToDate')){
-    function isSwitchWorkDayToDate($user, $date): bool | object
+if (!function_exists('isOvertime')) {
+    function isOvertime($user, $date): bool|object
     {
-        return $user->switchWorkDays()->whereDate('to_date', $date)->first() ?? false;
+        static $results = [];
+        $userId = $user->id;
+        if (!isset($results[$userId])) {
+            $results[$userId] = RequestDate::with('requestdateable')
+                ->where('requestdateable_type', 'App\Models\OverTime')
+                ->whereHas('requestdateable', function (Builder $query) use ($userId) {
+                    $query->where('user_id', $userId);
+                    $query->whereHas('approvalStatus', static function ($q) {
+                        return $q->where('status', ApprovalStatusEnum::APPROVED->value);
+                    });
+                })->get()->keyBy(fn($rd) => Carbon::parse($rd->date)->toDateString());
+        }
+        $dateStr = ($date instanceof Carbon) ? $date->toDateString() : Carbon::parse($date)->toDateString();
+        return $results[$userId]->get($dateStr) ?? false;
     }
 }
 
-if(!function_exists('getTakenLeave')){
+if (!function_exists('isWorkFromHome')) {
+    function isWorkFromHome($user, $date): bool|object
+    {
+        static $results = [];
+        $userId = $user->id;
+        if (!isset($results[$userId])) {
+            $results[$userId] = RequestDate::with('requestdateable')
+                ->where('requestdateable_type', 'App\Models\WorkFromHome')
+                ->whereHas('requestdateable', function (Builder $query) use ($userId) {
+                    $query->where('user_id', $userId);
+                    $query->whereHas('approvalStatus', static function ($q) {
+                        return $q->where('status', ApprovalStatusEnum::APPROVED->value);
+                    });
+                })->get()->keyBy(fn($rd) => Carbon::parse($rd->date)->toDateString());
+        }
+        $dateStr = ($date instanceof Carbon) ? $date->toDateString() : Carbon::parse($date)->toDateString();
+        return $results[$userId]->get($dateStr) ?? false;
+    }
+}
+
+if (!function_exists('isWorkDay')) {
+    function isWorkDay($user, $date): bool|object
+    {
+        if (!$user->relationLoaded('workDays')) {
+            $user->load('workDays');
+        }
+        return $user->workDays->where('day_name.value', getDayOfWeek($date))->first() ?? false;
+    }
+}
+
+if (!function_exists('isSwitchWorkDay')) {
+    function isSwitchWorkDay($user, $date): bool|object
+    {
+        static $results = [];
+        $userId = $user->id;
+        if (!isset($results[$userId])) {
+            $results[$userId] = $user->switchWorkDays->keyBy(fn($swd) => Carbon::parse($swd->from_date)->toDateString());
+        }
+        $dateStr = ($date instanceof Carbon) ? $date->toDateString() : Carbon::parse($date)->toDateString();
+        return $results[$userId]->get($dateStr) ?? false;
+    }
+}
+
+if (!function_exists('isSwitchWorkDayToDate')) {
+    function isSwitchWorkDayToDate($user, $date): bool|object
+    {
+        static $results = [];
+        $userId = $user->id;
+        if (!isset($results[$userId])) {
+            $results[$userId] = $user->switchWorkDays->keyBy(fn($swd) => Carbon::parse($swd->to_date)->toDateString());
+        }
+        $dateStr = ($date instanceof Carbon) ? $date->toDateString() : Carbon::parse($date)->toDateString();
+        return $results[$userId]->get($dateStr) ?? false;
+    }
+}
+
+if (!function_exists('getTakenLeave')) {
     function getTakenLeave($user, $leaveType, $from_date = null, $to_date = null): float
     {
         if (!$from_date || !$to_date) {
@@ -463,27 +521,31 @@ if(!function_exists('getTakenLeave')){
             ->whereHas('approvalStatus', function ($query) {
                 $query->whereIn('status', [ApprovalStatusEnum::APPROVED->value, ApprovalStatusEnum::PENDING->value, ApprovalStatusEnum::SUBMITTED->value]);
             })
-            ->withSum(['requestDates' => function ($query) use ($from_date, $to_date) {
-                $query->whereBetween('date', [$from_date, $to_date])
-                      ->whereNull('leave_carry_forward_id');
-            }], 'hours')->get()->sum('request_dates_sum_hours');
+            ->withSum([
+                'requestDates' => function ($query) use ($from_date, $to_date) {
+                    $query->whereBetween('date', [$from_date, $to_date])
+                        ->whereNull('leave_carry_forward_id');
+                }
+            ], 'hours')->get()->sum('request_dates_sum_hours');
 
         return floatval($totalHours / app(SettingWorkingHours::class)->day);
     }
 }
 
-if(!function_exists('getCarryForwardTaken')){
-    function getCarryForwardTaken($carryForward, $from_date, $to_date){
-        
+if (!function_exists('getCarryForwardTaken')) {
+    function getCarryForwardTaken($carryForward, $from_date, $to_date)
+    {
+
         $carryForwardHours = $carryForward->requestDates()->whereBetween('date', [$from_date, $to_date])->sum('hours');
 
         return floatval($carryForwardHours / app(SettingWorkingHours::class)->day);
     }
 }
 
-if(!function_exists('generatePrNo')){
-    function generatePrNo(){
-        return 'PR'.date('Ym').'-'.str_pad(PurchaseRequest::count() + 1, 5, '0', STR_PAD_LEFT);
+if (!function_exists('generatePrNo')) {
+    function generatePrNo()
+    {
+        return 'PR' . date('Ym') . '-' . str_pad(PurchaseRequest::count() + 1, 5, '0', STR_PAD_LEFT);
     }
 }
 
@@ -494,7 +556,7 @@ if(!function_exists('generatePrNo')){
 //             if($leaveDate){
 //                 return $leaveDate;
 //             }
-            
+
 //        }
 //        return null;
 //     }
@@ -538,7 +600,7 @@ if(!function_exists('generatePrNo')){
 //                 }
 //            }
 //         }
-        
+
 //        return null;
 //     }
 // }
@@ -549,33 +611,33 @@ if(!function_exists('generatePrNo')){
 //     function numberToWord($num = null)
 //     {
 //         $num    = ( string ) ( ( int ) $num );
-        
+
 //         if( ( int ) ( $num ) && ctype_digit( $num ) )
 //         {
 //             $words  = array( );
-             
+
 //             $num    = str_replace( array( ',' , ' ' ) , '' , trim( $num ) );
-             
+
 //             $list1  = array('','one','two','three','four','five','six','seven',
 //                 'eight','nine','ten','eleven','twelve','thirteen','fourteen',
 //                 'fifteen','sixteen','seventeen','eighteen','nineteen');
-             
+
 //             $list2  = array('','ten','twenty','thirty','forty','fifty','sixty',
 //                 'seventy','eighty','ninety','hundred');
-             
+
 //             $list3  = array('','thousand','million','billion','trillion',
 //                 'quadrillion','quintillion','sextillion','septillion',
 //                 'octillion','nonillion','decillion','undecillion',
 //                 'duodecillion','tredecillion','quattuordecillion',
 //                 'quindecillion','sexdecillion','septendecillion',
 //                 'octodecillion','novemdecillion','vigintillion');
-             
+
 //             $num_length = strlen( $num );
 //             $levels = ( int ) ( ( $num_length + 2 ) / 3 );
 //             $max_length = $levels * 3;
 //             $num    = substr( '00'.$num , -$max_length );
 //             $num_levels = str_split( $num , 3 );
-             
+
 //             foreach( $num_levels as $num_part )
 //             {
 //                 $levels--;
@@ -583,20 +645,20 @@ if(!function_exists('generatePrNo')){
 //                 $hundreds   = ( $hundreds ? ' ' . $list1[$hundreds] . ' Hundred' . ( $hundreds == 1 ? '' : 's' ) . ' ' : '' );
 //                 $tens       = ( int ) ( $num_part % 100 );
 //                 $singles    = '';
-                 
+
 //                 if( $tens < 20 ) { $tens = ( $tens ? ' ' . $list1[$tens] . ' ' : '' ); } else { $tens = ( int ) ( $tens / 10 ); $tens = ' ' . $list2[$tens] . ' '; $singles = ( int ) ( $num_part % 10 ); $singles = ' ' . $list1[$singles] . ' '; } $words[] = $hundreds . $tens . $singles . ( ( $levels && ( int ) ( $num_part ) ) ? ' ' . $list3[$levels] . ' ' : '' ); } $commas = count( $words ); if( $commas > 1 )
 //             {
 //                 $commas = $commas - 1;
 //             }
-             
+
 //             $words  = implode( ', ' , $words );
-             
+
 //             $words  = trim( str_replace( ' ,' , ',' , ucwords( $words ) )  , ', ' );
 //             if( $commas )
 //             {
 //                 $words  = str_replace( ',' , ' and' , $words );
 //             }
-             
+
 //             return ucfirst($words);
 //         }
 //         else if( ! ( ( int ) $num ) )
@@ -631,7 +693,7 @@ if(!function_exists('generatePrNo')){
 //             18 => "EIGHTEEN",
 //             19 => "NINETEEN"
 //         );
-    
+
 //         $tens = array( 
 //             0 => "ZERO",
 //             1 => "TEN",
@@ -644,7 +706,7 @@ if(!function_exists('generatePrNo')){
 //             8 => "EIGHTY", 
 //             9 => "NINETY" 
 //         ); 
-    
+
 //         $hundreds = array( 
 //             "HUNDRED", 
 //             "THOUSAND", 
@@ -653,18 +715,18 @@ if(!function_exists('generatePrNo')){
 //             "TRILLION", 
 //             "QUARDRILLION" 
 //         ); /*limit t quadrillion */
-    
+
 //         $num = number_format($num ,2,".",","); 
 //         $num_arr = explode(".",$num); 
 //         $wholenum = $num_arr[0]; 
 //         $decnum = $num_arr[1]; 
-    
+
 //         $whole_arr = array_reverse(explode(",",$wholenum)); 
 //         krsort($whole_arr,1); 
-    
+
 //         $rettxt = ""; 
 //         foreach($whole_arr as $key => $i){
-          
+
 //             while(substr($i,0,1)=="0")
 //                 $i=substr($i,1,5);
 
@@ -683,7 +745,7 @@ if(!function_exists('generatePrNo')){
 //                 $rettxt .= " ".$hundreds[$key]." "; 
 //             }
 //         } 
-        
+
 //         if($rettxt == 'ZERO' || $rettxt == 'ONE'){
 //             $rettxt .= " DOLLAR";
 //         }else{
@@ -713,7 +775,7 @@ if(!function_exists('generatePrNo')){
 
 // if(!function_exists('getTripPeopleinvoled')){
 //     function getTripPeopleinvoled($trip) : Collection {
-             
+
 //         if(ActionStatusEnum::tryFrom($trip->status->value) == ActionStatusEnum::Cancelled || ActionStatusEnum::tryFrom($trip->status->value) == ActionStatusEnum::Rejected)
 //         {            
 //             $peopleInvolved = collect();
@@ -729,7 +791,7 @@ if(!function_exists('generatePrNo')){
 //                     $peopleInvolved->push($vehicle->driver_id);
 //                 }
 //             }
-            
+
 
 //             if($trip->advances){
 //                 // logistic 
@@ -738,7 +800,7 @@ if(!function_exists('generatePrNo')){
 //                     $peopleInvolved->push($logistic->id);
 //                 }
 //             }
-            
+
 
 //             if($trip->payments){
 //                 // payment
@@ -746,7 +808,7 @@ if(!function_exists('generatePrNo')){
 //                 foreach($payments as $payment){
 //                     $peopleInvolved->push($payment->id);
 //                 }
-                
+
 //                 // payment authorize
 //                 $authorizes =  User::where('id', '!=', 1)->permission('authorize_payment_travel::trip')->get();
 //                 foreach($authorizes as $authorize){
@@ -776,7 +838,7 @@ if(!function_exists('generatePrNo')){
 //         if ($style == NumberFormatter::CURRENCY) {
 //             $formatter->setTextAttribute(NumberFormatter::CURRENCY_CODE, $currencyCode);
 //         }
-    
+
 //         return $formatter->format($value);
 //     }
 // }
@@ -806,7 +868,7 @@ if(!function_exists('generatePrNo')){
 //                 }
 //                 return $defaultBalance;
 //             }
-            
+
 //         }
 //         return $defaultBalance;
 //     }
@@ -821,7 +883,7 @@ if(!function_exists('generatePrNo')){
 //         $attributes = collect();
 //         $jointDate = Carbon::parse($employee->join_date);
 //         $workDurations = round(now()->floatDiffInYears($jointDate), 2);
-        
+
 //         if($workDurations < 1){
 //             $calendarYearStart = Carbon::createFromDate(now()->year, config('setting.calendar_month'), config('setting.calendar_day'), config('app.timezone'));
 //             $startDate = $jointDate->toDateString();
@@ -844,7 +906,7 @@ if(!function_exists('generatePrNo')){
 //                 $endDate    = Carbon::createFromDate($startDate)->addYear()->subDay()->toDateString();
 //             }                        
 //         }  
-        
+
 //         $leaveTypes = $employee->law->leave_types()->where($employee->gender->value, StatusEnum::Active)->get()->map(function($type){
 //             return [
 //                 'id'                        => $type->leave_type_id,
@@ -884,7 +946,7 @@ if(!function_exists('generatePrNo')){
 //                 foreach($employee->entitlements() as $entitlement){
 //                     $entitlement->update(['status' => StatusEnum::Suspended]);
 //                 }
-                
+
 //                 // create new entitlements
 //                 $employee->entitlements()->createMany($attributes);
 
@@ -1043,7 +1105,7 @@ if(!function_exists('generatePrNo')){
 //     function getWorkingDays($start_date, $end_date, $holidays = null): int{
 //         $start = Carbon::parse($start_date);
 //         $end = Carbon::parse($end_date);
-        
+
 //         $days = $start->diffInDaysFiltered(function (Carbon $date) use ($holidays) {
 //             if(is_null($holidays)){
 //                 return $date->isWeekday();

@@ -33,7 +33,7 @@ use Illuminate\Support\Str;
 class EmployeeResource extends Resource
 {
     use Translatable;
-    
+
     protected static ?string $model = Employee::class;
 
     protected static ?string $navigationIcon = 'fas-id-badge';
@@ -76,7 +76,7 @@ class EmployeeResource extends Resource
                                     ->required()
                                     ->unique(ignoreRecord: true)
                                     ->prefixIcon('fas-id-card')
-                                    ->maxLength(20),                        
+                                    ->maxLength(20),
                                 Forms\Components\ToggleButtons::make('gender')
                                     ->label(__('field.gender'))
                                     ->required()
@@ -90,7 +90,7 @@ class EmployeeResource extends Resource
                                     ->inline()
                                     ->grouped(),
                             ]),
-                        
+
                         Forms\Components\TextInput::make('email')
                             ->label(__('field.email'))
                             ->email()
@@ -100,7 +100,7 @@ class EmployeeResource extends Resource
                             ->maxLength(255),
                         Forms\Components\Repeater::make('telephones')
                             ->label(__('field.telephone'))
-                            ->addActionLabel(__('btn.label.add',['label'=> __('field.telephone')]))
+                            ->addActionLabel(__('btn.label.add', ['label' => __('field.telephone')]))
                             ->simple(
                                 PhoneInput::make('telephones')
                                     ->hiddenLabel()
@@ -138,7 +138,7 @@ class EmployeeResource extends Resource
                                     ->required()
                                     ->relationship('province', 'name', fn(Builder $query) => $query->where('location_type_id', 1))
                                     ->live(onBlur: true)
-                                    ->afterStateUpdated(function(Set $set) {
+                                    ->afterStateUpdated(function (Set $set) {
                                         $set('district_id', null);
                                         $set('commune_id', null);
                                         $set('village_id', null);
@@ -149,22 +149,22 @@ class EmployeeResource extends Resource
                                     ->live(onBlur: true)
                                     ->preload()
                                     ->searchable()
-                                    ->afterStateUpdated(function(Set $set) {                                        
+                                    ->afterStateUpdated(function (Set $set) {
                                         $set('commune_id', null);
                                         $set('village_id', null);
                                     }),
                                 Forms\Components\Select::make('commune_id')
                                     ->label(__('field.commune'))
-                                    ->relationship('commune', 'name', fn(Builder $query, Get $get) => $query->where('location_type_id', 3)->where('parent_id', $get('district_id')))                            
+                                    ->relationship('commune', 'name', fn(Builder $query, Get $get) => $query->where('location_type_id', 3)->where('parent_id', $get('district_id')))
                                     ->preload()
                                     ->searchable()
                                     ->live(onBlur: true)
-                                    ->afterStateUpdated(function(Set $set) {
+                                    ->afterStateUpdated(function (Set $set) {
                                         $set('village_id', null);
                                     }),
                                 Forms\Components\Select::make('village_id')
                                     ->label(__('field.village'))
-                                    ->relationship('village', 'name', fn(Builder $query, Get $get) => $query->where('location_type_id', 4)->where('parent_id', $get('commune_id')))                            
+                                    ->relationship('village', 'name', fn(Builder $query, Get $get) => $query->where('location_type_id', 4)->where('parent_id', $get('commune_id')))
                                     ->preload()
                                     ->searchable(),
                             ]),
@@ -175,11 +175,11 @@ class EmployeeResource extends Resource
                             ->image()
                             ->imageEditor()
                             ->imageEditorAspectRatios([
-                                null,                                                                
+                                null,
                                 '1:1',
                             ])
                             ->columnSpanFull(),
-                    ]),             
+                    ]),
             ]);
     }
 
@@ -226,16 +226,16 @@ class EmployeeResource extends Resource
                 PhoneColumn::make('telephones')
                     ->label(__('field.telephone'))
                     ->searchable()
-                    ->toggleable(isToggledHiddenByDefault: true), 
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('join_date')
                     ->label(__('field.join_date'))
                     ->date()
-                    ->sortable(), 
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('resign_date')
                     ->label(__('field.resign_date'))
                     ->date()
                     ->alignCenter()
-                    ->toggleable(isToggledHiddenByDefault: true),                              
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\IconColumn::make('status')
                     ->label(__('field.status'))
                     ->boolean()
@@ -265,15 +265,15 @@ class EmployeeResource extends Resource
             ->actions([
                 Tables\Actions\ActionGroup::make([
                     Tables\Actions\Action::make('resign')
-                        ->label(__('btn.resign'))                        
+                        ->label(__('btn.resign'))
                         ->icon('fas-person-walking-arrow-right')
                         ->color('danger')
                         ->requiresConfirmation()
                         ->modalHeading(__('btn.resign'))
                         ->modalDescription(fn(Employee $record) => __('btn.msg.resign', ['name' => $record->name]))
-                        ->modalIcon('fas-person-walking-arrow-right')                        
-                        ->fillForm(fn(Employee $record) :array => [
-                            'resign_date'  => $record->resign_date
+                        ->modalIcon('fas-person-walking-arrow-right')
+                        ->fillForm(fn(Employee $record): array => [
+                            'resign_date' => $record->resign_date
                         ])
                         ->form([
                             Forms\Components\DatePicker::make('resign_date')
@@ -284,7 +284,7 @@ class EmployeeResource extends Resource
                         ->action(function (array $data, Employee $record) {
                             $record->update([
                                 'resign_date' => $data['resign_date']
-                            ]);                           
+                            ]);
 
                             // send notification
                             Notification::make()
@@ -298,27 +298,28 @@ class EmployeeResource extends Resource
                         ->color('info')
                         ->requiresConfirmation()
                         ->modalIcon('fas-user-plus')
-                        ->visible(fn(Model $record) => empty($record->user))                                                
+                        ->visible(fn(Model $record) => empty($record->user))
                         ->action(function (Employee $record) {
                             $password = Str::password(12); // generate a default password with length of 12 caracters
                             // create login account
                             $user = User::updateOrCreate(
                                 [
-                                    'email'     => $record->email,                                    
+                                    'email' => $record->email,
                                 ],
                                 [
-                                    'name'      => $record->getTranslations('name'),
-                                    'username'  => $record->employee_id,
-                                    'email'     => $record->email, 
-                                    'password'  => $password,
+                                    'name' => $record->getTranslations('name'),
+                                    'username' => $record->employee_id,
+                                    'email' => $record->email,
+                                    'password' => $password,
                                     'email_verified_at' => now(),
-                                    'force_renew_password' => true                          
-                                ])->assignRole('employee');
-                            
+                                    'force_renew_password' => true
+                                ]
+                            )->assignRole('employee');
+
                             // update employee
                             $record->update([
-                                'user_id'   => $user->id
-                            ]); 
+                                'user_id' => $user->id
+                            ]);
 
                             // send notification
                             Notification::make()
@@ -332,62 +333,62 @@ class EmployeeResource extends Resource
                         ->color('info')
                         ->requiresConfirmation()
                         ->modalIcon('fas-paper-plane')
-                        ->visible(fn(Model $record) => !empty($record->user))                                                
+                        ->visible(fn(Model $record) => !empty($record->user))
                         ->action(function (Employee $record) {
                             $password = Str::password(12); // generate a default password with length of 12 caracters
-                            
+                
                             $record->user()->update([
                                 'password' => bcrypt($password),
-                                'force_renew_password' => true 
+                                'force_renew_password' => true
                             ]);
-                            
+
                             // send notification
                             Notification::make()
                                 ->title(__('msg.sent', ['name' => __('field.login_detail')]))
                                 ->success()
                                 ->send();
-                            
+
                             // send email notification to user
                             $record->user->notify(new WelcomeNotification($password));
                         }),
                     Tables\Actions\Action::make('photo')
                         ->label(__('btn.label.update', ['label' => __('field.photo')]))
                         ->icon('fas-image')
-                        ->color('info')                        
-                        ->requiresConfirmation()   
+                        ->color('info')
+                        ->requiresConfirmation()
                         ->modalIcon('fas-image')
-                        ->fillForm(fn(Model $record) :array => [
-                            'photo'  => $record->photo
-                        ])                     
+                        ->fillForm(fn(Model $record): array => [
+                            'photo' => $record->photo
+                        ])
                         ->form([
                             Forms\Components\FileUpload::make('photo')
-                            ->required()
-                            ->hiddenLabel()
-                            ->directory('employee-photos')
-                            ->image()
-                            ->imageEditor()
-                            ->imageEditorAspectRatios([
-                                null,                                                                
-                                '1:1',
-                            ]),  
+                                ->required()
+                                ->hiddenLabel()
+                                ->directory('employee-photos')
+                                ->image()
+                                ->imageEditor()
+                                ->imageEditorAspectRatios([
+                                    null,
+                                    '1:1',
+                                ]),
                         ])
                         ->action(function (array $data, Employee $record) {
                             // update profile image
                             $record->update([
-                                'photo'  => $data['photo']   
-                            ]);                                                    
+                                'photo' => $data['photo']
+                            ]);
 
                             // send notification
                             Notification::make()
                                 ->title(__('msg.updated', ['name' => __('field.photo')]))
                                 ->success()
-                                ->send();                            
+                                ->send();
                         }),
                     Tables\Actions\ViewAction::make(),
                     Tables\Actions\EditAction::make(),
                     Tables\Actions\DeleteAction::make(),
                     Tables\Actions\RestoreAction::make(),
-                    Tables\Actions\ForceDeleteAction::make(),                    
+                    Tables\Actions\ForceDeleteAction::make(),
                 ])
             ])
             ->bulkActions([
@@ -415,11 +416,12 @@ class EmployeeResource extends Resource
         ];
     }
 
-    // public static function getEloquentQuery(): Builder
-    // {
-    //     return parent::getEloquentQuery()
-    //         ->withoutGlobalScopes([
-    //             SoftDeletingScope::class,
-    //         ]);
-    // }
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->withoutGlobalScopes([
+                SoftDeletingScope::class,
+            ])
+            ->with(['user', 'province', 'district', 'commune', 'village']);
+    }
 }

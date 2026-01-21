@@ -27,8 +27,8 @@ use Spatie\Permission\Contracts\Role;
 
 class UserResource extends Resource implements HasShieldPermissions
 {
-    use Translatable; 
-    
+    use Translatable;
+
     protected static ?string $model = User::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-users';
@@ -52,7 +52,7 @@ class UserResource extends Resource implements HasShieldPermissions
     {
         return $form
             ->schema([
-                Forms\Components\Section::make()                    
+                Forms\Components\Section::make()
                     ->columns(2)
                     ->schema([
                         Forms\Components\TextInput::make('name')
@@ -77,7 +77,7 @@ class UserResource extends Resource implements HasShieldPermissions
                             ->hiddenLabel()
                             ->placeholder(__('field.user.password'))
                             ->autocomplete(false)
-                            ->required(fn (string $context): bool => $context === 'create')
+                            ->required(fn(string $context): bool => $context === 'create')
                             ->regeneratePassword(notify: false)
                             ->newPasswordLength(8)
                             ->minLength(8)
@@ -85,22 +85,22 @@ class UserResource extends Resource implements HasShieldPermissions
                             ->copyable()
                             ->copyMessage(__('field.copied', ['name' => __('field.user.password')]))
                             ->copyMessageDuration(3000)
-                            ->dehydrateStateUsing(fn ($state) => Hash::make($state))
-                            ->dehydrated(fn ($state) => filled($state)),
+                            ->dehydrateStateUsing(fn($state) => Hash::make($state))
+                            ->dehydrated(fn($state) => filled($state)),
                         Forms\Components\Select::make('roles')
                             ->hiddenLabel()
                             ->placeholder(__('model.roles'))
                             ->multiple()
                             ->relationship('roles', 'name')
-                            ->getOptionLabelFromRecordUsing(fn (Role $record) => ucwords(Str::of($record->name)->replace('_', ' ')))
+                            ->getOptionLabelFromRecordUsing(fn(Role $record) => ucwords(Str::of($record->name)->replace('_', ' ')))
                             ->preload()
                             ->createOptionForm([
                                 Forms\Components\TextInput::make('name')
                                     ->label(__('field.name'))
                                     ->required()
-                                    ->dehydrateStateUsing(fn ($state) => Str::of($state)->lower()->replace(' ', '_'))
+                                    ->dehydrateStateUsing(fn($state) => Str::of($state)->lower()->replace(' ', '_'))
                             ])
-                            ->columnSpanFull(), 
+                            ->columnSpanFull(),
                     ])
             ]);
     }
@@ -121,18 +121,18 @@ class UserResource extends Resource implements HasShieldPermissions
                     ->searchable(),
                 Tables\Columns\TextColumn::make('email')
                     ->label(__('field.email'))
-                    ->searchable(),                
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('roles.name')
                     ->label(__('model.roles'))
                     ->badge()
-                    ->formatStateUsing(fn (string $state): string => ucwords(Str::of($state)->replace('_', ' ')))
+                    ->formatStateUsing(fn(string $state): string => ucwords(Str::of($state)->replace('_', ' ')))
                     ->searchable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\IconColumn::make('status')
                     ->label(__('field.status'))
                     ->alignCenter()
-                    ->getStateUsing(function(User $record){
-                        return $record->isNotBanned() ? true :false;
+                    ->getStateUsing(function (User $record) {
+                        return $record->isNotBanned() ? true : false;
                     })
                     ->boolean(),
                 Tables\Columns\TextColumn::make('created_at')
@@ -161,20 +161,20 @@ class UserResource extends Resource implements HasShieldPermissions
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\Action::make('ban')
                     ->visible(fn() => auth()->user()->can('ban_user'))
-                    ->label(fn(User $record) => $record->isNotBanned() ? __('btn.ban') : __('btn.unban') )
+                    ->label(fn(User $record) => $record->isNotBanned() ? __('btn.ban') : __('btn.unban'))
                     ->icon(fn(User $record) => $record->isNotBanned() ? 'fas-user-lock' : 'fas-user-check')
-                    ->color(fn(User $record) => $record->isNotBanned() ? 'danger' : 'success')                        
-                    ->requiresConfirmation()                                                
+                    ->color(fn(User $record) => $record->isNotBanned() ? 'danger' : 'success')
+                    ->requiresConfirmation()
                     ->modalHeading(fn(User $record) => $record->isNotBanned() ? __('btn.label.ban', ['label' => $record->name]) : __('btn.label.unban', ['label' => $record->name]))
                     ->modalDescription(fn(User $record) => $record->isNotBanned() ? __('btn.msg.ban', ['name' => $record->name]) : __('btn.msg.unban', ['name' => $record->name]))
                     ->modalIcon(fn(User $record) => $record->isNotBanned() ? 'fas-user-lock' : 'fas-user-check')
                     ->modalIconColor(fn(User $record) => $record->isNotBanned() ? 'danger' : 'info')
-                    ->action(function (User $record) {              
-                        if($record->isNotBanned()){
+                    ->action(function (User $record) {
+                        if ($record->isNotBanned()) {
                             $record->ban();
-                        }else{
+                        } else {
                             $record->unban();
-                        }                           
+                        }
                     }),
                 Tables\Actions\DeleteAction::make(),
                 Tables\Actions\RestoreAction::make(),
@@ -223,5 +223,14 @@ class UserResource extends Resource implements HasShieldPermissions
             'force_delete_any',
             'ban'
         ];
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->withoutGlobalScopes([
+                SoftDeletingScope::class,
+            ])
+            ->with(['roles', 'employee']);
     }
 }

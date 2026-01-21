@@ -51,12 +51,12 @@ class PurchaseRequestResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make()     
-                    ->columns(3)               
+                Forms\Components\Section::make()
+                    ->columns(3)
                     ->schema([
                         Forms\Components\Group::make()
                             ->columnSpan(['lg' => 2])
-                            ->schema([                                
+                            ->schema([
                                 Forms\Components\TextInput::make('for')
                                     ->label(__('field.for_project_department'))
                                     ->required()
@@ -64,13 +64,13 @@ class PurchaseRequestResource extends Resource
                                 Forms\Components\TextInput::make('location')
                                     ->label(__('field.for_location'))
                                     ->required()
-                                    ->maxLength(255),                                
+                                    ->maxLength(255),
                             ]),
                         Forms\Components\Group::make()
                             ->columnSpan(['lg' => 1])
                             ->schema([
                                 Forms\Components\TextInput::make('pr_no')
-                                    ->label(__('field.pr_no'))                                    
+                                    ->label(__('field.pr_no'))
                                     ->default(generatePrNo()),
                                 Forms\Components\DatePicker::make('expected_date')
                                     ->label(__('field.expected_date'))
@@ -78,7 +78,7 @@ class PurchaseRequestResource extends Resource
                                     ->native(false)
                                     ->suffixIcon('fas-calendar')
                                     ->closeOnDateSelection(),
-                            ]),               
+                            ]),
                         Forms\Components\Textarea::make('purpose')
                             ->label(__('field.purpose'))
                             ->required()
@@ -86,27 +86,27 @@ class PurchaseRequestResource extends Resource
                         TableRepeater::make('requestItems')
                             ->label(__('field.request_items'))
                             ->relationship()
-                            ->required()                                                                        
-                            ->defaultItems(1) 
-                            ->addActionLabel(__('btn.label.add', ['label' => __('field.item')]))                  
+                            ->required()
+                            ->defaultItems(1)
+                            ->addActionLabel(__('btn.label.add', ['label' => __('field.item')]))
                             ->columnSpanFull()
                             ->headers([
                                 Header::make(__('field.desc')),
                                 Header::make(__('field.unit'))->width('100px'),
-                                Header::make(__('field.remark'))->width('250px'),                                
+                                Header::make(__('field.remark'))->width('250px'),
                             ])
                             ->schema([
                                 Forms\Components\Textarea::make('name')
-                                    ->hiddenLabel()                                    
+                                    ->hiddenLabel()
                                     ->required()
                                     ->rows(1)
-                                    ->autosize(),                              
+                                    ->autosize(),
                                 Forms\Components\TextInput::make('unit')
-                                    ->hiddenLabel()                                            
+                                    ->hiddenLabel()
                                     ->required()
                                     ->numeric(),
                                 Forms\Components\TextInput::make('remark')
-                                    ->hiddenLabel(),                                
+                                    ->hiddenLabel(),
                             ]),
                     ])
             ]);
@@ -117,7 +117,7 @@ class PurchaseRequestResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('requested')
-                    ->label(__('field.requested_by'))                    
+                    ->label(__('field.requested_by'))
                     ->searchable(),
                 Tables\Columns\TextColumn::make('pr_no')
                     ->label(__('field.pr_no'))
@@ -132,13 +132,13 @@ class PurchaseRequestResource extends Resource
                 Tables\Columns\TextColumn::make('use_funds')
                     ->label(__('field.use_funds'))
                     ->searchable()
-                    ->toggleable(isToggledHiddenByDefault: true),                
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('expected_date')
                     ->label(__('field.expected_date'))
                     ->date()
-                    ->sortable(),  
+                    ->sortable(),
                 ApprovalStatusColumn::make("approvalStatus.status")
-                    ->label(__('field.status')),               
+                    ->label(__('field.status')),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label(__('field.created_at'))
                     ->dateTime()
@@ -164,11 +164,11 @@ class PurchaseRequestResource extends Resource
             ])
             ->actions(
                 ApprovalActions::make(
-                    [                                               
-                        Tables\Actions\Action::make('discard') 
-                            ->label(__('filament-approvals::approvals.actions.discard'))                           
-                            ->visible(fn (Model $record) => (Auth::id() == $record->approvalStatus->creator->id && $record->isApprovalCompleted() && $record->isApproved()))                                                      
-                            ->hidden(fn(Model $record) => (Auth::id() != $record->approvalStatus->creator->id || $record->isDiscarded()))                            
+                    [
+                        Tables\Actions\Action::make('discard')
+                            ->label(__('filament-approvals::approvals.actions.discard'))
+                            ->visible(fn(Model $record) => (Auth::id() == $record->approvalStatus->creator->id && $record->isApprovalCompleted() && $record->isApproved()))
+                            ->hidden(fn(Model $record) => (Auth::id() != $record->approvalStatus->creator->id || $record->isDiscarded()))
                             ->form([
                                 Textarea::make('reason')
                                     ->label(__('field.reason'))
@@ -202,16 +202,17 @@ class PurchaseRequestResource extends Resource
                                     ->iconColor('success')
                                     ->title(__('msg.label.discarded', ['label' => __('model.purchase_request')]))
                                     ->send();
-                            }),                            
+                            }),
                     ],
-                    [                            
+                    [
                         Tables\Actions\ActionGroup::make([
                             Tables\Actions\EditAction::make(),
                             Tables\Actions\DeleteAction::make(),
                             Tables\Actions\RestoreAction::make(),
                         ])
                     ]
-                ));
+                )
+            );
     }
 
     public static function getRelations(): array
@@ -236,6 +237,7 @@ class PurchaseRequestResource extends Resource
         return parent::getEloquentQuery()
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
-            ]);
+            ])
+            ->with(['user']);
     }
 }

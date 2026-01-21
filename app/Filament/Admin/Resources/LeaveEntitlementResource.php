@@ -51,10 +51,10 @@ class LeaveEntitlementResource extends Resource
                     ->schema([
                         Forms\Components\Select::make('user_id')
                             ->label(__('model.employee'))
-                            ->relationship('user', 'name', function(Builder $query) {
-                                $query->whereHas('employee', function(Builder $query) {
+                            ->relationship('user', 'name', function (Builder $query) {
+                                $query->whereHas('employee', function (Builder $query) {
                                     $query->whereNull('resign_date');
-                                    $query->whereHas('contracts', function(Builder $query) {
+                                    $query->whereHas('contracts', function (Builder $query) {
                                         $query->where('is_active', true);
                                         // $query->whereHas('contractType', function(Builder $query) {
                                         //     $query->where('allow_leave_request', true);
@@ -66,45 +66,45 @@ class LeaveEntitlementResource extends Resource
                             ->preload()
                             ->searchable()
                             ->live(onBlur: true)
-                            ->afterStateUpdated(function($state, Set $set){
+                            ->afterStateUpdated(function ($state, Set $set) {
                                 $set('leave_type_id', null);
                                 $set('balance', null);
-                                if(!empty($state)){
-                                    $user = User::with('employee')->find($state);           
-                                    if(empty($user->entitlements)){
+                                if (!empty($state)) {
+                                    $user = User::with('employee')->find($state);
+                                    if (empty($user->entitlements)) {
                                         $startDate = Carbon::createFromDate(now()->year, $user->employee->join_date->month, $user->employee->join_date->day);
-                                    }else{
+                                    } else {
                                         $startDate = Carbon::createFromDate(date('Y'), '01', '01');
-                                    }                         
+                                    }
 
                                     $set('start_date', $startDate->toFormattedDateString());
                                     $set('end_date', Carbon::createFromDate(date('Y'), '12', '31')->toFormattedDateString());
-                                }                                
+                                }
                             }),
                         Forms\Components\Select::make('leave_type_id')
                             ->label(__('model.leave_type'))
-                            ->relationship('leaveType', 'name', function(Get $get, Builder $query) {
-                                if($get('user_id')){
+                            ->relationship('leaveType', 'name', function (Get $get, Builder $query) {
+                                if ($get('user_id')) {
                                     $user = User::find($get('user_id'));
-                                    if($user->contract->contractType->leave_types){
+                                    if ($user->contract->contractType->leave_types) {
                                         return $query->whereIn('id', $user->contract->contractType->leave_types)->where('balance', '>', 0)->where($user->employee->gender->value, true)->orderBy('id', 'asc');
-                                    }else{
+                                    } else {
                                         return $query->where('balance', '>', 0)->where($user->employee->gender->value, true)->orderBy('id', 'asc');
                                     }
                                 }
                             })
                             ->live()
-                            ->afterStateUpdated(function($state, Get $get, Set $set){
-                                if($get('user_id') && $state){
-                                    $user = User::with('employee')->find($get('user_id'));                                    
+                            ->afterStateUpdated(function ($state, Get $get, Set $set) {
+                                if ($get('user_id') && $state) {
+                                    $user = User::with('employee')->find($get('user_id'));
                                     $leaveType = LeaveType::find($state);
 
-                                    if(!empty($leaveType->option['balance_increment_amount']) && !empty($leaveType->option['balance_increment_period'])){
+                                    if (!empty($leaveType->option['balance_increment_amount']) && !empty($leaveType->option['balance_increment_period'])) {
                                         $set('balance', getEntitlementBalance($user->employee->join_date, $leaveType));
-                                    }else{
+                                    } else {
                                         $set('balance', $leaveType->balance);
-                                    }                                                                        
-                                }else{
+                                    }
+                                } else {
                                     $set('balance', null);
                                 }
                             }),
@@ -116,7 +116,7 @@ class LeaveEntitlementResource extends Resource
                                     ->native(false)
                                     ->live()
                                     ->suffixIcon('fas-calendar')
-                                    ->afterStateUpdated(function($state, Set $set){                                
+                                    ->afterStateUpdated(function ($state, Set $set) {
                                         $set('end_date', Carbon::parse($state)->addYear()->subDay()->toFormattedDateString());
                                     }),
                                 Forms\Components\DatePicker::make('end_date')
@@ -127,13 +127,13 @@ class LeaveEntitlementResource extends Resource
                                 Forms\Components\TextInput::make('balance')
                                     ->label(__('field.balance'))
                                     ->numeric()
-                                    ->default(0), 
+                                    ->default(0),
                                 Forms\Components\TextInput::make('taken')
                                     ->label(__('field.taken'))
                                     ->numeric()
-                                    ->default(0), 
-                            ])  
-                    ])               
+                                    ->default(0),
+                            ])
+                    ])
             ]);
     }
 
@@ -149,7 +149,7 @@ class LeaveEntitlementResource extends Resource
                     ->label(__('model.leave_type'))
                     ->numeric()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('start_date')   
+                Tables\Columns\TextColumn::make('start_date')
                     ->label(__('field.start_date'))
                     ->date()
                     ->sortable(),
@@ -179,7 +179,7 @@ class LeaveEntitlementResource extends Resource
                     ->color('success')
                     ->sortable(),
                 Tables\Columns\ToggleColumn::make('is_active')
-                    ->label(__('field.is_active')),            
+                    ->label(__('field.is_active')),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label(__('field.created_at'))
                     ->dateTime()
@@ -242,11 +242,12 @@ class LeaveEntitlementResource extends Resource
     public static function getEloquentQuery(): Builder
     {
         $query = parent::getEloquentQuery();
-        if(Auth::user()->hasRole(['super_admin', 'human_resource'])) {
-            return $query; 
+        if (Auth::user()->hasRole(['super_admin', 'human_resource'])) {
+            return $query->with(['user', 'leaveType']);
         }
 
         return parent::getEloquentQuery()
-                ->where('user_id', Auth::id());
+            ->where('user_id', Auth::id())
+            ->with(['user', 'leaveType']);
     }
 }

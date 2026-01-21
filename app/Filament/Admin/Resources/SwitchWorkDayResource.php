@@ -70,9 +70,9 @@ class SwitchWorkDayResource extends Resource
                             ->afterStateUpdated(fn($state, Set $set) => $set('to_date', $state))
                             ->rules([
                                 function (Get $get) {
-                                    return function (string $attribute, $value, Closure $fail) use($get) {
+                                    return function (string $attribute, $value, Closure $fail) use ($get) {
                                         // Not allow to select past date                                        
-                                        if($value < now()->toDateString()){
+                                        if ($value < now()->toDateString()) {
                                             $fail(__('msg.body.not_allow_past_date'));
                                         }
 
@@ -80,16 +80,16 @@ class SwitchWorkDayResource extends Resource
                                         // if($get('to_date') && $value > $get('to_date')){
                                         //     $fail(__('msg.body.select_before', ['option1' => __('field.work_date'), 'option2' => __('field.to_date')]));
                                         // }
-                                                                                
+                        
                                         // Not allow to select work day that is not  your work day                                         
-                                        if(empty(Auth::user()->workDays->where('day_name.value', Carbon::parse($value)->dayOfWeek())->first())){
+                                        if (empty(Auth::user()->workDays->where('day_name.value', Carbon::parse($value)->dayOfWeek())->first())) {
                                             $fail(__('msg.body.working_day'));
-                                        }    
-                                                                                                                              
+                                        }
+
                                         // Not allow to select work day that is public holiday
-                                        if(publicHoliday($value)){
+                                        if (publicHoliday($value)) {
                                             $fail(__('msg.body.is_public_holiday'));
-                                        }                                        
+                                        }
                                     };
                                 },
                             ]),
@@ -102,9 +102,9 @@ class SwitchWorkDayResource extends Resource
                             ->suffixIcon('fas-calendar')
                             ->rules([
                                 function (Get $get) {
-                                    return function (string $attribute, $value, Closure $fail) use($get) {
+                                    return function (string $attribute, $value, Closure $fail) use ($get) {
                                         // Not allow to select past date                                        
-                                        if($value < now()->subDay()){
+                                        if ($value < now()->subDay()) {
                                             $fail(__('msg.body.not_allow_past_date'));
                                         }
 
@@ -112,15 +112,15 @@ class SwitchWorkDayResource extends Resource
                                         // if($value < $get('from_date')){
                                         //     $fail(__('msg.body.select_after', ['option1' => __('field.to_date'), 'option2' => __('field.work_date')]));
                                         // }
-                                                                                
+                        
                                         // Not allow to select work day that is not  your work day                                         
-                                        if(Auth::user()->workDays->where('day_name.value', Carbon::parse($value)->dayOfWeek())->first()){
+                                        if (Auth::user()->workDays->where('day_name.value', Carbon::parse($value)->dayOfWeek())->first()) {
                                             $fail(__('msg.body.not_working_day'));
-                                        }    
-                                                                                      
-                                        
+                                        }
+
+
                                         // Not allow to select work day that is public holiday
-                                        if(publicHoliday($value)){
+                                        if (publicHoliday($value)) {
                                             $fail(__('msg.body.is_public_holiday'));
                                         }
                                     };
@@ -129,7 +129,7 @@ class SwitchWorkDayResource extends Resource
                         Forms\Components\Textarea::make('reason')
                             ->label(__('field.reason'))
                             ->required()
-                            ->columnSpanFull(),                        
+                            ->columnSpanFull(),
                     ])
             ]);
     }
@@ -149,9 +149,9 @@ class SwitchWorkDayResource extends Resource
                 Tables\Columns\TextColumn::make('to_date')
                     ->label(__('field.to_date'))
                     ->date()
-                    ->sortable(),                
+                    ->sortable(),
                 ApprovalStatusColumn::make("approvalStatus.status")
-                    ->label(__('field.status')), 
+                    ->label(__('field.status')),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label(__('field.created_at'))
                     ->dateTime()
@@ -177,11 +177,11 @@ class SwitchWorkDayResource extends Resource
             ])
             ->actions(
                 ApprovalActions::make(
-                    [                                               
-                        Tables\Actions\Action::make('discard') 
-                            ->label(__('filament-approvals::approvals.actions.discard'))                           
-                            ->visible(fn (Model $record) => (Auth::id() == $record->approvalStatus->creator->id && $record->isApprovalCompleted() && $record->isApproved()))                                                      
-                            ->hidden(fn(Model $record) => (Auth::id() != $record->approvalStatus->creator->id || $record->isDiscarded()))                            
+                    [
+                        Tables\Actions\Action::make('discard')
+                            ->label(__('filament-approvals::approvals.actions.discard'))
+                            ->visible(fn(Model $record) => (Auth::id() == $record->approvalStatus->creator->id && $record->isApprovalCompleted() && $record->isApproved()))
+                            ->hidden(fn(Model $record) => (Auth::id() != $record->approvalStatus->creator->id || $record->isDiscarded()))
                             ->form([
                                 Textarea::make('reason')
                                     ->label(__('field.reason'))
@@ -217,7 +217,7 @@ class SwitchWorkDayResource extends Resource
                                     ->send();
                             }),
                     ],
-                    [                            
+                    [
                         Tables\Actions\ActionGroup::make([
                             Tables\Actions\EditAction::make(),
                             Tables\Actions\DeleteAction::make(),
@@ -238,10 +238,10 @@ class SwitchWorkDayResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index'     => Pages\ListSwitchWorkDays::route('/'),
-            'create'    => Pages\CreateSwitchWorkDay::route('/create'),
-            'view'      => Pages\ViewSwitchWorkDay::route('/{record}'),
-            'edit'      => Pages\EditSwitchWorkDay::route('/{record}/edit'),
+            'index' => Pages\ListSwitchWorkDays::route('/'),
+            'create' => Pages\CreateSwitchWorkDay::route('/create'),
+            'view' => Pages\ViewSwitchWorkDay::route('/{record}'),
+            'edit' => Pages\EditSwitchWorkDay::route('/{record}/edit'),
         ];
     }
 
@@ -250,6 +250,7 @@ class SwitchWorkDayResource extends Resource
         return parent::getEloquentQuery()
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
-            ]);
+            ])
+            ->with(['user', 'approvalStatus']);
     }
 }

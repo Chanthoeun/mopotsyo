@@ -20,7 +20,7 @@ use Illuminate\Support\Str;
 class DepartmentResource extends Resource
 {
     use Translatable;
-    
+
     protected static ?string $model = Department::class;
 
     protected static ?string $navigationIcon = 'fas-building-user';
@@ -44,29 +44,29 @@ class DepartmentResource extends Resource
 
     public static function form(Form $form): Form
     {
-        return $form            
-            ->schema([   
+        return $form
+            ->schema([
                 Forms\Components\Select::make('parent_id')
                     ->label(__('field.parent'))
                     ->relationship('parent', 'name')
                     ->preload()
-                    ->searchable(),             
+                    ->searchable(),
                 Forms\Components\TextInput::make('name')
                     ->label(__('field.name'))
                     ->required()
                     ->unique(ignoreRecord: true)
-                    ->maxLength(255), 
+                    ->maxLength(255),
                 Forms\Components\Select::make('supperior_id')
                     ->label(__('field.supervisor'))
                     ->relationship('supervisor', 'name', fn(Builder $query) => $query->whereHas('employee', fn(Builder $query) => $query->whereNull('resign_date')->orWhereDate('resign_date', '>=', now())))
                     ->preload()
-                    ->searchable(),               
+                    ->searchable(),
                 Forms\Components\Select::make('role_id')
                     ->label(__('model.role'))
                     ->relationship('role', 'name', fn(Builder $query) => $query->whereNot('id', 1))
                     ->preload()
                     ->searchable()
-                    ->getOptionLabelFromRecordUsing(fn(Model $record) => ucwords(Str::of($record->name)->replace('_', ' '))),               
+                    ->getOptionLabelFromRecordUsing(fn(Model $record) => ucwords(Str::of($record->name)->replace('_', ' '))),
             ]);
     }
 
@@ -76,7 +76,7 @@ class DepartmentResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('name')
                     ->label(__('field.name'))
-                    ->searchable(),                
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('parent.name')
                     ->label(__('field.parent'))
                     ->searchable(),
@@ -86,7 +86,7 @@ class DepartmentResource extends Resource
                 Tables\Columns\TextColumn::make('role.name')
                     ->label(__('model.role'))
                     ->searchable()
-                    ->formatStateUsing(fn (string $state): string => ucwords(Str::of($state)->replace('_', ' '))),
+                    ->formatStateUsing(fn(string $state): string => ucwords(Str::of($state)->replace('_', ' '))),
                 Tables\Columns\ToggleColumn::make('is_active')
                     ->label(__('field.is_active')),
                 Tables\Columns\TextColumn::make('created_at')
@@ -130,11 +130,12 @@ class DepartmentResource extends Resource
         ];
     }
 
-    // public static function getEloquentQuery(): Builder
-    // {
-    //     return parent::getEloquentQuery()
-    //         ->withoutGlobalScopes([
-    //             SoftDeletingScope::class,
-    //         ]);
-    // }
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->withoutGlobalScopes([
+                SoftDeletingScope::class,
+            ])
+            ->with(['parent', 'supervisor', 'role']);
+    }
 }

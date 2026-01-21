@@ -36,7 +36,7 @@ class User extends Authenticatable implements FilamentUser, RenewPasswordContrac
     use Bannable, HasRoles, HasFactory, Notifiable, AuthenticationLoggable, SoftDeletes, HasTranslations, RenewPassword;
 
     public $translatable = ['name'];
-    
+
     /**
      * The attributes that are mass assignable.
      *
@@ -87,7 +87,7 @@ class User extends Authenticatable implements FilamentUser, RenewPasswordContrac
     public function needRenewPassword(): bool
     {
         $plugin = RenewPasswordPlugin::get();
-    
+
         return
             (
                 !is_null($plugin->getPasswordExpiresIn())
@@ -106,7 +106,7 @@ class User extends Authenticatable implements FilamentUser, RenewPasswordContrac
     public function employee(): HasOne
     {
         return $this->hasOne(Employee::class);
-    }    
+    }
 
     public function entitlements(): HasMany
     {
@@ -149,18 +149,22 @@ class User extends Authenticatable implements FilamentUser, RenewPasswordContrac
     {
         return Attribute::make(
             get: function () {
-                if(empty($this->employee)) return null;
-
+                if (is_null($this->employee)) {
+                    return null;
+                }
+                if ($this->employee->relationLoaded('contracts')) {
+                    return $this->employee->contracts->where('is_active', true)->first();
+                }
                 return $this->employee->contracts()->where('is_active', true)->first();
             },
         );
     }
-    
+
     protected function supervisor(): Attribute
     {
         return Attribute::make(
-            get: function(){   
-                return $this->contract->supervisor ?? null;                
+            get: function () {
+                return $this->contract->supervisor ?? null;
             },
         );
     }
@@ -168,8 +172,8 @@ class User extends Authenticatable implements FilamentUser, RenewPasswordContrac
     protected function departmentHead(): Attribute
     {
         return Attribute::make(
-            get: function(){   
-                return $this->contract->departmentHead ?? null;                
+            get: function () {
+                return $this->contract->departmentHead ?? null;
             },
         );
     }
@@ -177,24 +181,24 @@ class User extends Authenticatable implements FilamentUser, RenewPasswordContrac
     protected function departmentSupervisor(): Attribute
     {
         return Attribute::make(
-            get: function(){           
-                if($this->id == $this->contract->department->supervisor->id)
-                {
+            get: function () {
+                if ($this->id == $this->contract->department->supervisor->id) {
                     return $this->supervisor;
-                }   
+                }
 
                 return $this->contract->department->supervisor ?? null;
             },
         );
-    }    
+    }
 
     protected function hasEntitlement(): Attribute
     {
         return Attribute::make(
-            get: function() {
-                if($this->entitlements()->count() > 0) return true;
-
-                return false;
+            get: function () {
+                if ($this->relationLoaded('entitlements')) {
+                    return $this->entitlements->count() > 0;
+                }
+                return $this->entitlements()->count() > 0;
             },
         );
     }
@@ -202,10 +206,11 @@ class User extends Authenticatable implements FilamentUser, RenewPasswordContrac
     protected function hasCarryForward(): Attribute
     {
         return Attribute::make(
-            get: function() {
-                if($this->carryForwards()->count() > 0) return true;
-
-                return false;
+            get: function () {
+                if ($this->relationLoaded('carryForwards')) {
+                    return $this->carryForwards->count() > 0;
+                }
+                return $this->carryForwards()->count() > 0;
             },
         );
     }
@@ -213,28 +218,28 @@ class User extends Authenticatable implements FilamentUser, RenewPasswordContrac
     protected function name(): Attribute
     {
         return Attribute::make(
-            get: fn ($value) => $this->employee->nickname ?? $value,
+            get: fn($value) => $this->employee->nickname ?? $value,
         );
     }
 
     protected function fullName(): Attribute
     {
         return Attribute::make(
-            get: fn ($value) => $this->employee->name ?? $value,
+            get: fn($value) => $this->employee->name ?? $value,
         );
     }
 
     protected function workDays(): Attribute
     {
         return Attribute::make(
-            get: fn () => $this->employee->workDays->where('is_active', true),
+            get: fn() => $this->employee->workDays->where('is_active', true),
         );
     }
 
     protected function subordinators(): Attribute
     {
         return Attribute::make(
-            get: function() {
+            get: function () {
                 return $this->employee->contracts;
             },
         );
@@ -242,7 +247,7 @@ class User extends Authenticatable implements FilamentUser, RenewPasswordContrac
     protected function approvers(): Attribute
     {
         return Attribute::make(
-            get: function() {
+            get: function () {
                 return $this->employee->contract->approvers ?? null;
             },
         );
