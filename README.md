@@ -1,41 +1,41 @@
-## About Starter Kit
+## Features
 
-Starter Kit is a Laravel framework and filamentphp combination for developing new web application project. it has features as below:
+Starter Kit is a powerful Laravel and Filament-based application featuring:
 
-- Users Management
-- Roles Management
-- Filament Importer and Exporter
-- User Ban and Unban
-- Authentication Log
-- Activity Log
-- Debugbar
-- Font Awesome
-- Password Input
+- **Users & Roles Management**: Granular control via Laravel Shield.
+- **Advanced Approval System**:
+    - **Approval History**: Full audit trail accessible via status badges.
+    - **Force Approve**: Admin bypass for stuck or urgent requests.
+    - **Automated Workflow Reconciliation**: Real-time status sync across steps.
+- **Media & File Manager**: Integrated file handling.
+- **Utility Tools**: Filament Importer/Exporter, Authentication Log, Activity Audit, and more.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Approval System Migration & Deployment Guide
 
-## Approval System Migration & Deployment Guide (Production)
+Follow these steps to upgrade the approval system on the production server.
 
-### 2. Deployment Sequence
+### 1. Deployment Sequence
+
 1.  **Pull latest code**:
     ```bash
-    git pull origin main
+    git pull 
     ```
 2.  **Update dependencies**:
     ```bash
-    composer install --no-dev --optimize-autoloader
+    composer update --ignore-platform-reqs --no-dev --optimize-autoloader
     ```
-3.  **Run ONE Command for Full Upgrade** (Unified):
-    This command handles migrations (with data transfer), status reconciliation, and approver restoration automatically.
+3.  **Run Full Upgrade**:
+    This unified command handles migrations, data transfer, status reconciliation, and approver restoration.
     ```bash
-    php artisan app:upgrade-approvals
+    php artisan app:upgrade-approvals --force
     ```
 
-### 3. Verification
+### 2. Verification
+
 1.  **Bring App Up**:
     ```bash
     php artisan up
     ```
-2.  **Check Status**: 
-    Open any previously approved request to verify its **Approval History** is restored.
+2.  **Verify Results**: 
+    Open any previously approved request to verify its **Approval History** is fully restored and statuses are reconciled.
 

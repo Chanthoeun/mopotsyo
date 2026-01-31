@@ -46,9 +46,10 @@ class UpgradeApprovals extends Command
         $this->newLine();
         $this->info('Step 3: Restoring missing approvers from contract history...');
         // We use system call or manual interaction handling if needed, 
-        // but fix-missing-approvers uses $this->confirm inside.
+        // and fix-broken-requests uses $this->confirm inside.
         // Let's call it with no-interaction if force is on.
-        Artisan::call('approvals:fix-missing-approvers', [
+        Artisan::call('approvals:fix-broken-requests', [
+            '--force' => true,
             '--no-interaction' => true,
         ], $this->output);
 
