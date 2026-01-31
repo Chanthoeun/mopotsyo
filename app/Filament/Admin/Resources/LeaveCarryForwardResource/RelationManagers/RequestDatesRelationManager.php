@@ -9,7 +9,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
-use RingleSoft\LaravelProcessApproval\Enums\ApprovalStatusEnum;
+
 
 class RequestDatesRelationManager extends RelationManager
 {
@@ -62,20 +62,18 @@ class RequestDatesRelationManager extends RelationManager
                     ->requiresConfirmation()
                     ->icon('fas-trash')
                     ->modalIcon('fas-trash')
-                    ->action(function(){                        
+                    ->action(function () {
                         $from_date = $this->ownerRecord->start_date;
                         $to_date = $this->ownerRecord->end_date;
                         $user = $this->ownerRecord->user;
                         $leaves = $user->leaveRequests()->with('requestDates')->where('leave_type_id', 1)
-                        ->whereHas('requestDates', function($q) use($from_date, $to_date){
-                                $q->whereBetween('date', [$from_date, $to_date]);  
-                        })->whereHas('approvalStatus', static function ($q) {
-                            return $q->whereIn('status', [ApprovalStatusEnum::APPROVED->value, ApprovalStatusEnum::PENDING->value, ApprovalStatusEnum::SUBMITTED->value]);
-                        })->get();                    
-                        
-                        foreach($leaves as $leave){
-                            $requestDates = $leave->requestDates()->whereBetween('date', [$from_date, $to_date])->get();                            
-                            foreach($requestDates as $requestDate){                                 
+                            ->whereHas('requestDates', function ($q) use ($from_date, $to_date) {
+                                $q->whereBetween('date', [$from_date, $to_date]);
+                            })->whereIn('status', ['pending', 'approved'])->get();
+
+                        foreach ($leaves as $leave) {
+                            $requestDates = $leave->requestDates()->whereBetween('date', [$from_date, $to_date])->get();
+                            foreach ($requestDates as $requestDate) {
                                 $requestDate->leave_carry_forward_id = null;
                                 $requestDate->save();
                             }
@@ -86,28 +84,25 @@ class RequestDatesRelationManager extends RelationManager
                     ->requiresConfirmation()
                     ->icon('fas-plus')
                     ->modalIcon('fas-plus')
-                    ->action(function(){                        
+                    ->action(function () {
                         $from_date = $this->ownerRecord->start_date;
                         $to_date = $this->ownerRecord->end_date;
                         $user = $this->ownerRecord->user;
                         $leaves = $user->leaveRequests()->with('requestDates')->where('leave_type_id', 1)
-                        ->whereHas('requestDates', function($q) use($from_date, $to_date){
-                                $q->whereBetween('date', [$from_date, $to_date]);  
-                        })->whereHas('approvalStatus', static function ($q) {
-                            return $q->whereIn('status', [ApprovalStatusEnum::APPROVED->value, ApprovalStatusEnum::PENDING->value, ApprovalStatusEnum::SUBMITTED->value]);
-                        })->get();
-                        
+                            ->whereHas('requestDates', function ($q) use ($from_date, $to_date) {
+                                $q->whereBetween('date', [$from_date, $to_date]);
+                            })->whereIn('status', ['pending', 'approved'])->get();
+
                         $remaining = $this->ownerRecord->remaining;
-                        
-                        foreach($leaves as $leave){
-                            $requestDates = $leave->requestDates()->whereBetween('date', [$from_date, $to_date])->get();                            
-                            foreach($requestDates as $requestDate){                                 
-                                if($remaining > 0 && $remaining >= $requestDate->day && $requestDate->leave_carry_forward_id == null)
-                                {
+
+                        foreach ($leaves as $leave) {
+                            $requestDates = $leave->requestDates()->whereBetween('date', [$from_date, $to_date])->get();
+                            foreach ($requestDates as $requestDate) {
+                                if ($remaining > 0 && $remaining >= $requestDate->day && $requestDate->leave_carry_forward_id == null) {
                                     $requestDate->leave_carry_forward_id = $this->ownerRecord->id;
                                     $requestDate->save();
 
-                                    $remaining = floatval($remaining - $requestDate->day);                                    
+                                    $remaining = floatval($remaining - $requestDate->day);
                                 }
                             }
                         }

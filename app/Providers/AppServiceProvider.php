@@ -2,19 +2,10 @@
 
 namespace App\Providers;
 
-use App\Listeners\ApprovalLeaveRequestNotificationListener;
-use App\Listeners\SubmittedLeaveRequestNotificationListener;
-use App\Models\LeaveCarryForward;
-use App\Models\LeaveEntitlement;
-use App\Models\LeaveRequest;
 use App\Models\User;
 use App\Policies\ActivityPolicy;
 use App\Policies\AuthenticationLogPolicy;
 use App\Policies\EmailPolicy;
-use App\Policies\LeaveCarryForwardPolicy;
-use App\Policies\LeaveEntitlementPolicy;
-use App\Policies\LeaveRequestPolicy;
-use App\Policies\ProcessApprovalFlowPolicy;
 use App\Policies\RolePolicy;
 use App\Policies\UserPolicy;
 use Illuminate\Support\Facades\Event;
@@ -22,9 +13,6 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Rappasoft\LaravelAuthenticationLog\Models\AuthenticationLog;
 use RickDBCN\FilamentEmail\Models\Email;
-use RingleSoft\LaravelProcessApproval\Events\ApprovalNotificationEvent;
-use RingleSoft\LaravelProcessApproval\Events\ProcessSubmittedEvent;
-use RingleSoft\LaravelProcessApproval\Models\ProcessApprovalFlow;
 use Spatie\Activitylog\Models\Activity;
 use Spatie\Permission\Models\Role;
 
@@ -48,9 +36,8 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Activity::class, ActivityPolicy::class);
         Gate::policy(AuthenticationLog::class, AuthenticationLogPolicy::class);
         Gate::policy(Email::class, EmailPolicy::class);
-        Gate::policy(ProcessApprovalFlow::class, ProcessApprovalFlowPolicy::class);
 
-        
+
         Gate::define('use-translation-manager', function (?User $user) {
             // Your authorization logic
             return $user !== null && $user->hasRole('super_admin');
@@ -58,6 +45,9 @@ class AppServiceProvider extends ServiceProvider
 
 
         // Events
-        // Event::listen(ApprovalNotificationEvent::class, ApprovalLeaveRequestNotificationListener::class);
+        // Event::listen(
+        //     \App\Events\ApprovalProcessed::class,
+        //     \App\Listeners\SendApprovalNotification::class
+        // );
     }
 }

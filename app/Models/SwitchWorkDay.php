@@ -2,8 +2,7 @@
 
 namespace App\Models;
 
-use App\Traits\HasCustomApproval;
-use EightyNine\Approvals\Models\ApprovableModel;
+use App\Traits\Approvable;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -11,9 +10,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class SwitchWorkDay extends ApprovableModel
+class SwitchWorkDay extends Model
 {
-    use HasFactory, SoftDeletes, HasCustomApproval;
+    use HasFactory, SoftDeletes, Approvable;
 
     /**
      * The attributes that are mass assignable.
@@ -24,6 +23,7 @@ class SwitchWorkDay extends ApprovableModel
         'from_date',
         'to_date',
         'reason',
+        'status',
         'user_id',
     ];
 
@@ -36,6 +36,7 @@ class SwitchWorkDay extends ApprovableModel
         'id' => 'integer',
         'from_date' => 'date',
         'to_date' => 'date',
+        'status' => \App\Enums\Status::class,
         'user_id' => 'integer',
     ];
 
@@ -44,15 +45,12 @@ class SwitchWorkDay extends ApprovableModel
         return $this->belongsTo(User::class);
     }
 
-    public function processApprovers(): MorphMany
-    {
-        return $this->morphMany(ProcessApprover::class, 'modelable');
-    }
+
 
     protected function requested(): Attribute
     {
         return Attribute::make(
-            get: fn () => $this->user ? $this->user->full_name : $this->createdBy()->full_name,
+            get: fn() => $this->user?->full_name ?? '-',
         );
     }
 }

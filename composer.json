@@ -9,7 +9,6 @@
         "awcodes/filament-table-repeater": "^3.0",
         "bezhansalleh/filament-shield": "^3.2",
         "carlos-meneses/laravel-mpdf": "^2.1",
-        "eightynine/filament-approvals": "^3.1",
         "eightynine/filament-excel-import": "^3.0",
         "filament/filament": "^3.2",
         "filament/spatie-laravel-settings-plugin": "^3.2",
@@ -28,12 +27,12 @@
         "rawilk/filament-password-input": "^2.0",
         "rickdbcn/filament-email": "^1.6",
         "saade/filament-fullcalendar": "^3.2",
+        "spatie/laravel-activitylog": "^4.10",
         "spatie/laravel-settings": "^3.3",
         "tapp/filament-authentication-log": "^3.1",
         "torann/geoip": "^3.0",
         "yebor974/filament-renew-password": "^2.0",
-        "ysfkaya/filament-phone-input": "^3.0",
-        "z3d0x/filament-logger": "^0.7.1"
+        "ysfkaya/filament-phone-input": "^3.0"
     },
     "require-dev": {
         "barryvdh/laravel-debugbar": "^3.13",

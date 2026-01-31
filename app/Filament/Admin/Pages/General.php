@@ -71,20 +71,22 @@ class General extends SettingsPage
                             ->columnSpanFull(),
                         Forms\Components\FileUpload::make('logo')
                             ->label(__('field.logo'))
+                            ->disk('public')
                             ->directory('settings')
                             ->image()
                             ->imageEditor()
                             ->imageEditorAspectRatios([
-                                null,                                                                
+                                null,
                                 '1:1',
                             ]),
                         Forms\Components\FileUpload::make('icon')
                             ->label(__('field.icon'))
+                            ->disk('public')
                             ->directory('settings')
                             ->image()
                             ->imageEditor()
                             ->imageEditorAspectRatios([
-                                null,                                                                
+                                null,
                                 '1:1',
                             ]),
                     ])

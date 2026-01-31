@@ -11,7 +11,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use RingleSoft\LaravelProcessApproval\Enums\ApprovalActionEnum;
 
 class LeaveEntitlement extends Model
 {
@@ -71,44 +70,35 @@ class LeaveEntitlement extends Model
     protected function balance(): Attribute
     {
         return Attribute::make(
-            get: fn ($value) => floatval($value),
+            get: fn($value) => floatval($value),
         );
     }
 
     protected function allTaken(): Attribute
     {
         return Attribute::make(
-            get: function () {     
-                
+            get: function () {
                 $systemTaken = getTakenLeave($this->user, $this->leave_type_id, $this->start_date, $this->end_date);
-
-                
-                if($this->taken == null){
-                    return floatval($systemTaken);
-                }
-
-                if($this->taken >= $this->balance){
-                    return floatval($this->taken);
-                }
-
-                return floatval($this->taken + $systemTaken);
-            } 
+                return floatval(($this->taken ?? 0) + $systemTaken);
+            }
         );
     }
 
     protected function remaining(): Attribute
     {
         return Attribute::make(
-            get: fn () => floatval($this->balance - $this->allTaken),
+            get: function () {
+                return floatval($this->balance - $this->allTaken);
+            },
         );
     }
 
     protected function accrued(): Attribute
     {
         return Attribute::make(
-            get: function(){
-                if($this->leaveType->option->allow_accrual){
-                    return floatval(calculateAccrud($this->balance, $this->start_date, now()) - $this->taken);
+            get: function () {
+                if ($this->leaveType->option->allow_accrual) {
+                    return floatval(calculateAccrud($this->balance, $this->start_date, now()) - $this->allTaken);
                 }
                 return 0;
             },

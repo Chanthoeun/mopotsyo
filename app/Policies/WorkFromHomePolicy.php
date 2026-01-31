@@ -7,16 +7,20 @@ use App\Models\WorkFromHome;
 use App\Settings\SettingOptions;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
-class WorkFromHomePolicy
+use App\Policies\Base\WorkFromHomePolicy as BasePolicy;
+
+class WorkFromHomePolicy extends BasePolicy
 {
-    use HandlesAuthorization;
 
     /**
      * Determine whether the user can view any models.
      */
     public function viewAny(User $user): bool
     {
-        if(app(SettingOptions::class)->allow_work_from_home == true){
+        if ($user->hasRole(['super_admin', 'human_resource']))
+            return true;
+
+        if (app(SettingOptions::class)->allow_work_from_home == true) {
             return $user->can('view_any_work::from::home');
         }
         return false;
@@ -27,8 +31,18 @@ class WorkFromHomePolicy
      */
     public function view(User $user, WorkFromHome $workFromHome): bool
     {
-        if(app(SettingOptions::class)->allow_work_from_home == true){
-            return $user->can('view_work::from::home');
+        if ($user->hasRole(['super_admin', 'human_resource']))
+            return true;
+
+        if (app(SettingOptions::class)->allow_work_from_home == true) {
+            if ($user->id === $workFromHome->user_id) {
+                return $user->can('view_work::from::home');
+            }
+
+            // Allow view if the user is an approver for this request
+            if ($workFromHome->approvalSteps()->where('approver_id', $user->id)->exists()) {
+                return $user->can('view_work::from::home');
+            }
         }
         return false;
     }
@@ -38,7 +52,7 @@ class WorkFromHomePolicy
      */
     public function create(User $user): bool
     {
-        if(app(SettingOptions::class)->allow_work_from_home == true){
+        if (app(SettingOptions::class)->allow_work_from_home == true) {
             return $user->can('create_work::from::home');
         }
         return false;
@@ -49,7 +63,7 @@ class WorkFromHomePolicy
      */
     public function update(User $user, WorkFromHome $workFromHome): bool
     {
-        if($workFromHome->approvalStatus->status == 'Created' && $user->id == $workFromHome->user_id){
+        if ($workFromHome->status === \App\Enums\Status::CREATED && $user->id == $workFromHome->user_id) {
             return $user->can('update_work::from::home');
         }
         return false;
@@ -60,9 +74,6 @@ class WorkFromHomePolicy
      */
     public function delete(User $user, WorkFromHome $workFromHome): bool
     {
-        if($workFromHome->approvalStatus->status == 'Created' && $user->id == $workFromHome->user_id){
-            return $user->can('delete_work::from::home');
-        }
         return false;
     }
 
@@ -71,7 +82,7 @@ class WorkFromHomePolicy
      */
     public function deleteAny(User $user): bool
     {
-        return $user->can('delete_any_work::from::home');
+        return false;
     }
 
     /**
@@ -79,9 +90,6 @@ class WorkFromHomePolicy
      */
     public function forceDelete(User $user, WorkFromHome $workFromHome): bool
     {
-        if($workFromHome->approvalStatus->status == 'Created' && $user->id == $workFromHome->user_id){
-            return $user->can('force_delete_work::from::home');
-        }
         return false;
     }
 
@@ -90,7 +98,7 @@ class WorkFromHomePolicy
      */
     public function forceDeleteAny(User $user): bool
     {
-        return $user->can('force_delete_any_work::from::home');
+        return false;
     }
 
     /**
@@ -98,7 +106,10 @@ class WorkFromHomePolicy
      */
     public function restore(User $user, WorkFromHome $workFromHome): bool
     {
-        if($workFromHome->approvalStatus->status == 'Created' && $user->id == $workFromHome->user_id){
+        if ($user->hasRole('super_admin'))
+            return true;
+
+        if ($workFromHome->status === \App\Enums\Status::PENDING && $user->id == $workFromHome->user_id) {
             return $user->can('restore_work::from::home');
         }
         return false;
@@ -133,44 +144,20 @@ class WorkFromHomePolicy
      */
     public function approve(User $user, WorkFromHome $workFromHome): bool
     {
-        if($workFromHome->isSubmitted() && !$workFromHome->isApprovalCompleted() && !$workFromHome->isDiscarded()){
-            $nextStep = $workFromHome->nextApprovalStep();
-            $approval = $workFromHome->user->approvers->where('model_type', get_class($workFromHome))->where('role_id', $nextStep->role_id)->first();
-            if($approval && $approval->approver_id == $user->id){
-                return $workFromHome->canBeApprovedBy($user);
-            }            
-        }
-        
-        return false;
+        return $workFromHome->status === \App\Enums\Status::PENDING && $workFromHome->canBeApprovedBy($user);
     }
     /**
      * Determine whether the user can reject.
      */
     public function reject(User $user, WorkFromHome $workFromHome): bool
-    {           
-        if($workFromHome->isSubmitted() && !$workFromHome->isApprovalCompleted() && !$workFromHome->isDiscarded()){
-            $nextStep = $workFromHome->nextApprovalStep();
-            $approval = $workFromHome->user->approvers->where('model_type', get_class($workFromHome))->where('role_id', $nextStep->role_id)->first();
-            if($approval && $approval->approver_id == $user->id){
-                return $workFromHome->canBeApprovedBy($user);
-            }            
-        }
-        
-        return false;
+    {
+        return $workFromHome->status === \App\Enums\Status::PENDING && $workFromHome->canBeApprovedBy($user);
     }
     /**
      * Determine whether the user can discard.
      */
     public function discard(User $user, WorkFromHome $workFromHome): bool
-    {                           
-        if($workFromHome->isRejected() && !$workFromHome->isDiscarded()){
-            $nextStep = $workFromHome->nextApprovalStep();
-            $approval = $workFromHome->user->approvers->where('model_type', get_class($workFromHome))->where('role_id', $nextStep->role_id)->first();
-            if($workFromHome->user_id == $user->id || ($approval && $approval->approver_id == $user->id)){
-                return true;
-            }                  
-        }       
-
-        return false;
+    {
+        return ($workFromHome->isSubmitted() || $workFromHome->isApproved()) && ($user->id === $workFromHome->user_id || $user->hasRole('super_admin'));
     }
 }

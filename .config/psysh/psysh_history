@@ -1,3 +1,1 @@
-$user = \App\Models\User::where('email', 'sysadmin@mopotsyo.org')->first();
-$user->password = \Illuminate\Support\Facades\Hash::make('password');
-$user->save();
+echo 'Leave Requests: ' . \App\Models\LeaveRequest::count(); echo ' Users: ' . \App\Models\User::count();

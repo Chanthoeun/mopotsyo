@@ -107,7 +107,28 @@ class LeaveEntitlementResource extends Resource
                                 } else {
                                     $set('balance', null);
                                 }
-                            }),
+                            })
+                            ->rules([
+                                fn(Get $get, ?\Illuminate\Database\Eloquent\Model $record) => function (string $attribute, $value, \Closure $fail) use ($get, $record) {
+                                    if (!$get('user_id') || !$value || !$get('start_date') || !$get('end_date')) {
+                                        return;
+                                    }
+
+                                    $query = \App\Models\LeaveEntitlement::query()
+                                        ->where('user_id', $get('user_id'))
+                                        ->where('leave_type_id', $value)
+                                        ->whereDate('start_date', \Carbon\Carbon::parse($get('start_date')))
+                                        ->whereDate('end_date', \Carbon\Carbon::parse($get('end_date')));
+
+                                    if ($record) {
+                                        $query->where('id', '!=', $record->id);
+                                    }
+
+                                    if ($query->exists()) {
+                                        $fail(__('An entitlement for this employee, leave type, and period already exists.'));
+                                    }
+                                },
+                            ]),
                         Forms\Components\Grid::make(4)
                             ->schema([
                                 Forms\Components\DatePicker::make('start_date')
@@ -164,22 +185,23 @@ class LeaveEntitlementResource extends Resource
                     ->badge()
                     ->color('info')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('all_taken')
+                Tables\Columns\TextColumn::make('all_taken_calculated')
                     ->label(__('field.taken'))
                     ->numeric()
                     ->alignCenter()
                     ->badge()
                     ->color('danger')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('remaining')
+                Tables\Columns\TextColumn::make('remaining_calculated')
                     ->label(__('field.remaining'))
                     ->numeric()
                     ->alignCenter()
                     ->badge()
                     ->color('success')
                     ->sortable(),
-                Tables\Columns\ToggleColumn::make('is_active')
-                    ->label(__('field.is_active')),
+                Tables\Columns\IconColumn::make('is_active')
+                    ->label(__('field.is_active'))
+                    ->boolean(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label(__('field.created_at'))
                     ->dateTime()
@@ -203,7 +225,7 @@ class LeaveEntitlementResource extends Resource
                     ->relationship('user', 'name', fn(Builder $query) => $query->whereHas('entitlements'))
                     ->searchable()
                     ->preload(),
-                Tables\Filters\TrashedFilter::make(),
+                Tables\Filters\TrashedFilter::make()->visible(fn() => Auth::user()->hasRole('super_admin')),
             ])
             ->actions([
                 Tables\Actions\ActionGroup::make([
@@ -223,6 +245,41 @@ class LeaveEntitlementResource extends Resource
             ]);
     }
 
+    public static function infolist(\Filament\Infolists\Infolist $infolist): \Filament\Infolists\Infolist
+    {
+        return $infolist
+            ->schema([
+                \Filament\Infolists\Components\Section::make()
+                    ->columns(3)
+                    ->schema([
+                        \Filament\Infolists\Components\TextEntry::make('user.name')
+                            ->label(__('model.employee')),
+                        \Filament\Infolists\Components\TextEntry::make('leaveType.name')
+                            ->label(__('model.leave_type')),
+                        \Filament\Infolists\Components\IconEntry::make('is_active')
+                            ->label(__('field.is_active'))
+                            ->boolean(),
+                        \Filament\Infolists\Components\TextEntry::make('start_date')
+                            ->label(__('field.start_date'))
+                            ->date(),
+                        \Filament\Infolists\Components\TextEntry::make('end_date')
+                            ->label(__('field.end_date'))
+                            ->date(),
+                        \Filament\Infolists\Components\TextEntry::make('balance')
+                            ->label(__('field.balance'))
+                            ->numeric(),
+                        \Filament\Infolists\Components\TextEntry::make('all_taken')
+                            ->label(__('field.taken'))
+                            ->numeric()
+                            ->color('danger'),
+                        \Filament\Infolists\Components\TextEntry::make('remaining')
+                            ->label(__('field.remaining'))
+                            ->numeric()
+                            ->color('success'),
+                    ])
+            ]);
+    }
+
     public static function getRelations(): array
     {
         return [
@@ -235,19 +292,42 @@ class LeaveEntitlementResource extends Resource
         return [
             'index' => Pages\ListLeaveEntitlements::route('/'),
             'create' => Pages\CreateLeaveEntitlement::route('/create'),
+            'view' => Pages\ViewLeaveEntitlement::route('/{record}'),
             'edit' => Pages\EditLeaveEntitlement::route('/{record}/edit'),
         ];
     }
 
     public static function getEloquentQuery(): Builder
     {
-        $query = parent::getEloquentQuery();
-        if (Auth::user()->hasRole(['super_admin', 'human_resource'])) {
-            return $query->with(['user', 'leaveType']);
-        }
+        $dayLength = app(\App\Settings\SettingWorkingHours::class)->day ?: 8;
 
-        return parent::getEloquentQuery()
-            ->where('user_id', Auth::id())
-            ->with(['user', 'leaveType']);
+        $leaveRequestClass = str_replace('\\', '\\\\', \App\Models\LeaveRequest::class);
+        $approvedStatus = \App\Enums\Status::APPROVED->value;
+        $pendingStatus = \App\Enums\Status::PENDING->value;
+
+        // Define subquery raw SQL (interpolating safe values to avoid binding issues with addSelect)
+        $systemTakenHours = "(
+            SELECT COALESCE(SUM(rd.hours), 0)
+            FROM request_dates rd
+            JOIN leave_requests lr ON rd.requestdateable_id = lr.id AND rd.requestdateable_type = '$leaveRequestClass'
+            WHERE lr.deleted_at IS NULL
+            AND lr.status IN ('$approvedStatus', '$pendingStatus')
+            AND lr.user_id = leave_entitlements.user_id
+            AND lr.leave_type_id = leave_entitlements.leave_type_id
+            AND rd.date >= leave_entitlements.start_date
+            AND rd.date <= leave_entitlements.end_date
+            AND rd.leave_carry_forward_id IS NULL
+        )";
+
+        $query = parent::getEloquentQuery()
+            ->addSelect([
+                '*', // Select all columns from leave_entitlements
+                \Illuminate\Support\Facades\DB::raw("($systemTakenHours) / $dayLength as system_taken_days"),
+                \Illuminate\Support\Facades\DB::raw("COALESCE(taken, 0) + (($systemTakenHours) / $dayLength) as all_taken_calculated"),
+                \Illuminate\Support\Facades\DB::raw("balance - (COALESCE(taken, 0) + (($systemTakenHours) / $dayLength)) as remaining_calculated"),
+            ]);
+
+        return $query->with(['user', 'leaveType'])
+            ->when(!Auth::user()->hasRole(['super_admin', 'human_resource']), fn($q) => $q->where('user_id', Auth::id()));
     }
 }

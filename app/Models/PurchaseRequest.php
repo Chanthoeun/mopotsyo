@@ -2,8 +2,7 @@
 
 namespace App\Models;
 
-use App\Traits\HasCustomApproval;
-use EightyNine\Approvals\Models\ApprovableModel;
+use App\Traits\Approvable;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -11,9 +10,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class PurchaseRequest extends ApprovableModel
+class PurchaseRequest extends Model
 {
-    use HasFactory, SoftDeletes, HasCustomApproval;
+    use HasFactory, SoftDeletes, Approvable;
 
     /**
      * The attributes that are mass assignable.
@@ -21,12 +20,13 @@ class PurchaseRequest extends ApprovableModel
      * @var array
      */
     protected $fillable = [
-        'pr_no',        
+        'pr_no',
         'purpose',
         'for',
         'location',
         'used_fund',
         'expected_date',
+        'status',
         'user_id',
     ];
 
@@ -38,6 +38,7 @@ class PurchaseRequest extends ApprovableModel
     protected $casts = [
         'id' => 'integer',
         'expected_date' => 'date',
+        'status' => \App\Enums\Status::class,
         'user_id' => 'integer',
     ];
 
@@ -46,24 +47,21 @@ class PurchaseRequest extends ApprovableModel
         return $this->belongsTo(User::class);
     }
 
-    public function processApprovers(): MorphMany
-    {
-        return $this->morphMany(ProcessApprover::class, 'modelable');
-    }
+
 
     public function requestItems(): MorphMany
     {
         return $this->morphMany(RequestItem::class, 'requestitemable');
-    }    
+    }
 
     protected function total(): Attribute
     {
         return Attribute::make(
-            get: fn () => function(){
+            get: fn() => function () {
                 $total = 0;
-                foreach($this->requestItems as $item){
+                foreach ($this->requestItems as $item) {
                     $total += $item->amount;
-                }   
+                }
                 return $total;
             },
         );
@@ -72,27 +70,9 @@ class PurchaseRequest extends ApprovableModel
     protected function requested(): Attribute
     {
         return Attribute::make(
-            get: fn () => $this->user ? $this->user->full_name : $this->createdBy()->full_name,
+            get: fn() => $this->user?->full_name ?? '-',
         );
     }
 
-    protected function approvers(): Attribute
-    {
-        return Attribute::make(
-            get: function() {
-                $approvers = collect();
-                foreach($this->processApprovers as $approver){
-                    if($approver->user_id){
-                        $approvers->push($approver->user);
-                    }else{
-                        foreach(User::role($approver->role_id)->get() as $user){
-                            $approvers->push($user);
-                        }
-                    }
-                }
 
-                return $approvers;
-            },
-        );
-    }
 }

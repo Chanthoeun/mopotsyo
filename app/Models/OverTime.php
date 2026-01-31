@@ -2,9 +2,8 @@
 
 namespace App\Models;
 
-use App\Traits\HasCustomApproval;
 use App\Settings\SettingWorkingHours;
-use EightyNine\Approvals\Models\ApprovableModel;
+use App\Traits\Approvable;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -13,9 +12,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class OverTime extends ApprovableModel
+class OverTime extends Model
 {
-    use HasFactory, SoftDeletes, HasCustomApproval;
+    use HasFactory, SoftDeletes, Approvable;
 
     /**
      * The attributes that are mass assignable.
@@ -26,7 +25,8 @@ class OverTime extends ApprovableModel
         'expiry_date',
         'reason',
         'unused',
-        'user_id'
+        'user_id',
+        'status',
     ];
 
     /**
@@ -37,7 +37,8 @@ class OverTime extends ApprovableModel
     protected $casts = [
         'id' => 'integer',
         'expiry_date' => 'date',
-        'unused' => 'boolean'
+        'unused' => 'boolean',
+        'status' => \App\Enums\Status::class,
     ];
 
     public function user(): BelongsTo
@@ -55,49 +56,35 @@ class OverTime extends ApprovableModel
         return $this->belongsToMany(LeaveRequest::class);
     }
 
-    public function processApprovers(): MorphMany
-    {
-        return $this->morphMany(ProcessApprover::class, 'modelable');
-    }
+
 
     protected function hours(): Attribute
     {
         return Attribute::make(
-            get: fn () => $this->requestDates()->sum('hours'),
+            get: function () {
+                if ($this->relationLoaded('requestDates')) {
+                    return $this->requestDates->sum('hours');
+                }
+                return $this->requestDates()->sum('hours');
+            },
         );
     }
 
     protected function days(): Attribute
     {
         return Attribute::make(
-            get: fn () => floatval($this->hours / app(SettingWorkingHours::class)->day),
+            get: function () {
+                return floatval($this->hours / app(SettingWorkingHours::class)->day);
+            },
         );
     }
 
     protected function requested(): Attribute
     {
         return Attribute::make(
-            get: fn () => $this->user ? $this->user->full_name : $this->createdBy()->full_name,
+            get: fn() => $this->user?->full_name ?? '-',
         );
     }
 
-    protected function approvers(): Attribute
-    {
-        return Attribute::make(
-            get: function() {
-                $approvers = collect();
-                foreach($this->processApprovers as $approver){
-                    if($approver->user_id){
-                        $approvers->push($approver->user);
-                    }else{
-                        foreach(User::role($approver->role_id)->get() as $user){
-                            $approvers->push($user);
-                        }
-                    }
-                }
 
-                return $approvers;
-            },
-        );
-    }
 }

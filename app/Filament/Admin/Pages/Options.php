@@ -8,7 +8,6 @@ use App\Settings\SettingOptions;
 use Awcodes\TableRepeater\Components\TableRepeater;
 use Awcodes\TableRepeater\Header;
 use BezhanSalleh\FilamentShield\Traits\HasPageShield;
-use EightyNine\Approvals\Services\ModelScannerService;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Pages\SettingsPage;
@@ -19,7 +18,7 @@ use Illuminate\Support\Str;
 class Options extends SettingsPage
 {
     use HasPageShield;
-    
+
     protected static ?string $navigationIcon = 'heroicon-o-cog-6-tooth';
 
     protected static string $settings = SettingOptions::class;
@@ -43,7 +42,13 @@ class Options extends SettingsPage
 
     public function form(Form $form): Form
     {
-        $models = (new ModelScannerService())->getApprovableModels();
+        $models = [
+            'App\Models\LeaveRequest' => 'LeaveRequest',
+            'App\Models\OverTime' => 'OverTime',
+            'App\Models\WorkFromHome' => 'WorkFromHome',
+            'App\Models\PurchaseRequest' => 'PurchaseRequest',
+            'App\Models\SwitchWorkDay' => 'SwitchWorkDay',
+        ];
         return $form
             ->schema([
                 Forms\Components\Tabs::make('Tabs')
@@ -64,20 +69,20 @@ class Options extends SettingsPage
                                     ->columnSpanFull()
                                     ->collapsed(false)
                                     ->addActionLabel(__('btn.label.add', ['label' => __('field.rule')]))
-                                    ->itemLabel(fn (array $state): ?string => $state['name'] ?? null)
+                                    ->itemLabel(fn(array $state): ?string => $state['name'] ?? null)
                                     ->reorderable(false)
-                                    ->schema([                                                                                    
+                                    ->schema([
                                         Forms\Components\TextInput::make('name')
                                             ->label(__('field.name'))
                                             ->required()
-                                            ->unique(ignoreRecord:true)
+                                            ->unique(ignoreRecord: true)
                                             ->live(onBlur: true)
                                             ->maxLength(255),
                                         Forms\Components\Select::make('roles')
-                                            ->label(__('field.approval_roles'))                                                    
+                                            ->label(__('field.approval_roles'))
                                             ->required()
                                             ->multiple()
-                                            ->options(fn () => Role::whereNot('id', 1)->orderBy('id', 'asc')->get()->pluck('name', 'id')->map(fn ($item) => ucwords(Str::of($item)->replace('_', ' ')))->toArray()),                       
+                                            ->options(fn() => Role::whereNot('id', 1)->orderBy('id', 'asc')->get()->pluck('name', 'id')->map(fn($item) => ucwords(Str::of($item)->replace('_', ' ')))->toArray()),
                                         Forms\Components\Grid::make(3)
                                             ->schema([
                                                 Forms\Components\TextInput::make('from_amount')
@@ -95,10 +100,10 @@ class Options extends SettingsPage
                                                     ->required()
                                                     ->numeric()
                                                     ->suffix(__('field.day')),
-                                            ]),                                         
+                                            ]),
                                         Forms\Components\Textarea::make('description')
                                             ->label(__('field.desc'))
-                                            ->columnSpanFull(),                                                                                                                               
+                                            ->columnSpanFull(),
                                     ]),
                             ]),
                         Forms\Components\Tabs\Tab::make(__('model.switch_work_day'))
@@ -165,36 +170,30 @@ class Options extends SettingsPage
                         Forms\Components\Tabs\Tab::make(__('field.options.cc_email'))
                             ->schema([
                                 TableRepeater::make('cc_emails')
-                                    ->label(__('field.options.cc_email'))  
-                                    ->hiddenLabel()                          
-                                    ->addActionLabel(__('btn.add'))                            
+                                    ->label(__('field.options.cc_email'))
+                                    ->hiddenLabel()
+                                    ->addActionLabel(__('btn.add'))
                                     ->defaultItems(1)
                                     ->headers([
                                         Header::make(__('field.feature'))->width('40%'),
                                         Header::make(__('field.options.accounts')),
-                                    ]) 
+                                    ])
                                     ->schema([
                                         Forms\Components\Select::make('model_type')
                                             ->label(__('field.feature'))
-                                            ->options(function() use ($models) {
-                                                // remove 'App\Models\' from the value of models
-                                                $models = array_map(function($model) {
-                                                    return str_replace('App\Models\\', '', $model);
-                                                }, $models);
-                                                return $models;
-                                            })
+                                            ->options($models)
                                             ->required(),
                                         Forms\Components\Select::make('accounts')
                                             ->label(__('field.options.accounts'))
                                             ->multiple()
-                                            ->options(function() {
+                                            ->options(function () {
                                                 return User::whereHas('employee', fn(Builder $q) => $q->whereNull('resign_date')->orWhereDate('resign_date', '>', now()))->get()->pluck('full_name', 'id');
                                             })
                                             ->required(),
                                     ])
                             ]),
-                        ]),
-                
+                    ]),
+
             ]);
     }
 }

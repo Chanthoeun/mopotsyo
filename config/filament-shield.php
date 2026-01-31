@@ -57,10 +57,9 @@ return [
     ],
 
     'generator' => [
-        'option' => 'permissions',
-        // 'option' => 'policies_and_permissions',
-        'policy_directory' => 'Policies',
-        'policy_namespace' => 'Policies',
+        'option' => 'policies_and_permissions',
+        'policy_directory' => 'Policies/Base',
+        'policy_namespace' => 'Policies\\Base',
     ],
 
     'exclude' => [
@@ -71,7 +70,8 @@ return [
         ],
 
         'widgets' => [
-            'AccountWidget', 'FilamentInfoWidget',
+            'AccountWidget',
+            'FilamentInfoWidget',
         ],
 
         'resources' => [],

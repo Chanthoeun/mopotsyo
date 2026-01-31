@@ -27,7 +27,7 @@ class ListLeaveTypes extends ListRecords
             ExcelImportAction::make()
                 ->color("primary")
                 ->icon('heroicon-o-arrow-up-tray')
-                ->use(LeaveTypeImport::class),            
+                ->use(LeaveTypeImport::class),
             ExportAction::make()
                 ->icon('heroicon-o-arrow-down-tray')
                 ->exports([

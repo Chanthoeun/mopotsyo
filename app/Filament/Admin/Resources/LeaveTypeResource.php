@@ -5,6 +5,8 @@ namespace App\Filament\Admin\Resources;
 use App\Filament\Admin\Resources\LeaveTypeResource\Pages;
 use App\Filament\Admin\Resources\LeaveTypeResource\RelationManagers;
 use App\Models\LeaveType;
+use App\Imports\LeaveTypeImport;
+use EightyNine\ExcelImport\ExcelImportAction;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
@@ -21,7 +23,7 @@ use Illuminate\Support\Str;
 class LeaveTypeResource extends Resource
 {
     use Translatable;
-    
+
     protected static ?string $model = LeaveType::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
@@ -49,24 +51,24 @@ class LeaveTypeResource extends Resource
             ->schema([
                 Forms\Components\Section::make()
                     ->columns(2)
-                    ->schema([  
+                    ->schema([
                         Forms\Components\Grid::make(3)
                             ->schema([
                                 Forms\Components\TextInput::make('name')
                                     ->label(__('field.name'))
                                     ->required()
-                                    ->unique(ignoreRecord:true),
+                                    ->unique(ignoreRecord: true),
                                 Forms\Components\TextInput::make('abbr')
                                     ->label(__('field.abbr'))
                                     ->required()
-                                    ->unique(ignoreRecord:true)
-                                    ->maxLength(5),                        
+                                    ->unique(ignoreRecord: true)
+                                    ->maxLength(5),
                                 Forms\Components\ColorPicker::make('color')
                                     ->label(__('field.color'))
                                     ->required()
-                                    ->unique(ignoreRecord:true),
-                            ]),                    
-                        
+                                    ->unique(ignoreRecord: true),
+                            ]),
+
                         Forms\Components\Toggle::make('male')
                             ->label(__('field.male'))
                             ->default(true),
@@ -88,14 +90,14 @@ class LeaveTypeResource extends Resource
                                     ->hint(__('hint.day'))
                                     ->placeholder(__('placeholder.balance')),
                                 Forms\Components\TextInput::make('maximum_balance')
-                                            ->label(__('field.maximum_balance'))
-                                            ->numeric()
-                                            ->helperText(__('helper.maximum_balance'))
-                                            ->hint(__('hint.day')),                                
+                                    ->label(__('field.maximum_balance'))
+                                    ->numeric()
+                                    ->helperText(__('helper.maximum_balance'))
+                                    ->hint(__('hint.day')),
                                 Forms\Components\Grid::make(3)
                                     ->schema([
                                         Forms\Components\TextInput::make('option.minimum_request_days')
-                                            ->label(__('field.minimum_request_days'))                                    
+                                            ->label(__('field.minimum_request_days'))
                                             ->numeric()
                                             ->helperText(__('helper.minimum_request_day'))
                                             ->hint(__('hint.day'))
@@ -110,9 +112,9 @@ class LeaveTypeResource extends Resource
                                         Forms\Components\TextInput::make('option.balance_increment_amount')
                                             ->label(__('field.balance_increment_amount'))
                                             ->numeric()
-                                            ->helperText(fn(Get $get) => __('helper.balance_increment_amount', ['period' => $get('balance_increment_period')]))                                            
+                                            ->helperText(fn(Get $get) => __('helper.balance_increment_amount', ['period' => $get('balance_increment_period')]))
                                             ->hint(__('hint.day')),
-                                        
+
                                     ])
                             ]),
                         Forms\Components\Group::make()
@@ -133,7 +135,7 @@ class LeaveTypeResource extends Resource
                                             ->maxLength(10)
                                             ->visible(fn(Get $get) => $get('option.allow_carry_forward') == true),
                                     ])
-                            ]),                        
+                            ]),
                         Forms\Components\Group::make()
                             ->columns(1)
                             ->schema([
@@ -143,28 +145,28 @@ class LeaveTypeResource extends Resource
                                         Forms\Components\Toggle::make('allow_accrual')
                                             ->label(__('field.allow_accrual')),
                                     ]),
-                            ]),                  
-                        
+                            ]),
+
                         Forms\Components\Repeater::make('rules')
                             ->label(__('field.rules'))
                             ->columns(2)
                             ->columnSpanFull()
                             ->collapsed(false)
                             ->addActionLabel(__('btn.label.add', ['label' => __('field.rule')]))
-                            ->itemLabel(fn (array $state): ?string => $state['name'] ?? null)
+                            ->itemLabel(fn(array $state): ?string => $state['name'] ?? null)
                             ->reorderable(false)
-                            ->schema([                                                                                    
+                            ->schema([
                                 Forms\Components\TextInput::make('name')
                                     ->label(__('field.name'))
                                     ->required()
-                                    ->unique(ignoreRecord:true)
+                                    ->unique(ignoreRecord: true)
                                     ->live(onBlur: true)
                                     ->maxLength(255),
                                 Forms\Components\Select::make('roles')
-                                    ->label(__('field.approval_roles'))                                                    
+                                    ->label(__('field.approval_roles'))
                                     ->required()
                                     ->multiple()
-                                    ->options(fn () => Role::whereNot('id', 1)->orderBy('id', 'asc')->get()->pluck('name', 'id')->map(fn ($item) => ucwords(Str::of($item)->replace('_', ' ')))->toArray()),                       
+                                    ->options(fn() => Role::whereNot('id', 1)->orderBy('id', 'asc')->get()->pluck('name', 'id')->map(fn($item) => ucwords(Str::of($item)->replace('_', ' ')))->toArray()),
                                 Forms\Components\Grid::make(3)
                                     ->schema([
                                         Forms\Components\TextInput::make('from_amount')
@@ -196,19 +198,19 @@ class LeaveTypeResource extends Resource
                                     ->boolean()
                                     ->inline()
                                     ->default(false)
-                                    ->grouped(), 
+                                    ->grouped(),
                                 Forms\Components\Textarea::make('description')
                                     ->label(__('field.desc'))
-                                    ->columnSpanFull(),                                                                                                                               
+                                    ->columnSpanFull(),
                             ]),
-                    ])                
+                    ])
             ]);
     }
 
     public static function table(Table $table): Table
     {
         return $table
-            ->columns([                
+            ->columns([
                 Tables\Columns\ColorColumn::make('color')
                     ->label(__('field.color'))
                     ->searchable(),
@@ -224,7 +226,7 @@ class LeaveTypeResource extends Resource
                     ->label(__('field.balance'))
                     ->numeric()
                     ->alignCenter()
-                    ->sortable(),                                              
+                    ->sortable(),
                 Tables\Columns\IconColumn::make('male')
                     ->label(__('field.male'))
                     ->boolean()
@@ -232,7 +234,7 @@ class LeaveTypeResource extends Resource
                 Tables\Columns\IconColumn::make('female')
                     ->label(__('field.female'))
                     ->boolean()
-                    ->alignCenter(),            
+                    ->alignCenter(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label(__('field.created_at'))
                     ->dateTime()

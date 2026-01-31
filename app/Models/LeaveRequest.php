@@ -2,26 +2,21 @@
 
 namespace App\Models;
 
-use App\Traits\HasCustomApproval;
 use App\Enums\ApprovalStatuEnum;
 use App\Settings\SettingWorkingHours;
-use EightyNine\Approvals\Models\ApprovableModel;
-use Filament\Notifications\Notification;
+use App\Traits\Approvable;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use RingleSoft\LaravelProcessApproval\Enums\ApprovalActionEnum;
-use RingleSoft\LaravelProcessApproval\Enums\ApprovalStatusEnum;
 
-class LeaveRequest extends ApprovableModel
+class LeaveRequest extends Model
 {
-    use HasFactory, SoftDeletes, HasCustomApproval;
+    use HasFactory, SoftDeletes, Approvable;
     /**
      * The attributes that are mass assignable.
      *
@@ -33,6 +28,7 @@ class LeaveRequest extends ApprovableModel
         'to_date',
         'reason',
         'attachment',
+        'status',
         'is_completed',
         'user_id'
     ];
@@ -48,6 +44,7 @@ class LeaveRequest extends ApprovableModel
         'from_date' => 'date',
         'to_date' => 'date',
         'is_completed' => 'boolean',
+        'status' => \App\Enums\Status::class,
     ];
 
     public function user(): BelongsTo
@@ -65,10 +62,7 @@ class LeaveRequest extends ApprovableModel
         return $this->morphMany(RequestDate::class, 'requestdateable');
     }
 
-    public function processApprovers(): MorphMany
-    {
-        return $this->morphMany(ProcessApprover::class, 'modelable');
-    }
+
 
     public function leaverequestable(): MorphTo
     {
@@ -83,7 +77,7 @@ class LeaveRequest extends ApprovableModel
     protected function requested(): Attribute
     {
         return Attribute::make(
-            get: fn() => $this->user ? $this->user->full_name : $this->createdBy()->full_name,
+            get: fn() => $this->user?->full_name ?? '-',
         );
     }
 
@@ -99,25 +93,7 @@ class LeaveRequest extends ApprovableModel
         );
     }
 
-    protected function approvers(): Attribute
-    {
-        return Attribute::make(
-            get: function () {
-                $approvers = collect();
-                foreach ($this->processApprovers as $approver) {
-                    if ($approver->user_id) {
-                        $approvers->push($approver->user);
-                    } else {
-                        foreach (User::role($approver->role_id)->get() as $user) {
-                            $approvers->push($user);
-                        }
-                    }
-                }
 
-                return $approvers;
-            },
-        );
-    }
 
     protected function backDate(): Attribute
     {

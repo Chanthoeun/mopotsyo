@@ -14,7 +14,7 @@ class LeaveCarryForward extends Model
 {
     use HasFactory, SoftDeletes;
 
-    protected $append = ['taken', 'remaining', 'is_active'];
+    protected $append = ['is_active'];
     /**
      * The attributes that are mass assignable.
      *
@@ -23,7 +23,7 @@ class LeaveCarryForward extends Model
     protected $fillable = [
         'start_date',
         'end_date',
-        'balance',        
+        'balance',
         'leave_entitlement_id',
         'user_id',
     ];
@@ -60,35 +60,36 @@ class LeaveCarryForward extends Model
     protected function balance(): Attribute
     {
         return Attribute::make(
-            get: fn ($value) => floatval($value),
+            get: fn($value) => floatval($value),
+        );
+    }
+
+
+
+    protected function isActive(): Attribute
+    {
+        return Attribute::make(
+            get: fn() => $this->end_date >= now() ? true : false,
         );
     }
 
     protected function taken(): Attribute
     {
         return Attribute::make(
-            get: function (){
-                $days = 0;
-                foreach($this->requestDates as $requestDate){
-                    $days += $requestDate->day;
-                }
-
-                return $days;
-            },
+            get: function () {
+                $dayLength = app(\App\Settings\SettingWorkingHours::class)->day ?: 8;
+                $hours = $this->requestDates()->sum('hours');
+                return floatval($hours / $dayLength);
+            }
         );
     }
 
     protected function remaining(): Attribute
     {
         return Attribute::make(
-            get: fn () => floatval($this->balance - $this->taken),
-        );
-    }
-
-    protected function isActive(): Attribute
-    {
-        return Attribute::make(
-            get: fn () => $this->end_date >= now() ? true : false,
+            get: function () {
+                return floatval($this->balance - $this->taken);
+            }
         );
     }
 }

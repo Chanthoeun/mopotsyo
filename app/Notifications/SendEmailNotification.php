@@ -12,7 +12,7 @@ class SendEmailNotification extends Notification implements ShouldQueue
     use Queueable;
 
     public $message;
-    public $comment; 
+    public $comment;
     public $cc;
 
     /**
@@ -40,24 +40,30 @@ class SendEmailNotification extends Notification implements ShouldQueue
      */
     public function toMail(object $notifiable): MailMessage
     {
-        if(empty($this->cc)) {
-            return (new MailMessage)
-                    ->subject($this->message['subject'])
-                    ->greeting($this->message['greeting'])
-                    ->line($this->message['body'])
-                    ->line($this->comment)
-                    ->action($this->message['action']['name'], $this->message['action']['url'])
-                    ->line(__('mail.thanks'));
+        $mail = (new MailMessage)
+            ->subject($this->message['subject'])
+            ->greeting($this->message['greeting'])
+            ->line($this->message['body']);
+
+        // Add specific details if available
+        if (!empty($this->message['details']) && is_array($this->message['details'])) {
+            foreach ($this->message['details'] as $label => $value) {
+                $mail->line(new \Illuminate\Support\HtmlString("<strong>{$label}:</strong> {$value}"));
+            }
         }
 
-        return (new MailMessage)
-                    ->cc($this->cc)
-                    ->subject($this->message['subject'])
-                    ->greeting($this->message['greeting'])
-                    ->line($this->message['body'])
-                    ->line($this->comment)
-                    ->action($this->message['action']['name'], $this->message['action']['url'])
-                    ->line(__('mail.thanks'));
+        if ($this->comment) {
+            $mail->line(new \Illuminate\Support\HtmlString("<strong>" . __('field.note') . ":</strong> {$this->comment}"));
+        }
+
+        $mail->action($this->message['action']['name'], $this->message['action']['url'])
+            ->line(__('mail.thanks'));
+
+        if (!empty($this->cc)) {
+            $mail->cc($this->cc);
+        }
+
+        return $mail;
     }
 
     /**

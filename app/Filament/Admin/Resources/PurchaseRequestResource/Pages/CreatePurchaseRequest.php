@@ -14,12 +14,13 @@ class CreatePurchaseRequest extends CreateRecord
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
-        if(empty($data['pr_no'])){
+        if (empty($data['pr_no'])) {
             $data['pr_no'] = generatePrNo();
         }
 
-        $data['user_id']     = Auth::id();
-    
+        $data['user_id'] = Auth::id();
+        $data['status'] = \App\Enums\Status::CREATED;
+
         return $data;
     }
 
@@ -30,7 +31,6 @@ class CreatePurchaseRequest extends CreateRecord
 
     protected function afterCreate(): void
     {
-        // create process approval
-        createProcessApprover($this->record);                   
+        // $this->record->submitToApproval();
     }
 }

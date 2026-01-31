@@ -10,10 +10,15 @@ class ViewWorkFromHome extends ViewRecord
 {
     protected static string $resource = WorkFromHomeResource::class;
 
+    public function getSubheading(): ?string
+    {
+        return __('field.status') . ': ' . $this->record->status->getLabel();
+    }
+
     protected function getHeaderActions(): array
     {
-        return [
+        return \App\Actions\ApprovalActions::makePageActions([], [
             Actions\EditAction::make(),
-        ];
+        ]);
     }
 }

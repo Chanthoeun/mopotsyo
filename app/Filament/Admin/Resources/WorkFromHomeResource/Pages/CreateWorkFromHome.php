@@ -13,10 +13,46 @@ class CreateWorkFromHome extends CreateRecord
 {
     protected static string $resource = WorkFromHomeResource::class;
 
+    protected function beforeValidate(): void
+    {
+        $data = $this->form->getState();
+
+        if (!empty($data['requestDates'])) {
+            $userId = Auth::id();
+
+            foreach ($data['requestDates'] as $requestDate) {
+                if (empty($requestDate['date'])) {
+                    continue;
+                }
+
+                // Check if this date already exists in another WFH request
+                $existingRequest = \App\Models\RequestDate::where('date', $requestDate['date'])
+                    ->whereHasMorph('requestdateable', [WorkFromHome::class], function ($query) use ($userId) {
+                        $query->where('user_id', $userId)
+                            ->whereIn('status', ['approved', 'pending', 'created']);
+                    })
+                    ->first();
+
+                if ($existingRequest) {
+                    \Filament\Notifications\Notification::make()
+                        ->danger()
+                        ->title(__('validation.duplicate_request_date'))
+                        ->body(__('validation.duplicate_request_date_body', [
+                            'date' => \Carbon\Carbon::parse($requestDate['date'])->format('Y-m-d')
+                        ]))
+                        ->send();
+
+                    $this->halt();
+                }
+            }
+        }
+    }
+
     protected function mutateFormDataBeforeCreate(array $data): array
     {
-        $data['user_id']     = Auth::id();
-    
+        $data['user_id'] = Auth::id();
+        $data['status'] = \App\Enums\Status::CREATED;
+
         return $data;
     }
 
@@ -27,42 +63,6 @@ class CreateWorkFromHome extends CreateRecord
 
     protected function afterCreate(): void
     {
-        $approvers = $this->record->user->approvers->where('model_type', WorkFromHome::class);
-        $roles = [];
-        if($approvers->count() == 1){
-            $approvers = $approvers->pluck('role_id');
-        }else{
-            if(app(SettingOptions::class)->work_from_home_rules){
-                foreach(app(SettingOptions::class)->work_from_home_rules as $rule){ 
-                    if($this->record->days >= $rule['from_amount'] && $this->record->days <= $rule['to_amount']){
-                        $roles = $rule['roles'];
-                    }else if($this->record->days >= $rule['from_amount'] && empty($rule['to_amount'])){
-                        $roles = $rule['roles'];
-                    }
-                }                
-                $approvers = $this->record->user->approvers->where('model_type', WorkFromHome::class)->whereIn('role_id', $roles);
-                if($approvers->count() == 0){
-                    $approvers[] = $this->record->user->approvers->where('model_type', WorkFromHome::class)->first()->role_id;
-                }else{
-                    $approvers = $approvers->pluck('role_id');
-                }
-            }else{
-                $approvers = $approvers->pluck('role_id');
-            }
-        }
-        
-        $allSteps = $this->record->approvalFlowSteps();
-        $approverRoleIds = $approvers->toArray();
-
-        $steps = $allSteps->map(function ($item) use ($approverRoleIds) {
-            $stepArray = $item->toApprovalStatusArray();
-            // Mark step as active if its role is in the determined list of approvers
-            $stepArray['active'] = in_array($item->role_id, $approverRoleIds);
-            return $stepArray;
-        })->toArray();
-        
-        $this->record->approvalStatus()->update([
-            'steps' => array_values($steps)
-        ]);
+        // $this->record->submitToApproval();
     }
 }

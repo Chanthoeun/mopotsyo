@@ -7,19 +7,23 @@ use App\Models\SwitchWorkDay;
 use App\Settings\SettingOptions;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
-class SwitchWorkDayPolicy
+use App\Policies\Base\SwitchWorkDayPolicy as BasePolicy;
+
+class SwitchWorkDayPolicy extends BasePolicy
 {
-    use HandlesAuthorization;
 
     /**
      * Determine whether the user can view any models.
      */
     public function viewAny(User $user): bool
-    {        
-        if(app(SettingOptions::class)->allow_switch_day_work == true){
+    {
+        if ($user->hasRole(['super_admin', 'human_resource']))
+            return true;
+
+        if (app(SettingOptions::class)->allow_switch_day_work == true) {
             return $user->can('view_any_switch::work::day');
-        } 
-        return false;       
+        }
+        return false;
     }
 
     /**
@@ -27,10 +31,20 @@ class SwitchWorkDayPolicy
      */
     public function view(User $user, SwitchWorkDay $switchWorkDay): bool
     {
-        if(app(SettingOptions::class)->allow_switch_day_work == true){
-            return $user->can('view_switch::work::day');
-        } 
-        return false;         
+        if ($user->hasRole(['super_admin', 'human_resource']))
+            return true;
+
+        if (app(SettingOptions::class)->allow_switch_day_work == true) {
+            if ($user->id === $switchWorkDay->user_id) {
+                return $user->can('view_switch::work::day');
+            }
+
+            // Allow view if the user is an approver for this request
+            if ($switchWorkDay->approvalSteps()->where('approver_id', $user->id)->exists()) {
+                return $user->can('view_switch::work::day');
+            }
+        }
+        return false;
     }
 
     /**
@@ -38,10 +52,10 @@ class SwitchWorkDayPolicy
      */
     public function create(User $user): bool
     {
-        if(app(SettingOptions::class)->allow_switch_day_work == true && $user->contract && strtolower($user->contract->contractType->abbr) == 'ptc'){
+        if (app(SettingOptions::class)->allow_switch_day_work == true && $user->contract && strtolower($user->contract->contractType->abbr) == 'ptc') {
             return $user->can('create_switch::work::day');
-        } 
-        return false;          
+        }
+        return false;
     }
 
     /**
@@ -49,7 +63,7 @@ class SwitchWorkDayPolicy
      */
     public function update(User $user, SwitchWorkDay $switchWorkDay): bool
     {
-        if($switchWorkDay->approvalStatus->status == 'Created' && $user->id == $switchWorkDay->user_id){            
+        if ($switchWorkDay->status === \App\Enums\Status::CREATED && $user->id == $switchWorkDay->user_id) {
             return $user->can('update_switch::work::day');
         }
         return false;
@@ -60,9 +74,6 @@ class SwitchWorkDayPolicy
      */
     public function delete(User $user, SwitchWorkDay $switchWorkDay): bool
     {
-        if($switchWorkDay->approvalStatus->status == 'Created' && $user->id == $switchWorkDay->user_id){            
-            return $user->can('delete_switch::work::day');
-        }
         return false;
     }
 
@@ -71,7 +82,7 @@ class SwitchWorkDayPolicy
      */
     public function deleteAny(User $user): bool
     {
-        return $user->can('delete_any_switch::work::day');
+        return false;
     }
 
     /**
@@ -79,9 +90,6 @@ class SwitchWorkDayPolicy
      */
     public function forceDelete(User $user, SwitchWorkDay $switchWorkDay): bool
     {
-        if($switchWorkDay->approvalStatus->status == 'Created' && $user->id == $switchWorkDay->user_id){                        
-            return $user->can('force_delete_switch::work::day');
-        }
         return false;
     }
 
@@ -90,7 +98,7 @@ class SwitchWorkDayPolicy
      */
     public function forceDeleteAny(User $user): bool
     {
-        return $user->can('force_delete_any_switch::work::day');
+        return false;
     }
 
     /**
@@ -98,7 +106,10 @@ class SwitchWorkDayPolicy
      */
     public function restore(User $user, SwitchWorkDay $switchWorkDay): bool
     {
-        if($switchWorkDay->approvalStatus->status == 'Created' && $user->id == $switchWorkDay->user_id){            
+        if ($user->hasRole('super_admin'))
+            return true;
+
+        if ($switchWorkDay->status === \App\Enums\Status::PENDING && $user->id == $switchWorkDay->user_id) {
             return $user->can('restore_switch::work::day');
         }
         return false;
@@ -133,40 +144,20 @@ class SwitchWorkDayPolicy
      */
     public function approve(User $user, SwitchWorkDay $switchWorkDay): bool
     {
-        if($switchWorkDay->isSubmitted() && !$switchWorkDay->isApprovalCompleted() && !$switchWorkDay->isDiscarded()){
-            $nextStep = $switchWorkDay->nextApprovalStep();
-            $approval = $switchWorkDay->user->approvers->where('model_type', get_class($switchWorkDay))->where('role_id', $nextStep->role_id)->first();
-            if($approval && $approval->approver_id == $user->id){
-                return $switchWorkDay->canBeApprovedBy($user);
-            }            
-        }
+        return $switchWorkDay->status === \App\Enums\Status::PENDING && $switchWorkDay->canBeApprovedBy($user);
     }
     /**
      * Determine whether the user can reject.
      */
     public function reject(User $user, SwitchWorkDay $switchWorkDay): bool
-    {           
-        if($switchWorkDay->isSubmitted() && !$switchWorkDay->isApprovalCompleted() && !$switchWorkDay->isDiscarded()){
-            $nextStep = $switchWorkDay->nextApprovalStep();
-            $approval = $switchWorkDay->user->approvers->where('model_type', get_class($switchWorkDay))->where('role_id', $nextStep->role_id)->first();
-            if($approval && $approval->approver_id == $user->id){
-                return $switchWorkDay->canBeApprovedBy($user);
-            }            
-        }
+    {
+        return $switchWorkDay->status === \App\Enums\Status::PENDING && $switchWorkDay->canBeApprovedBy($user);
     }
     /**
      * Determine whether the user can discard.
      */
     public function discard(User $user, SwitchWorkDay $switchWorkDay): bool
-    {                           
-        if($switchWorkDay->isRejected() && !$switchWorkDay->isDiscarded()){
-            $nextStep = $switchWorkDay->nextApprovalStep();
-            $approval = $switchWorkDay->user->approvers->where('model_type', get_class($switchWorkDay))->where('role_id', $nextStep->role_id)->first();
-            if($switchWorkDay->user_id == $user->id || ($approval && $approval->approver_id == $user->id)){
-                return true;
-            }                  
-        }       
-
-        return false;
+    {
+        return ($switchWorkDay->isSubmitted() || $switchWorkDay->isApproved()) && ($user->id === $switchWorkDay->user_id || $user->hasRole('super_admin'));
     }
 }

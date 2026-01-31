@@ -38,6 +38,16 @@ services:
     networks:
       - mopotsyo-network
 
+  mail:
+    image: axllent/mailpit
+    container_name: mopotsyo-mail
+    restart: unless-stopped
+    ports:
+      - "8025:8025"
+      - "1025:1025"
+    networks:
+      - mopotsyo-network
+
 networks:
   mopotsyo-network:
     driver: bridge

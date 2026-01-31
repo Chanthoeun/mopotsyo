@@ -3,67 +3,33 @@
 namespace App\Filament\Admin\Resources\LeaveRequestResource\Pages;
 
 use App\Filament\Admin\Resources\LeaveRequestResource;
-use App\Models\User;
 use Filament\Actions;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ViewRecord;
 use Illuminate\Support\Facades\Auth;
-use RingleSoft\LaravelProcessApproval\Enums\ApprovalStatusEnum;
-use RingleSoft\LaravelProcessApproval\Events\ProcessDiscardedEvent;
-use RingleSoft\LaravelProcessApproval\Models\ProcessApproval;
 
 class ViewLeaveRequest extends ViewRecord
 {
-    use  \EightyNine\Approvals\Traits\HasApprovalHeaderActions;
 
     protected static string $resource = LeaveRequestResource::class;
 
-    /**
-     * Get the completion action.
-     *
-     * @return Filament\Actions\Action
-     * @throws Exception
-     */
-    protected function getOnCompletionAction()
-    {                
-        return Action::make("discard")
-            ->label(__('filament-approvals::approvals.actions.discard'))                                       
-            ->hidden(fn() => Auth::id() != $this->record->approvalStatus->creator->id || $this->record->isDiscarded())   
-            ->icon('heroicon-m-archive-box-x-mark')
-            ->color('danger')
-            ->requiresConfirmation()
-            ->modalIcon('heroicon-m-archive-box-x-mark')
-            ->form([
-                Textarea::make('reason')
-                    ->label(__('field.reason'))
-                    ->required()
-            ])
-            ->action(function(array $data){
-                $this->record->approvalStatus()->update(['status' => ApprovalStatusEnum::DISCARDED->value]);
+    public function getSubheading(): ?string
+    {
+        $subheading = __('field.status') . ': ' . $this->record->status->getLabel();
 
-                // update approval status
-                $approval = ProcessApproval::query()->create([
-                    'approvable_type' => $this->record::getApprovableType(),
-                    'approvable_id' => $this->record->id,
-                    'process_approval_flow_step_id' => null,
-                    'approval_action' => ApprovalStatusEnum::DISCARDED,
-                    'comment' => $data['reason'],
-                    'user_id' => Auth::id(),
-                    'approver_name' => Auth::user()->full_name
-                ]);
+        if ($this->record->user_id !== Auth::id()) {
+            $subheading .= ' | ' . __('field.requested_by') . ': ' . $this->record->user->full_name;
+        }
 
-                ProcessDiscardedEvent::dispatch($approval);
+        return $subheading;
+    }
 
-                // notification
-                Notification::make()
-                    ->success()
-                    ->icon('fas-user-clock')
-                    ->iconColor('success')
-                    ->title(__('msg.label.discarded', ['label' => __('model.leave_request')]))
-                    ->send();
-            });
-            
+    protected function getHeaderActions(): array
+    {
+        return \App\Actions\ApprovalActions::makePageActions([], [
+            Actions\EditAction::make(),
+        ]);
     }
 }

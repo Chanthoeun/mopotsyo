@@ -19,6 +19,8 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 
+use Illuminate\Support\Facades\Auth;
+
 class LeaveCarryForwardResource extends Resource
 {
     protected static ?string $model = LeaveCarryForward::class;
@@ -64,16 +66,33 @@ class LeaveCarryForwardResource extends Resource
                             }),
                         Forms\Components\Select::make('leave_entitlement_id')
                             ->label(__('model.entitlement'))
-                            ->relationship('leaveEntitlement', 'id', fn(Get $get, Builder $query) => $query->where('user_id', $get('user_id'))->whereHas('leaveType', fn($query) => $query->where('option->allow_carry_forward', true)))
+                            ->relationship('leaveEntitlement', 'id', fn(Get $get, Builder $query) => $query->where('user_id', $get('user_id'))->whereHas('leaveType', fn($query) => $query->where('option->allow_carry_forward', true))->with('leaveType'))
                             ->required()
-                            ->getOptionLabelFromRecordUsing(fn(Model $record) => "{$record->leaveType->name} - {$record->start_date->toFormattedDateString()} - {$record->end_date->toFormattedDateString()} ({$record->remaining})")
+                            // The user should select the NEW/Current entitlement where they want to apply the carry forward
+                            ->getOptionLabelFromRecordUsing(fn(Model $record) => "{$record->leaveType->name} - {$record->start_date->toFormattedDateString()} - {$record->end_date->toFormattedDateString()}")
                             ->live()
                             ->afterStateUpdated(function ($state, Set $set) {
-                                $entitlement = LeaveEntitlement::find($state);
-                                $endDate = Carbon::parse($entitlement->end_date)->add($entitlement->leaveType->option['carry_forward_duration'])->toFormattedDateString();
-                                $set('start_date', $entitlement->end_date->addDay()->toFormattedDateString());
+                                $newEntitlement = LeaveEntitlement::find($state);
+
+                                // Find the PREVIOUS entitlement to calculate the balance to carry forward
+                                $prevEntitlement = LeaveEntitlement::where('user_id', $newEntitlement->user_id)
+                                    ->where('leave_type_id', $newEntitlement->leave_type_id)
+                                    ->where('end_date', '<', $newEntitlement->start_date)
+                                    ->orderBy('end_date', 'desc')
+                                    ->first();
+
+                                $balance = $prevEntitlement ? $prevEntitlement->remaining : 0;
+
+                                $duration = $newEntitlement->leaveType->option['carry_forward_duration'] ?? '+3 months';
+                                try {
+                                    $endDate = Carbon::parse($newEntitlement->start_date)->modify($duration)->toFormattedDateString();
+                                } catch (\Exception $e) {
+                                    $endDate = Carbon::parse($newEntitlement->start_date)->addMonths(3)->toFormattedDateString();
+                                }
+
+                                $set('start_date', Carbon::parse($newEntitlement->start_date)->toFormattedDateString());
                                 $set('end_date', $endDate);
-                                $set('balance', $entitlement->remaining);
+                                $set('balance', $balance);
                             }),
                         Forms\Components\Grid::make(3)
                             ->schema([
@@ -138,9 +157,11 @@ class LeaveCarryForwardResource extends Resource
                     ->color('success')
                     ->alignCenter()
                     ->sortable(),
-                Tables\Columns\IconColumn::make('is_active')
+                Tables\Columns\TextColumn::make('is_active')
                     ->label(__('field.is_active'))
-                    ->boolean()
+                    ->badge()
+                    ->formatStateUsing(fn(bool $state): string => $state ? __('field.active') : __('field.inactive'))
+                    ->color(fn(bool $state): string => $state ? 'success' : 'danger')
                     ->alignCenter(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label(__('field.created_at'))
@@ -165,10 +186,70 @@ class LeaveCarryForwardResource extends Resource
                     ->relationship('user', 'name')
                     ->preload()
                     ->searchable(),
-                Tables\Filters\TrashedFilter::make(),
+                Tables\Filters\TrashedFilter::make()->visible(fn() => Auth::user()->hasRole('super_admin')),
             ])
             ->actions([
                 Tables\Actions\ActionGroup::make([
+                    Tables\Actions\Action::make('link_leave')
+                        ->label(__('btn.link_leave'))
+                        ->icon('heroicon-o-link')
+                        ->color('success')
+                        ->modalWidth('lg')
+                        ->form(function (LeaveCarryForward $record) {
+                            $leaveType = $record->leaveEntitlement->leaveType;
+
+                            // Find eligible LeaveRequest IDs
+                            $leaveRequestIds = \App\Models\LeaveRequest::where('user_id', $record->user_id)
+                                ->where('leave_type_id', $leaveType->id)
+                                ->where('status', \App\Enums\Status::APPROVED->value)
+                                ->pluck('id');
+
+                            // Find eligible RequestDates
+                            $options = \App\Models\RequestDate::where('requestdateable_type', \App\Models\LeaveRequest::class)
+                                ->whereIn('requestdateable_id', $leaveRequestIds)
+                                ->whereBetween('date', [$record->start_date, $record->end_date])
+                                ->whereNull('leave_carry_forward_id')
+                                ->get()
+                                ->mapWithKeys(function ($date) {
+                                $dayLength = app(\App\Settings\SettingWorkingHours::class)->day;
+                                $days = $date->hours / $dayLength;
+                                $label = trans_choice('field.days_with_count', $days, ['count' => (float) $days]);
+
+                                return [
+                                    $date->id => $date->date->toFormattedDateString() . ' (' . $label . ')',
+                                ];
+                            });
+
+                            return [
+                                \Filament\Forms\Components\CheckboxList::make('request_dates')
+                                    ->label(__('model.leave_request'))
+                                    ->options($options)
+                                    ->required()
+                                    ->noSearchResultsMessage(__('msg.no_record_found'))
+                                    ->columns(2)
+                                    ->bulkToggleable(),
+                            ];
+                        })
+                        ->action(function (array $data, LeaveCarryForward $record) {
+                            $count = 0;
+                            $dates = \App\Models\RequestDate::whereIn('id', $data['request_dates'])->get();
+
+                            foreach ($dates as $date) {
+                                $date->leaveCarryForward()->associate($record)->save();
+                                $count += $date->hours;
+                            }
+
+                            // Calculate days for notification purposes only
+                            $dayLength = app(\App\Settings\SettingWorkingHours::class)->day ?: 8;
+                            $days = $count / $dayLength;
+                            $label = trans_choice('field.days_with_count', $days, ['count' => (float) $days]);
+
+                            \Filament\Notifications\Notification::make()
+                                ->success()
+                                ->title(__('msg.label.success', ['label' => __('btn.link_leave')]))
+                                ->body(__('msg.body.success', ['name' => $label, 'action' => __('action.linked')]))
+                                ->send();
+                        }),
                     Tables\Actions\ViewAction::make(),
                     Tables\Actions\EditAction::make(),
                     Tables\Actions\DeleteAction::make(),
@@ -178,10 +259,83 @@ class LeaveCarryForwardResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\BulkAction::make('link_all_carry_forward')
+                        ->label(__('btn.link_all_carry_forward'))
+                        ->icon('heroicon-o-link')
+                        ->color('success')
+                        ->requiresConfirmation()
+                        ->modalHeading(__('btn.link_all_carry_forward'))
+                        ->modalDescription(__('btn.msg.link_all_carry_forward'))
+                        ->action(function (\Illuminate\Database\Eloquent\Collection $records) {
+                            $totalLinked = 0;
+                            foreach ($records as $record) {
+                                $leaveType = $record->leaveEntitlement->leaveType;
+
+                                // Find eligible LeaveRequest IDs
+                                $leaveRequestIds = \App\Models\LeaveRequest::where('user_id', $record->user_id)
+                                    ->where('leave_type_id', $leaveType->id)
+                                    ->where('status', \App\Enums\Status::APPROVED->value)
+                                    ->pluck('id');
+
+                                // Find eligible RequestDates
+                                $dates = \App\Models\RequestDate::where('requestdateable_type', \App\Models\LeaveRequest::class)
+                                    ->whereIn('requestdateable_id', $leaveRequestIds)
+                                    ->whereBetween('date', [$record->start_date, $record->end_date])
+                                    ->whereNull('leave_carry_forward_id')
+                                    ->get();
+
+                                foreach ($dates as $date) {
+                                    $date->leaveCarryForward()->associate($record)->save();
+                                }
+                                $totalLinked += $dates->count();
+                            }
+
+                            \Filament\Notifications\Notification::make()
+                                ->success()
+                                ->title(__('msg.label.success', ['label' => __('btn.link_all_carry_forward')]))
+                                ->body("Successfully linked {$totalLinked} request dates across selected records.")
+                                ->send();
+                        }),
                     Tables\Actions\DeleteBulkAction::make(),
                     Tables\Actions\ForceDeleteBulkAction::make(),
                     Tables\Actions\RestoreBulkAction::make(),
                 ]),
+            ]);
+    }
+
+    public static function infolist(\Filament\Infolists\Infolist $infolist): \Filament\Infolists\Infolist
+    {
+        return $infolist
+            ->schema([
+                \Filament\Infolists\Components\Section::make()
+                    ->columns(3)
+                    ->schema([
+                        \Filament\Infolists\Components\TextEntry::make('user.name')
+                            ->label(__('model.employee')),
+                        \Filament\Infolists\Components\TextEntry::make('leaveEntitlement.leaveType.name')
+                            ->label(__('model.entitlement'))
+                            ->formatStateUsing(fn(Model $record): string => "{$record->leaveEntitlement->leaveType->name} ({$record->leaveEntitlement->start_date->toFormattedDateString()} - {$record->leaveEntitlement->end_date->toFormattedDateString()})"),
+                        \Filament\Infolists\Components\IconEntry::make('is_active')
+                            ->label(__('field.is_active'))
+                            ->boolean(),
+                        \Filament\Infolists\Components\TextEntry::make('start_date')
+                            ->label(__('field.start_date'))
+                            ->date(),
+                        \Filament\Infolists\Components\TextEntry::make('end_date')
+                            ->label(__('field.end_date'))
+                            ->date(),
+                        \Filament\Infolists\Components\TextEntry::make('balance')
+                            ->label(__('field.balance'))
+                            ->numeric(),
+                        \Filament\Infolists\Components\TextEntry::make('taken')
+                            ->label(__('field.taken'))
+                            ->numeric()
+                            ->color('danger'),
+                        \Filament\Infolists\Components\TextEntry::make('remaining')
+                            ->label(__('field.remaining'))
+                            ->numeric()
+                            ->color('success'),
+                    ])
             ]);
     }
 
@@ -197,16 +351,50 @@ class LeaveCarryForwardResource extends Resource
         return [
             'index' => Pages\ListLeaveCarryForwards::route('/'),
             'create' => Pages\CreateLeaveCarryForward::route('/create'),
+            'view' => Pages\ViewLeaveCarryForward::route('/{record}'),
             'edit' => Pages\EditLeaveCarryForward::route('/{record}/edit'),
         ];
     }
 
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()
+        $dayLength = app(\App\Settings\SettingWorkingHours::class)->day ?: 8;
+
+        $query = parent::getEloquentQuery()
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
-            ])
-            ->with(['user', 'leaveType']);
+            ]);
+
+        // Subquery: Sum hours from linked request_dates to get accurate 'taken' days dynamically
+        $systemTakenHours = "(
+            SELECT COALESCE(SUM(rd.hours), 0)
+            FROM request_dates rd
+            WHERE rd.leave_carry_forward_id = leave_carry_forwards.id
+        )";
+
+        $query->addSelect([
+            'leave_carry_forwards.id',
+            'leave_carry_forwards.start_date',
+            'leave_carry_forwards.end_date',
+            'leave_carry_forwards.balance',
+            'leave_carry_forwards.leave_entitlement_id',
+            'leave_carry_forwards.user_id',
+            'leave_carry_forwards.created_at',
+            'leave_carry_forwards.updated_at',
+            'leave_carry_forwards.deleted_at',
+            \Illuminate\Support\Facades\DB::raw("($systemTakenHours) / $dayLength as taken"),
+            \Illuminate\Support\Facades\DB::raw("balance - (($systemTakenHours) / $dayLength) as remaining"),
+            \Illuminate\Support\Facades\DB::raw("CASE WHEN leave_carry_forwards.end_date >= CURRENT_DATE THEN 1 ELSE 0 END as is_active"),
+        ]);
+
+        $query->with(['user', 'leaveEntitlement.leaveType']);
+
+        if (!Auth::user()->hasRole(['super_admin', 'human_resource'])) {
+            $query->where('user_id', Auth::id());
+        }
+
+        return $query;
     }
+
+
 }

@@ -43,9 +43,9 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login(CustomLogin::class)
-            ->brandLogo(fn(): ?string => asset('storage/'.app(SettingGeneral::class)->logo) ?? null)
+            ->brandLogo(fn(): ?string => asset('storage/' . app(SettingGeneral::class)->logo) ?? null)
             ->brandLogoHeight('3.5rem')
-            ->favicon(fn(): ?string => asset('storage/'.app(SettingGeneral::class)->icon) ?? null)
+            ->favicon(fn(): ?string => asset('storage/' . app(SettingGeneral::class)->icon) ?? null)
             ->colors([
                 'primary' => Color::Amber,
             ])
@@ -56,12 +56,12 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->discoverWidgets(in: app_path('Filament/Admin/Widgets'), for: 'App\\Filament\\Admin\\Widgets')
             ->widgets([
-                // Widgets\AccountWidget::class,
-                // Widgets\FilamentInfoWidget::class,
+                    // Widgets\AccountWidget::class,
+                    // Widgets\FilamentInfoWidget::class,
                 CalendarWidget::class,
             ])
             ->resources([
-                config('filament-logger.activity_resource')
+                // config('filament-logger.activity_resource')
             ])
             ->middleware([
                 EncryptCookies::class,
@@ -74,8 +74,8 @@ class AdminPanelProvider extends PanelProvider
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
             ])
-            ->authMiddleware([ 
-                LogoutBanned::class, 
+            ->authMiddleware([
+                LogoutBanned::class,
                 AuthBanned::class,
                 Authenticate::class,
             ])
@@ -83,7 +83,7 @@ class AdminPanelProvider extends PanelProvider
             ->sidebarCollapsibleOnDesktop()
             ->databaseNotifications()
             ->databaseNotificationsPolling('30s')
-            ->viteTheme('resources/css/filament/admin/theme.css')            
+            ->viteTheme('resources/css/filament/admin/theme.css')
             ->plugins([
                 FilamentProgressbarPlugin::make()->color('#29b'),
                 FilamentAuthenticationLogPlugin::make(),
@@ -91,7 +91,6 @@ class AdminPanelProvider extends PanelProvider
                 SpatieLaravelTranslatablePlugin::make()->defaultLocales(['en', 'km']),
                 TranslationManagerPlugin::make(),
                 RenewPasswordPlugin::make()->forceRenewPassword(),
-                \EightyNine\Approvals\ApprovalPlugin::make(),
                 FilamentFullCalendarPlugin::make()
                     ->selectable()
                     ->timezone(config('app.timezone')),
@@ -100,17 +99,17 @@ class AdminPanelProvider extends PanelProvider
             ->unsavedChangesAlerts()
             ->navigationGroups([
                 NavigationGroup::make()
-                     ->label(fn() => __('nav.employee'))
-                     ->icon('fas-user'),
+                    ->label(fn() => __('nav.employee'))
+                    ->icon('fas-user'),
                 NavigationGroup::make()
-                     ->label(fn() => __('nav.procurement'))
-                     ->icon('fas-cart-shopping'),
+                    ->label(fn() => __('nav.procurement'))
+                    ->icon('fas-cart-shopping'),
                 NavigationGroup::make()
-                     ->label(fn() => __('nav.hr'))
-                     ->icon('fas-users'),
+                    ->label(fn() => __('nav.hr'))
+                    ->icon('fas-users'),
                 NavigationGroup::make()
-                     ->label(fn() => __('nav.rdf'))
-                     ->icon('heroicon-o-shopping-cart'),
+                    ->label(fn() => __('nav.rdf'))
+                    ->icon('heroicon-o-shopping-cart'),
                 NavigationGroup::make()
                     ->label(fn() => __('nav.admin'))
                     ->icon('fas-gears'),
@@ -118,13 +117,14 @@ class AdminPanelProvider extends PanelProvider
                     ->label(fn() => __('nav.settings'))
                     ->icon('fas-gear'),
                 NavigationGroup::make()
-                    ->label(fn (): string => __('nav.log'))
+                    ->label(fn(): string => __('nav.log'))
                     ->icon('fas-file-lines')
                     ->collapsed(),
             ])
             ->font(
-                'Battambang', 
+                'Battambang',
                 url: 'https://fonts.googleapis.com/css2?family=Battambang:wght@100;300;400;700;900&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap',
-                provider: GoogleFontProvider::class);
+                provider: GoogleFontProvider::class
+            );
     }
 }

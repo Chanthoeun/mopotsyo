@@ -2,20 +2,24 @@
 
 namespace App\Policies;
 
-use App\Enums\ApprovalStatuEnum;
+
 use App\Models\User;
 use App\Models\PurchaseRequest;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
-class PurchaseRequestPolicy
+use App\Policies\Base\PurchaseRequestPolicy as BasePolicy;
+
+class PurchaseRequestPolicy extends BasePolicy
 {
-    use HandlesAuthorization;
 
     /**
      * Determine whether the user can view any models.
      */
     public function viewAny(User $user): bool
     {
+        if ($user->hasRole(['super_admin', 'human_resource']))
+            return true;
+
         return $user->can('view_any_purchase::request');
     }
 
@@ -24,7 +28,19 @@ class PurchaseRequestPolicy
      */
     public function view(User $user, PurchaseRequest $purchaseRequest): bool
     {
-        return $user->can('view_purchase::request');
+        if ($user->hasRole(['super_admin', 'human_resource']))
+            return true;
+
+        if ($user->id === $purchaseRequest->user_id) {
+            return $user->can('view_purchase::request');
+        }
+
+        // Allow view if the user is an approver for this request
+        if ($purchaseRequest->approvalSteps()->where('approver_id', $user->id)->exists()) {
+            return $user->can('view_purchase::request');
+        }
+
+        return false;
     }
 
     /**
@@ -40,7 +56,7 @@ class PurchaseRequestPolicy
      */
     public function update(User $user, PurchaseRequest $purchaseRequest): bool
     {
-        if($purchaseRequest->approvalStatus->status == 'Created' && $user->id == $purchaseRequest->user_id){
+        if ($purchaseRequest->status === \App\Enums\Status::CREATED && $user->id == $purchaseRequest->user_id) {
             return $user->can('update_purchase::request');
         }
         return false;
@@ -51,9 +67,6 @@ class PurchaseRequestPolicy
      */
     public function delete(User $user, PurchaseRequest $purchaseRequest): bool
     {
-        if($purchaseRequest->approvalStatus->status == 'Created' && $user->id == $purchaseRequest->user_id){
-            return $user->can('delete_purchase::request');
-        }
         return false;
     }
 
@@ -62,7 +75,7 @@ class PurchaseRequestPolicy
      */
     public function deleteAny(User $user): bool
     {
-        return $user->can('delete_any_purchase::request');
+        return false;
     }
 
     /**
@@ -70,9 +83,6 @@ class PurchaseRequestPolicy
      */
     public function forceDelete(User $user, PurchaseRequest $purchaseRequest): bool
     {
-        if($purchaseRequest->approvalStatus->status == 'Created' && $user->id == $purchaseRequest->user_id){
-            return $user->can('force_delete_purchase::request');
-        }
         return false;
     }
 
@@ -81,7 +91,7 @@ class PurchaseRequestPolicy
      */
     public function forceDeleteAny(User $user): bool
     {
-        return $user->can('force_delete_any_purchase::request');
+        return false;
     }
 
     /**
@@ -89,7 +99,10 @@ class PurchaseRequestPolicy
      */
     public function restore(User $user, PurchaseRequest $purchaseRequest): bool
     {
-        if($purchaseRequest->approvalStatus->status == 'Created' && $user->id == $purchaseRequest->user_id){
+        if ($user->hasRole('super_admin'))
+            return true;
+
+        if ($purchaseRequest->status === \App\Enums\Status::PENDING && $user->id == $purchaseRequest->user_id) {
             return $user->can('restore_purchase::request');
         }
         return false;
@@ -124,44 +137,20 @@ class PurchaseRequestPolicy
      */
     public function approve(User $user, PurchaseRequest $purchaseRequest): bool
     {
-        if($purchaseRequest->isSubmitted() && !$purchaseRequest->isApprovalCompleted() && !$purchaseRequest->isDiscarded()){
-            $nextStep = $purchaseRequest->nextApprovalStep();
-            $approval = $purchaseRequest->user->approvers->where('model_type', get_class($purchaseRequest))->where('role_id', $nextStep->role_id)->first();
-            if($approval && $approval->approver_id == $user->id){
-                return $purchaseRequest->canBeApprovedBy($user);
-            }            
-        }
-        
-        return false;
+        return $purchaseRequest->status === \App\Enums\Status::PENDING && $purchaseRequest->canBeApprovedBy($user);
     }
     /**
      * Determine whether the user can reject.
      */
     public function reject(User $user, PurchaseRequest $purchaseRequest): bool
-    {      
-        if($purchaseRequest->isSubmitted() && !$purchaseRequest->isApprovalCompleted() && !$purchaseRequest->isDiscarded()){
-            $nextStep = $purchaseRequest->nextApprovalStep();
-            $approval = $purchaseRequest->user->approvers->where('model_type', get_class($purchaseRequest))->where('role_id', $nextStep->role_id)->first();
-            if($approval && $approval->approver_id == $user->id){
-                return $purchaseRequest->canBeApprovedBy($user);
-            }            
-        }
-        
-        return false;
+    {
+        return $purchaseRequest->status === \App\Enums\Status::PENDING && $purchaseRequest->canBeApprovedBy($user);
     }
     /**
      * Determine whether the user can discard.
      */
     public function discard(User $user, PurchaseRequest $purchaseRequest): bool
-    {                           
-        if($purchaseRequest->isRejected() && !$purchaseRequest->isDiscarded()){
-            $nextStep = $purchaseRequest->nextApprovalStep();
-            $approval = $purchaseRequest->user->approvers->where('model_type', get_class($purchaseRequest))->where('role_id', $nextStep->role_id)->first();
-            if($purchaseRequest->user_id == $user->id || ($approval && $approval->approver_id == $user->id)){
-                return true;
-            }                  
-        }       
-
-        return false;
+    {
+        return ($purchaseRequest->isSubmitted() || $purchaseRequest->isApproved()) && ($user->id === $purchaseRequest->user_id || $user->hasRole('super_admin'));
     }
 }

@@ -6,15 +6,19 @@ use App\Models\User;
 use App\Models\OverTime;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
-class OverTimePolicy
+use App\Policies\Base\OverTimePolicy as BasePolicy;
+
+class OverTimePolicy extends BasePolicy
 {
-    use HandlesAuthorization;
 
     /**
      * Determine whether the user can view any models.
      */
     public function viewAny(User $user): bool
     {
+        if ($user->hasRole(['super_admin', 'human_resource']))
+            return true;
+
         return $user->can('view_any_over::time');
     }
 
@@ -23,7 +27,19 @@ class OverTimePolicy
      */
     public function view(User $user, OverTime $overTime): bool
     {
-        return $user->can('view_over::time');
+        if ($user->hasRole(['super_admin', 'human_resource']))
+            return true;
+
+        if ($user->id === $overTime->user_id) {
+            return $user->can('view_over::time');
+        }
+
+        // Allow view if the user is an approver for this request
+        if ($overTime->approvalSteps()->where('approver_id', $user->id)->exists()) {
+            return $user->can('view_over::time');
+        }
+
+        return false;
     }
 
     /**
@@ -31,7 +47,8 @@ class OverTimePolicy
      */
     public function create(User $user): bool
     {
-        if(empty($user->supervisor)) return false;
+        if (empty($user->supervisor))
+            return false;
 
         return $user->can('create_over::time');
     }
@@ -41,7 +58,7 @@ class OverTimePolicy
      */
     public function update(User $user, OverTime $overTime): bool
     {
-        if($overTime->approvalStatus->status == 'Created' && $user->id == $overTime->user_id){            
+        if ($overTime->status === \App\Enums\Status::CREATED && $user->id == $overTime->user_id) {
             return $user->can('update_over::time');
         }
         return false;
@@ -52,9 +69,6 @@ class OverTimePolicy
      */
     public function delete(User $user, OverTime $overTime): bool
     {
-        if($overTime->approvalStatus->status == 'Created' && $user->id == $overTime->user_id){            
-            return $user->can('delete_over::time');
-        }
         return false;
     }
 
@@ -63,7 +77,7 @@ class OverTimePolicy
      */
     public function deleteAny(User $user): bool
     {
-        return $user->can('delete_any_over::time');
+        return false;
     }
 
     /**
@@ -71,9 +85,6 @@ class OverTimePolicy
      */
     public function forceDelete(User $user, OverTime $overTime): bool
     {
-        if($overTime->approvalStatus->status == 'Created' && $user->id == $overTime->user_id){            
-            return $user->can('force_delete_over::time');
-        }
         return false;
     }
 
@@ -82,7 +93,7 @@ class OverTimePolicy
      */
     public function forceDeleteAny(User $user): bool
     {
-        return $user->can('force_delete_any_over::time');
+        return false;
     }
 
     /**
@@ -90,7 +101,10 @@ class OverTimePolicy
      */
     public function restore(User $user, OverTime $overTime): bool
     {
-        if($overTime->approvalStatus->status == 'Created' && $user->id == $overTime->user_id){            
+        if ($user->hasRole('super_admin'))
+            return true;
+
+        if ($overTime->status === \App\Enums\Status::PENDING && $user->id == $overTime->user_id) {
             return $user->can('restore_over::time');
         }
         return false;
@@ -125,44 +139,20 @@ class OverTimePolicy
      */
     public function approve(User $user, OverTime $overTime): bool
     {
-        if($overTime->isSubmitted() && !$overTime->isApprovalCompleted() && !$overTime->isDiscarded()){
-            $nextStep = $overTime->nextApprovalStep();
-            $approval = $overTime->user->approvers->where('model_type', get_class($overTime))->where('role_id', $nextStep->role_id)->first();
-            if($approval && $approval->approver_id == $user->id){
-                return $overTime->canBeApprovedBy($user);
-            }            
-        }
-        
-        return false;
+        return $overTime->status === \App\Enums\Status::PENDING && $overTime->canBeApprovedBy($user);
     }
     /**
      * Determine whether the user can reject.
      */
     public function reject(User $user, OverTime $overTime): bool
-    {      
-        if($overTime->isSubmitted() && !$overTime->isApprovalCompleted() && !$overTime->isDiscarded()){
-            $nextStep = $overTime->nextApprovalStep();
-            $approval = $overTime->user->approvers->where('model_type', get_class($overTime))->where('role_id', $nextStep->role_id)->first();
-            if($approval && $approval->approver_id == $user->id){
-                return $overTime->canBeApprovedBy($user);
-            }            
-        }
-        
-        return false;
+    {
+        return $overTime->status === \App\Enums\Status::PENDING && $overTime->canBeApprovedBy($user);
     }
     /**
      * Determine whether the user can discard.
      */
     public function discard(User $user, OverTime $overTime): bool
-    {                           
-        if($overTime->isRejected() && !$overTime->isDiscarded()){
-            $nextStep = $overTime->nextApprovalStep();
-            $approval = $overTime->user->approvers->where('model_type', get_class($overTime))->where('role_id', $nextStep->role_id)->first();
-            if($overTime->user_id == $user->id || ($approval && $approval->approver_id == $user->id)){
-                return true;
-            }                  
-        }       
-
-        return false;
+    {
+        return ($overTime->isSubmitted() || $overTime->isApproved()) && ($user->id === $overTime->user_id || $user->hasRole('super_admin'));
     }
 }

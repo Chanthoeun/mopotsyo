@@ -359,27 +359,40 @@ class TimesheetResource extends Resource
                 Tables\Filters\TrashedFilter::make()->visible(Auth::user()->hasRole(['super_admin'])),
             ])
             ->actions([
-                Tables\Actions\Action::make('downoad')
-                    ->label(__('btn.download'))
-                    ->icon('fas-file-pdf')
-                    ->color('success')
-                    ->action(function (Model $record) {
-                        $pdf = PDF::loadView('pdfs.timesheet', [
-                            'type' => __('model.timesheet'),
-                            'logo' => 'data:image/png;base64, ' . base64_encode(file_get_contents('storage/' . app(SettingGeneral::class)->logo)),
-                            'name' => $record->name,
-                            'record' => $record
-                        ]);
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\Action::make('downoad')
+                        ->label(__('btn.download'))
+                        ->icon('fas-file-pdf')
+                        ->color('success')
+                        ->action(function (Model $record) {
+                            $logoPath = public_path('storage/' . app(SettingGeneral::class)->logo);
+                            $logo = null;
+                            if (file_exists($logoPath)) {
+                                $logo = 'data:image/png;base64, ' . base64_encode(file_get_contents($logoPath));
+                            }
 
-                        Notification::make()
-                            ->title(__('msg.downloaded', ['name' => __('model.timesheet')]))
-                            ->success()
-                            ->send();
+                            $pdf = PDF::loadView('pdfs.timesheet', [
+                                'type' => __('model.timesheet'),
+                                'logo' => $logo,
+                                'name' => $record->name,
+                                'record' => $record
+                            ]);
 
-                        return response()->streamDownload(function () use ($pdf) {
-                            echo $pdf->stream(); }, $record->name . '.pdf');
-                    }),
-                Tables\Actions\EditAction::make(),
+                            Notification::make()
+                                ->title(__('msg.downloaded', ['name' => __('model.timesheet')]))
+                                ->success()
+                                ->send();
+
+                            return response()->streamDownload(function () use ($pdf) {
+                                echo $pdf->stream();
+                            }, $record->name . '.pdf');
+                        }),
+                    Tables\Actions\ViewAction::make(),
+                    Tables\Actions\EditAction::make(),
+                    Tables\Actions\DeleteAction::make(),
+                    Tables\Actions\RestoreAction::make(),
+                    Tables\Actions\ForceDeleteAction::make(),
+                ])
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -387,6 +400,45 @@ class TimesheetResource extends Resource
                     Tables\Actions\ForceDeleteBulkAction::make(),
                     Tables\Actions\RestoreBulkAction::make(),
                 ]),
+            ]);
+    }
+
+    public static function infolist(\Filament\Infolists\Infolist $infolist): \Filament\Infolists\Infolist
+    {
+        return $infolist
+            ->schema([
+                \Filament\Infolists\Components\Section::make()
+                    ->columns(2)
+                    ->schema([
+                        \Filament\Infolists\Components\TextEntry::make('name')
+                            ->label(__('field.name')),
+                        \Filament\Infolists\Components\TextEntry::make('user.name')
+                            ->label(__('model.employee')),
+                        \Filament\Infolists\Components\TextEntry::make('from_date')
+                            ->label(__('field.from_date'))
+                            ->date(),
+                        \Filament\Infolists\Components\TextEntry::make('to_date')
+                            ->label(__('field.to_date'))
+                            ->date(),
+                    ]),
+                \Filament\Infolists\Components\Section::make(__('model.timesheet_dates'))
+                    ->schema([
+                        \Filament\Infolists\Components\RepeatableEntry::make('dates')
+                            ->hiddenLabel()
+                            ->columns(4)
+                            ->schema([
+                                \Filament\Infolists\Components\TextEntry::make('date')
+                                    ->label(__('field.date'))
+                                    ->date(),
+                                \Filament\Infolists\Components\TextEntry::make('day')
+                                    ->label(__('field.day')),
+                                \Filament\Infolists\Components\TextEntry::make('type')
+                                    ->label(__('field.type')),
+                                \Filament\Infolists\Components\TextEntry::make('remark')
+                                    ->label(__('field.remark'))
+                                    ->default('-'),
+                            ])
+                    ])
             ]);
     }
 
@@ -402,6 +454,7 @@ class TimesheetResource extends Resource
         return [
             'index' => Pages\ListTimesheets::route('/'),
             'create' => Pages\CreateTimesheet::route('/create'),
+            'view' => Pages\ViewTimesheet::route('/{record}'),
             'edit' => Pages\EditTimesheet::route('/{record}/edit'),
         ];
     }

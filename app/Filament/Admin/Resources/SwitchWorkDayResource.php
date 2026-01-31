@@ -9,7 +9,6 @@ use App\Models\SwitchWorkDay;
 use App\Settings\SettingOptions;
 use Carbon\Carbon;
 use Closure;
-use EightyNine\Approvals\Tables\Columns\ApprovalStatusColumn;
 use Filament\Forms;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Form;
@@ -25,9 +24,6 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\HtmlString;
-use RingleSoft\LaravelProcessApproval\Enums\ApprovalStatusEnum;
-use RingleSoft\LaravelProcessApproval\Events\ProcessDiscardedEvent;
-use RingleSoft\LaravelProcessApproval\Models\ProcessApproval;
 
 class SwitchWorkDayResource extends Resource
 {
@@ -150,8 +146,13 @@ class SwitchWorkDayResource extends Resource
                     ->label(__('field.to_date'))
                     ->date()
                     ->sortable(),
-                ApprovalStatusColumn::make("approvalStatus.status")
-                    ->label(__('field.status')),
+                Tables\Columns\TextColumn::make('current_approver_name')
+                    ->label(__('field.current_approver'))
+                    ->color('primary')
+                    ->weight('bold'),
+                Tables\Columns\TextColumn::make('status')
+                    ->label(__('field.status'))
+                    ->badge(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label(__('field.created_at'))
                     ->dateTime()
@@ -170,60 +171,36 @@ class SwitchWorkDayResource extends Resource
             ])
             ->defaultSort('created_at', 'desc')
             ->filters([
-                Tables\Filters\SelectFilter::make('requested_by')
-                    ->label(__('field.requested_by'))
-                    ->relationship('user', 'name'),
-                Tables\Filters\TrashedFilter::make()
+                Tables\Filters\TrashedFilter::make()->visible(fn() => Auth::user()->hasRole('super_admin')),
+                Tables\Filters\SelectFilter::make('status')
+                    ->label(__('field.status'))
+                    ->options(\App\Enums\Status::class),
             ])
             ->actions(
-                ApprovalActions::make(
+                array_merge(
                     [
-                        Tables\Actions\Action::make('discard')
-                            ->label(__('filament-approvals::approvals.actions.discard'))
-                            ->visible(fn(Model $record) => (Auth::id() == $record->approvalStatus->creator->id && $record->isApprovalCompleted() && $record->isApproved()))
-                            ->hidden(fn(Model $record) => (Auth::id() != $record->approvalStatus->creator->id || $record->isDiscarded()))
-                            ->form([
-                                Textarea::make('reason')
-                                    ->label(__('field.reason'))
-                                    ->required()
-                            ])
-                            ->icon('heroicon-m-archive-box-x-mark')
-                            ->color('danger')
+                        Tables\Actions\Action::make('submit')
+                            ->label(__('btn.submit'))
+                            ->icon('heroicon-o-paper-airplane')
+                            ->color('primary')
                             ->requiresConfirmation()
-                            ->modalIcon('heroicon-m-archive-box-x-mark')
-                            ->action(function (array $data, Model $record) {
-                                // update status  
-                                $record->approvalStatus()->update(['status' => ApprovalStatusEnum::DISCARDED->value]);
-
-                                // update approval status
-                                $approval = ProcessApproval::query()->create([
-                                    'approvable_type' => $record::getApprovableType(),
-                                    'approvable_id' => $record->id,
-                                    'process_approval_flow_step_id' => null,
-                                    'approval_action' => ApprovalStatusEnum::DISCARDED,
-                                    'comment' => $data['reason'],
-                                    'user_id' => Auth::id(),
-                                    'approver_name' => Auth::user()->full_name1
-                                ]);
-
-                                ProcessDiscardedEvent::dispatch($approval);
-
-                                // notification
+                            ->action(function (SwitchWorkDay $record) {
+                                $record->submitToApproval();
                                 Notification::make()
+                                    ->title(__('msg.body.submitted', ['label' => __('model.switch_work_day')]))
                                     ->success()
-                                    ->icon('fas-user-clock')
-                                    ->iconColor('success')
-                                    ->title(__('msg.label.discarded', ['label' => __('model.switch_work_day')]))
                                     ->send();
-                            }),
+                            })
+                            ->visible(fn(SwitchWorkDay $record) => $record->status === \App\Enums\Status::CREATED),
                     ],
-                    [
-                        Tables\Actions\ActionGroup::make([
-                            Tables\Actions\EditAction::make(),
-                            Tables\Actions\DeleteAction::make(),
-                            Tables\Actions\RestoreAction::make(),
-                        ])
-                    ]
+                    ApprovalActions::make(
+                        [
+                            Tables\Actions\ActionGroup::make([
+                                Tables\Actions\ViewAction::make(),
+                                Tables\Actions\EditAction::make(),
+                            ])
+                        ]
+                    )
                 )
             );
     }
@@ -247,10 +224,16 @@ class SwitchWorkDayResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()
-            ->withoutGlobalScopes([
-                SoftDeletingScope::class,
-            ])
-            ->with(['user', 'approvalStatus']);
+        $query = parent::getEloquentQuery()
+            ->with(['user.employee.contracts.supervisor', 'approvalSteps.approver']);
+
+        if (!Auth::user()->hasRole(['super_admin', 'human_resource'])) {
+            $query->where(function (Builder $query) {
+                $query->where('user_id', Auth::id())
+                    ->orWhereHas('approvalSteps', fn($q) => $q->where('approver_id', Auth::id()));
+            });
+        }
+
+        return $query;
     }
 }

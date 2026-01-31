@@ -189,7 +189,6 @@ class EmployeeResource extends Resource
             ->columns([
                 Tables\Columns\ImageColumn::make('photo')
                     ->label(__('field.photo'))
-                    ->searchable()
                     ->circular()
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('employee_id')
@@ -204,7 +203,6 @@ class EmployeeResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('gender')
                     ->label(__('field.gender'))
-                    ->searchable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\IconColumn::make('married')
                     ->label(__('field.married'))
@@ -218,7 +216,6 @@ class EmployeeResource extends Resource
                     ->toggleable(),
                 CountryColumn::make('nationality')
                     ->label(__('field.nationality'))
-                    ->searchable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('email')
                     ->label(__('field.email'))
@@ -236,16 +233,14 @@ class EmployeeResource extends Resource
                     ->date()
                     ->alignCenter()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\IconColumn::make('status')
+                Tables\Columns\IconColumn::make('is_active')
                     ->label(__('field.status'))
                     ->boolean()
-                    ->alignCenter()
-                    ->getStateUsing(fn(Model $record) => empty($record->resign_date) && $record->resign_date < Carbon::now() ? true : false),
-                Tables\Columns\IconColumn::make('user.name')
+                    ->alignCenter(),
+                Tables\Columns\IconColumn::make('has_account')
                     ->label(__('field.account'))
                     ->boolean()
-                    ->alignCenter()
-                    ->getStateUsing(fn(Model $record) => empty($record->user) ? false : true),
+                    ->alignCenter(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -261,6 +256,20 @@ class EmployeeResource extends Resource
             ])
             ->filters([
                 Tables\Filters\TrashedFilter::make(),
+                Tables\Filters\SelectFilter::make('gender')
+                    ->label(__('field.gender'))
+                    ->options(GenderEnum::class),
+                Tables\Filters\SelectFilter::make('nationality')
+                    ->label(__('field.nationality'))
+                    ->options([
+                        'KH' => 'Cambodian',
+                        'TH' => 'Thai',
+                        'VN' => 'Vietnamese',
+                        'CN' => 'Chinese',
+                        'FR' => 'French',
+                        'US' => 'American',
+                    ])
+                    ->searchable(),
             ])
             ->actions([
                 Tables\Actions\ActionGroup::make([
@@ -272,6 +281,7 @@ class EmployeeResource extends Resource
                         ->modalHeading(__('btn.resign'))
                         ->modalDescription(fn(Employee $record) => __('btn.msg.resign', ['name' => $record->name]))
                         ->modalIcon('fas-person-walking-arrow-right')
+                        ->visible(fn(Model $record) => empty($record->resign_date))
                         ->fillForm(fn(Employee $record): array => [
                             'resign_date' => $record->resign_date
                         ])
@@ -286,9 +296,28 @@ class EmployeeResource extends Resource
                                 'resign_date' => $data['resign_date']
                             ]);
 
-                            // send notification
                             Notification::make()
                                 ->title(__('msg.resigned', ['name' => __('field.resign_date')]))
+                                ->success()
+                                ->send();
+                        }),
+                    Tables\Actions\Action::make('restore')
+                        ->label(__('btn.restore'))
+                        ->icon('fas-rotate-left')
+                        ->color('success')
+                        ->requiresConfirmation()
+                        ->modalHeading(__('btn.restore'))
+                        ->modalDescription(fn(Employee $record) => __('btn.msg.restore', ['name' => $record->name]))
+                        ->modalIcon('fas-rotate-left')
+                        ->visible(fn(Model $record) => !empty($record->resign_date))
+                        ->action(function (Employee $record) {
+                            $record->update([
+                                'resign_date' => null
+                            ]);
+
+                            // send notification
+                            Notification::make()
+                                ->title(__('msg.updated', ['name' => __('model.employee')]))
                                 ->success()
                                 ->send();
                         }),
@@ -298,7 +327,7 @@ class EmployeeResource extends Resource
                         ->color('info')
                         ->requiresConfirmation()
                         ->modalIcon('fas-user-plus')
-                        ->visible(fn(Model $record) => empty($record->user))
+                        ->visible(fn(Model $record) => empty($record->user) && empty($record->resign_date))
                         ->action(function (Employee $record) {
                             $password = Str::password(12); // generate a default password with length of 12 caracters
                             // create login account
@@ -327,13 +356,69 @@ class EmployeeResource extends Resource
                                 ->success()
                                 ->send();
                         }),
+                    Tables\Actions\Action::make('reset_password')
+                        ->label(__('btn.reset_password'))
+                        ->icon('fas-key')
+                        ->color('info')
+                        ->requiresConfirmation()
+                        ->modalIcon('fas-key')
+                        ->modalHeading(__('btn.reset_password'))
+                        ->modalDescription(fn(Employee $record) => __('btn.msg.reset_password', ['name' => $record->name]))
+                        ->visible(fn(Model $record) => !empty($record->user) && empty($record->resign_date))
+                        ->form([
+                            Password::make('password')
+                                ->label(__('field.user.password'))
+                                ->placeholder(__('field.user.password'))
+                                ->required()
+                                ->minLength(8)
+                                ->same('password_confirmation'),
+                            Password::make('password_confirmation')
+                                ->label(__('field.user.password_confirmation'))
+                                ->placeholder(__('field.user.password_confirmation'))
+                                ->required()
+                                ->minLength(8),
+                        ])
+                        ->action(function (array $data, Employee $record) {
+                            $record->user()->update([
+                                'password' => Hash::make($data['password']),
+                                'force_renew_password' => true,
+                            ]);
+
+                            Notification::make()
+                                ->title(__('msg.updated', ['name' => __('field.user.password')]))
+                                ->success()
+                                ->send();
+                        }),
+                    Tables\Actions\Action::make('ban_user')
+                        ->label(fn(Employee $record) => $record->user->isNotBanned() ? __('btn.login_ban') : __('btn.login_unban'))
+                        ->icon(fn(Employee $record) => $record->user->isNotBanned() ? 'fas-user-lock' : 'fas-user-check')
+                        ->color(fn(Employee $record) => $record->user->isNotBanned() ? 'danger' : 'success')
+                        ->requiresConfirmation()
+                        ->modalHeading(fn(Employee $record) => $record->user->isNotBanned() ? __('btn.msg.login_ban', ['name' => $record->name]) : __('btn.msg.login_unban', ['name' => $record->name]))
+                        ->modalIcon(fn(Employee $record) => $record->user->isNotBanned() ? 'fas-user-lock' : 'fas-user-check')
+                        ->visible(fn(Model $record) => !empty($record->user_id) && (!$record->is_active || $record->user->isBanned()) && auth()->user()->can('ban_user'))
+                        ->action(function (Employee $record) {
+                            if ($record->user->isNotBanned()) {
+                                $record->user->ban();
+                                Notification::make()
+                                    ->title(__('btn.login_ban') . ' ' . __('msg.success', ['name' => $record->name, 'action' => '']))
+                                    ->success()
+                                    ->send();
+                            } else {
+                                $record->user->unban();
+                                Notification::make()
+                                    ->title(__('btn.login_unban') . ' ' . __('msg.success', ['name' => $record->name, 'action' => '']))
+                                    ->success()
+                                    ->send();
+                            }
+                        }),
                     Tables\Actions\Action::make('login_detail')
                         ->label(__('btn.label.send', ['label' => __('field.login_detail')]))
                         ->icon('fas-paper-plane')
                         ->color('info')
                         ->requiresConfirmation()
                         ->modalIcon('fas-paper-plane')
-                        ->visible(fn(Model $record) => !empty($record->user))
+                        ->visible(fn(Model $record) => !empty($record->user) && empty($record->resign_date))
                         ->action(function (Employee $record) {
                             $password = Str::password(12); // generate a default password with length of 12 caracters
                 
@@ -357,6 +442,9 @@ class EmployeeResource extends Resource
                         ->color('info')
                         ->requiresConfirmation()
                         ->modalIcon('fas-image')
+                        ->modalHeading(__('btn.label.update', ['label' => __('field.photo')]))
+                        ->modalDescription(fn(Employee $record) => __('btn.msg.update', ['name' => $record->name]))
+                        ->visible(fn(Model $record) => empty($record->resign_date))
                         ->fillForm(fn(Model $record): array => [
                             'photo' => $record->photo
                         ])
@@ -384,9 +472,12 @@ class EmployeeResource extends Resource
                                 ->success()
                                 ->send();
                         }),
-                    Tables\Actions\ViewAction::make(),
-                    Tables\Actions\EditAction::make(),
-                    Tables\Actions\DeleteAction::make(),
+                    Tables\Actions\ViewAction::make()
+                        ->visible(fn(Model $record) => empty($record->resign_date)),
+                    Tables\Actions\EditAction::make()
+                        ->visible(fn(Model $record) => empty($record->resign_date)),
+                    Tables\Actions\DeleteAction::make()
+                        ->visible(fn(Model $record) => empty($record->resign_date)),
                     Tables\Actions\RestoreAction::make(),
                     Tables\Actions\ForceDeleteAction::make(),
                 ])
@@ -422,6 +513,9 @@ class EmployeeResource extends Resource
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
             ])
-            ->with(['user', 'province', 'district', 'commune', 'village']);
+            ->select('*')
+            ->selectRaw('(resign_date IS NULL OR resign_date > NOW()) as is_active')
+            ->selectRaw('(user_id IS NOT NULL) as has_account')
+            ->with(['user.bans']);
     }
 }

@@ -15,7 +15,7 @@ class RequestDate extends Model
     use HasFactory;
 
     public $with = ['requestdateable'];
-    
+
     /**
      * The attributes that are mass assignable.
      *
@@ -26,6 +26,7 @@ class RequestDate extends Model
         'start_time',
         'end_time',
         'hours',
+        'leave_carry_forward_id',
     ];
 
     /**
@@ -48,17 +49,15 @@ class RequestDate extends Model
         return $this->belongsTo(LeaveCarryForward::class);
     }
 
-    protected function date(): Attribute
-    {
-        return Attribute::make(
-            get: fn ($value) => $value,
-        );
-    }
+
 
     protected function day(): Attribute
     {
         return Attribute::make(
-            get: fn () => floatval($this->hours / app(SettingWorkingHours::class)->day),
+            get: function () {
+                $dayLength = app(SettingWorkingHours::class)->day ?: 8;
+                return floatval($this->hours / $dayLength);
+            },
         );
     }
 }

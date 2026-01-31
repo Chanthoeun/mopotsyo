@@ -8,7 +8,6 @@ use App\Models\LeaveCarryForward;
 use App\Models\LeaveRequest;
 use App\Models\LeaveRequestRule;
 use App\Models\LeaveType;
-use App\Models\ProcessApprover;
 use App\Models\User;
 use Filament\Actions;
 use Filament\Notifications\Notification;
@@ -16,11 +15,46 @@ use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
-use RingleSoft\LaravelProcessApproval\Enums\ApprovalStatusEnum;
+
 
 class CreateLeaveRequest extends CreateRecord
 {
     protected static string $resource = LeaveRequestResource::class;
+
+    protected function beforeValidate(): void
+    {
+        $data = $this->form->getState();
+
+        if (!empty($data['requestDates'])) {
+            $userId = Auth::id();
+
+            foreach ($data['requestDates'] as $requestDate) {
+                if (empty($requestDate['date'])) {
+                    continue;
+                }
+
+                // Check if this date already exists in another leave request
+                $existingRequest = \App\Models\RequestDate::where('date', $requestDate['date'])
+                    ->whereHasMorph('requestdateable', [LeaveRequest::class], function ($query) use ($userId) {
+                        $query->where('user_id', $userId)
+                            ->whereIn('status', ['approved', 'pending', 'created']);
+                    })
+                    ->first();
+
+                if ($existingRequest) {
+                    Notification::make()
+                        ->danger()
+                        ->title(__('validation.duplicate_leave_date'))
+                        ->body(__('validation.duplicate_leave_date_body', [
+                            'date' => \Carbon\Carbon::parse($requestDate['date'])->format('Y-m-d')
+                        ]))
+                        ->send();
+
+                    $this->halt();
+                }
+            }
+        }
+    }
 
     protected function getRedirectUrl(): string
     {
@@ -30,62 +64,39 @@ class CreateLeaveRequest extends CreateRecord
     protected function mutateFormDataBeforeCreate(array $data): array
     {
         $data['user_id'] = Auth::id();
-    
+        $data['status'] = \App\Enums\Status::CREATED;
+
         return $data;
     }
 
     protected function afterCreate(): void
     {
-        $approvers = $this->record->user->approvers->where('model_type', LeaveRequest::class);
-        $roles = [];
-        if($approvers->count() == 1){
-            $approvers = $approvers->pluck('role_id');
-        }else{
-            $leaveType = $this->record->leaveType;
-            if(!empty($leaveType->rules)){
-                foreach($leaveType->rules as $rule){
-                    if($this->record->days >= $rule['from_amount'] && $this->record->days <= $rule['to_amount']){
-                        $roles = $rule['roles'];
-                    }else if($this->record->days >= $rule['from_amount'] && empty($rule['to_amount'])){
-                        $roles = $rule['roles'];
-                    }           
-                }
+        // $this->record->submitToApproval();
 
-                $approvers = $this->record->user->approvers->where('model_type', LeaveRequest::class)->whereIn('role_id', $roles);
-                if($approvers->count() == 0){
-                    $approvers[] = $this->record->user->approvers->where('model_type', LeaveRequest::class)->first()->role_id;
-                }else{
-                    $approvers = $approvers->pluck('role_id');
-                }
-            }else{
-                $approvers = $approvers->pluck('role_id');
-            }
-        }
-        
-        
-        $allSteps = $this->record->approvalFlowSteps();
-        $approverRoleIds = $approvers->toArray();
-
-        $steps = $allSteps->map(function ($item) use ($approverRoleIds) {
-            $stepArray = $item->toApprovalStatusArray();
-            // Mark step as active if its role is in the determined list of approvers
-            $stepArray['active'] = in_array($item->role_id, $approverRoleIds);
-            return $stepArray;
-        })->toArray();
-        
-        $this->record->approvalStatus()->update([
-            'steps' => array_values($steps)
-         ]);
-         
         // check Carry Forward add add leave to carry forward
-        foreach($this->record->requestDates->where('leave_type_id' == 1) as $requestDate)
-        {
-            $carryForward = LeaveCarryForward::where('user_id', $this->record->user_id)->whereDate('start_date', '<=', $requestDate->date)->whereDate('end_date', '>=', $requestDate->date)->first();
-            if($carryForward && $carryForward->is_active == true && $carryForward->remaining > 0){
+        foreach ($this->record->requestDates as $requestDate) {
+            if ($requestDate->leave_carry_forward_id) {
+                continue;
+            }
+
+            // check if leave request type is Annual Leave
+            $leaveRequest = $this->record;
+            $leaveType = LeaveType::where('name', 'like', '%Annual%')->first();
+
+            if (!$leaveType || $leaveRequest->leave_type_id != $leaveType->id) {
+                continue;
+            }
+
+            $carryForward = LeaveCarryForward::where('user_id', $this->record->user_id)
+                ->whereDate('start_date', '<=', $requestDate->date)
+                ->whereDate('end_date', '>=', $requestDate->date)
+                ->first();
+
+            if ($carryForward && $carryForward->remaining > 0) {
                 $requestDate->leave_carry_forward_id = $carryForward->id;
                 $requestDate->save();
             }
-        }        
+        }
     }
 
     protected function getCreatedNotification(): ?Notification

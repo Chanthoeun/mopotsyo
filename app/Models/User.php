@@ -164,7 +164,7 @@ class User extends Authenticatable implements FilamentUser, RenewPasswordContrac
     {
         return Attribute::make(
             get: function () {
-                return $this->contract->supervisor ?? null;
+                return $this->contract?->supervisor;
             },
         );
     }
@@ -173,7 +173,7 @@ class User extends Authenticatable implements FilamentUser, RenewPasswordContrac
     {
         return Attribute::make(
             get: function () {
-                return $this->contract->departmentHead ?? null;
+                return $this->contract?->departmentHead;
             },
         );
     }
@@ -182,11 +182,15 @@ class User extends Authenticatable implements FilamentUser, RenewPasswordContrac
     {
         return Attribute::make(
             get: function () {
+                if (!$this->contract || !$this->contract->department || !$this->contract->department->supervisor) {
+                    return null;
+                }
+
                 if ($this->id == $this->contract->department->supervisor->id) {
                     return $this->supervisor;
                 }
 
-                return $this->contract->department->supervisor ?? null;
+                return $this->contract->department->supervisor;
             },
         );
     }
@@ -218,21 +222,31 @@ class User extends Authenticatable implements FilamentUser, RenewPasswordContrac
     protected function name(): Attribute
     {
         return Attribute::make(
-            get: fn($value) => $this->employee->nickname ?? $value,
+            get: function ($value) {
+                if ($this->relationLoaded('employee')) {
+                    return $this->employee?->nickname ?? $value;
+                }
+                return $value;
+            }
         );
     }
 
     protected function fullName(): Attribute
     {
         return Attribute::make(
-            get: fn($value) => $this->employee->name ?? $value,
+            get: function ($value) {
+                if ($this->relationLoaded('employee')) {
+                    return $this->employee?->name ?? $value;
+                }
+                return $value;
+            }
         );
     }
 
     protected function workDays(): Attribute
     {
         return Attribute::make(
-            get: fn() => $this->employee->workDays->where('is_active', true),
+            get: fn() => $this->employee?->workDays->where('is_active', true) ?? collect(),
         );
     }
 
@@ -240,7 +254,7 @@ class User extends Authenticatable implements FilamentUser, RenewPasswordContrac
     {
         return Attribute::make(
             get: function () {
-                return $this->employee->contracts;
+                return $this->employee?->contracts ?? collect();
             },
         );
     }
@@ -248,7 +262,7 @@ class User extends Authenticatable implements FilamentUser, RenewPasswordContrac
     {
         return Attribute::make(
             get: function () {
-                return $this->employee->contract->approvers ?? null;
+                return $this->employee?->contract?->approvers;
             },
         );
     }

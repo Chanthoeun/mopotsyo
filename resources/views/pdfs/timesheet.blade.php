@@ -1,21 +1,23 @@
 <?php 
-    use App\Enums\TimesheetTypeEnum;   
-    use App\Models\LeaveType;
+    use App\Enums\TimesheetTypeEnum;
+use App\Models\LeaveType;
 
-    $user = $record->user;
-    $leaveTypeIds = $user->contract->contractType->leave_types;
+$user = $record->user;
+$leaveTypeIds = $user->contract->contractType->leave_types;
 ?>
 <!DOCTYPE html>
 <html>
+
 <head>
     <meta charset="UTF-8">
     <title>{{__('model.timesheet')}}</title>
     <style type="text/css">
-        body{
+        body {
             margin: 0;
             font-family: 'Khmeros', sans-serif;
             font-size: 12pt;
         }
+
         @page {
             footer: page-footer;
             margin: 10pt 35pt 10pt 35pt;
@@ -28,398 +30,496 @@
             margin-right: 35pt;
             margin-bottom: 10pt;
         }
+
         .page-break {
             page-break-after: always;
         }
 
-        p, li{
-            font-size:13px;
-        }
-        h3{
-            font-size:13px;
-        }
-        .m-0{
-            margin: 0px;
-        }
-        .p-0{
-            padding: 0px;
-        }
-        .pt-5{
-            padding-top:5px;
-        }
-        .px-0{
-            padding-left:0px;
-            padding-right:0px;
-        }
-        .px-3{
-            padding-left:3px;
-            padding-right:3px;
-        }
-        .px-5{
-            padding-left:5px;
-            padding-right:5px;
-        }
-        .py-0{
-            padding-top:0px;
-            padding-bottom:0px;
-        }
-        .py-3{
-            padding-top:3px;
-            padding-bottom:3px;
-        }
-        .py-5{
-            padding-top:5px;
-            padding-bottom:5px;
-        }
-        .mt-10{
-            margin-top:10px;
-        }
-        .mt-5{
-            margin-top:5px;
+        p,
+        li {
+            font-size: 13px;
         }
 
-        .mb-5{
-            margin-bottom:5px;
+        h3 {
+            font-size: 13px;
         }
-        
-        .text-center{
-            text-align:center !important;
+
+        .m-0 {
+            margin: 0px;
         }
-        .text-right{
-            text-align:right !important;
+
+        .p-0 {
+            padding: 0px;
         }
-        .w-100{
+
+        .pt-5 {
+            padding-top: 5px;
+        }
+
+        .px-0 {
+            padding-left: 0px;
+            padding-right: 0px;
+        }
+
+        .px-3 {
+            padding-left: 3px;
+            padding-right: 3px;
+        }
+
+        .px-5 {
+            padding-left: 5px;
+            padding-right: 5px;
+        }
+
+        .py-0 {
+            padding-top: 0px;
+            padding-bottom: 0px;
+        }
+
+        .py-3 {
+            padding-top: 3px;
+            padding-bottom: 3px;
+        }
+
+        .py-5 {
+            padding-top: 5px;
+            padding-bottom: 5px;
+        }
+
+        .mt-10 {
+            margin-top: 10px;
+        }
+
+        .mt-5 {
+            margin-top: 5px;
+        }
+
+        .mb-5 {
+            margin-bottom: 5px;
+        }
+
+        .text-center {
+            text-align: center !important;
+        }
+
+        .text-right {
+            text-align: right !important;
+        }
+
+        .w-100 {
             width: 100%;
-        }    
-        .w-85{
-            width:85%;   
         }
-        .w-75{
-            width:75%;   
+
+        .w-85 {
+            width: 85%;
         }
-        .w-70{
-            width:70%;   
+
+        .w-75 {
+            width: 75%;
         }
-        .w-65{
-            width:65%;   
+
+        .w-70 {
+            width: 70%;
         }
-        .w-60{
-            width:60%;   
+
+        .w-65 {
+            width: 65%;
         }
-        .w-50{
-            width:50%;   
+
+        .w-60 {
+            width: 60%;
         }
-        .w-40{
-            width:40%;   
+
+        .w-50 {
+            width: 50%;
         }
-        .w-35{
-            width:35%;   
+
+        .w-40 {
+            width: 40%;
         }
-        .w-33{
-            width:33%;   
+
+        .w-35 {
+            width: 35%;
         }
-        .w-30{
-            width:30%;   
+
+        .w-33 {
+            width: 33%;
         }
-        .w-25{
-            width:25%;   
+
+        .w-30 {
+            width: 30%;
         }
-        .w-20{
-            width:20%;   
+
+        .w-25 {
+            width: 25%;
         }
-        .w-15{
-            width:15%;   
+
+        .w-20 {
+            width: 20%;
         }
-        .w-10{
-            width:10%;   
+
+        .w-15 {
+            width: 15%;
         }
-        .w-7{
-            width:7%;   
+
+        .w-10 {
+            width: 10%;
         }
-        .w-5{
-            width:5%;   
+
+        .w-7 {
+            width: 7%;
         }
-        .hg-15{
-            height:15px;
+
+        .w-5 {
+            width: 5%;
         }
-        .hg-30{
-            height:30px;
+
+        .hg-15 {
+            height: 15px;
         }
-        .logo img{
-            width:120px;
-            height:120px;
-            padding-top:10px;
+
+        .hg-30 {
+            height: 30px;
+        }
+
+        .logo img {
+            width: 120px;
+            height: 120px;
+            padding-top: 10px;
             /* padding-top:30px; */
         }
-        .logo span{
-            margin-left:8px;
-            top:19px;
+
+        .logo span {
+            margin-left: 8px;
+            top: 19px;
             position: absolute;
             font-weight: bold;
-            font-size:25px;
+            font-size: 25px;
         }
-        .gray-color{
-            color:#5D5D5D;
+
+        .gray-color {
+            color: #5D5D5D;
         }
-        .text-bold{
+
+        .text-bold {
             font-weight: bold;
         }
-        .border{
-            border:1px solid black;
+
+        .border {
+            border: 1px solid black;
         }
-        table tr,th,td{
+
+        table tr,
+        th,
+        td {
             border: 1px solid #d2d2d2;
-            border-collapse:collapse;
-            padding:1px 8px;
+            border-collapse: collapse;
+            padding: 1px 8px;
         }
-        table tr th{
+
+        table tr th {
             background: #F4F4F4;
-            font-size:13px;
+            font-size: 13px;
         }
-        table tr td{
-            font-size:13px;
+
+        table tr td {
+            font-size: 13px;
         }
-        table{
-            border-collapse:collapse;
+
+        table {
+            border-collapse: collapse;
         }
-        .box-text{
+
+        .box-text {
             margin-top: 0;
             padding-top: 0;
             vertical-align: top;
         }
-        .box-text p{
+
+        .box-text p {
             margin: 0;
             padding: 0;
             line-height: 18px;
         }
+
         /* .box-text p{
             line-height:10px;
         } */
-        .float-left{
-            float:left;
+        .float-left {
+            float: left;
         }
-        .float-right{
+
+        .float-right {
             float: right;
         }
-        .total-part{
-            font-size:16px;
-            line-height:12px;
+
+        .total-part {
+            font-size: 16px;
+            line-height: 12px;
         }
-        .total-right p{
-            padding-right:20px;
-        }    
+
+        .total-right p {
+            padding-right: 20px;
+        }
     </style>
 </head>
+
 <body>
-<div class="head-title" style="position:relative;">
-    <div class="w-50 float-left">
-        <h2 class="m-0 p-0">
-            <div class="w-40 logo">
-                <img src="{{$logo}}" alt="{{$name}}">                
-            </div>
-        </h2>      
-    </div>
-    <div class="w-50 float-right" style="position: absolute; bottom: 0; right: 0;">
-        <h2 class="text-right m-0 p-0">{{strtoupper(__('model.employee') . ' ' .__('model.timesheet'))}}</h2>
-    </div>        
-    <div style="clear: both;"></div>    
-</div>
-<hr>
-<div class="table-section bill-tbl w-100">
-    <table class="table w-100">
-        <tbody>
-            <tr>
-                <td align="left">{{__('field.name')}}</td>                
-                <td align="left">{{$record->user->full_name}}</td>
-                <td align="left">{{__('model.department')}}</td>                
-                <td align="left">{{$record->user->contract->department->name}}</td>                                                                                           
-            </tr>
-            <tr>
-                <td align="left">{{__('field.position')}}</td>                
-                <td align="left">{{$record->user->contract->position}}</td> 
-                <td align="left">{{__('field.month') .' - '. __('field.year')}}</td>                
-                <td align="left">{{$record->to_date->monthName .' - '. $record->to_date->year}}</td>                   
-            </tr>
-            
-        </tbody>
-    </table>
-</div>
-
-<div class="table-section bill-tbl w-100">
-    <table class="table w-100">
-        <thead>
-            <tr>
-                <th class="w-20" colspan="2">{{__('field.day')}}</th>                
-                <th class="w-15">{{__('field.date')}}</th>                
-                <th class="w-7">{{__('field.day')}}</th>
-                <th class="w-10">{{__('field.type')}}</th>
-                <th>{{__('field.remark')}}</th>                 
-            </tr>
-        </thead>
-        <tbody>
-            @foreach ($record->dates as $item)
-            <tr>
-                <td>{{$item->date->locale('km')->dayName}}</td>                
-                <td>{{$item->date->locale('en')->dayName}}</td>                
-                <td align="center">{{$item->date->format('d-m-Y')}}</td>                
-                <td align="center">{{floatval($item->day)}}</td>
-                <td align="center">{{$item->type->getLabel()}}</td>
-                <td>{{$item->remark}}</td>                         
-            </tr>
-            @endforeach
-        </tbody>        
-    </table>
-</div>
-<div class="mt-10">
-    <div class="w-30 float-left">
-        <div class="table-section bill-tbl w-100">
-            <table class="table w-100">
-                <thead>
-                    <tr>
-                        <th align="center">@lang('field.activities')</th>
-                        <th align="center">@lang('field.no_of_days')</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (TimesheetTypeEnum::cases() as $item)
-                    @if ($record->dates()->where('type', $item->value)->sum('day') > 0)
-                    <tr>
-                        <td>{{$item->getLabel()}}</td>
-                        <td align="center">{{floatval($record->dates()->where('type', $item->value)->sum('day'))}}</td>
-                    </tr>
-                    @endif
-                    @endforeach
-                    <tr>
-                        <td align="right">@lang('field.total')</td>
-                        <td align="center">{{floatval($record->dates->sum('day'))}}</td>
-                    </tr>
-                </tbody>
-            </table>
+    <div class="head-title" style="position:relative;">
+        <div class="w-50 float-left">
+            <h2 class="m-0 p-0">
+                <div class="w-40 logo">
+                    <img src="{{$logo}}" alt="{{$name}}">
+                </div>
+            </h2>
         </div>
+        <div class="w-50 float-right" style="position: absolute; bottom: 0; right: 0;">
+            <h2 class="text-right m-0 p-0">{{strtoupper(__('model.employee') . ' ' . __('model.timesheet'))}}</h2>
+        </div>
+        <div style="clear: both;"></div>
     </div>
-    <div class="w-65 float-right">
-        @if ($leaveTypeIds)                
-        <div class="table-section bill-tbl w-100">
-            <table class="table w-100">
-                <thead>
-                    <tr>
-                        <th rowspan="2">@lang('model.leave_entitlement')</th>
-                        <th rowspan="2">@lang('field.unit')</th>
-                        <th rowspan="2">@lang('field.allowance')</th>
-                        <th colspan="2">@lang('field.used')</th>
-                        <th rowspan="2">@lang('field.remaining')</th>
-                    </tr>
-                    <tr>
-                        <th>@lang('field.all')</th>
-                        <th>@lang('field.this_month')</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @php
-                        $leaveTypes = \App\Models\LeaveType::whereIn('id', $leaveTypeIds)
-                            ->where($user->employee->gender->value, true)
-                            ->where('balance', '>', 0)
-                            ->orderBy('id', 'asc')
-                            ->get();
-                    @endphp
-                    @foreach ($leaveTypes as $leaveType)
-                        @php
-                            // Find the active entitlement for the timesheet's period.
-                            $entitlement = $user->entitlements()
-                                ->where('leave_type_id', $leaveType->id)
-                                ->where('is_active', true)
-                                ->where('start_date', '<=', $record->from_date)
-                                ->where('end_date', '>=', $record->from_date)
-                                ->first();
+    <hr>
+    <div class="table-section bill-tbl w-100">
+        <table class="table w-100">
+            <tbody>
+                <tr>
+                    <td align="left">{{__('field.name')}}</td>
+                    <td align="left">{{$record->user->full_name}}</td>
+                    <td align="left">{{__('model.department')}}</td>
+                    <td align="left">{{$record->user->contract->department->name}}</td>
+                </tr>
+                <tr>
+                    <td align="left">{{__('field.position')}}</td>
+                    <td align="left">{{$record->user->contract->position}}</td>
+                    <td align="left">{{__('field.month') . ' - ' . __('field.year')}}</td>
+                    <td align="left">{{$record->to_date->monthName . ' - ' . $record->to_date->year}}</td>
+                </tr>
 
-                            $allowance = 0;
-                            $allTaken = 0;
-                            $takenThisMonth = 0;
-                            $remaining = 0;
+            </tbody>
+        </table>
+    </div>
 
-                            if ($entitlement) {
-                                $allowance = (float) $entitlement->balance;
-                                $allTaken = (float) $entitlement->taken + (float) getTakenLeave($user, $leaveType->id, $entitlement->start_date, $entitlement->end_date);
-                                $takenThisMonth = (float) getTakenLeave($user, $leaveType->id, $record->from_date, $record->to_date);
-                                $remaining = $allowance - $allTaken;
-                            }
-                        @endphp
+    <div class="table-section bill-tbl w-100">
+        <table class="table w-100">
+            <thead>
+                <tr>
+                    <th class="w-20" colspan="2">{{__('field.day')}}</th>
+                    <th class="w-15">{{__('field.date')}}</th>
+                    <th class="w-7">{{__('field.day')}}</th>
+                    <th class="w-10">{{__('field.type')}}</th>
+                    <th>{{__('field.remark')}}</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach ($record->dates as $item)
+                    <tr>
+                        <td>{{$item->date->locale('km')->dayName}}</td>
+                        <td>{{$item->date->locale('en')->dayName}}</td>
+                        <td align="center">{{$item->date->format('d-m-Y')}}</td>
+                        <td align="center">{{floatval($item->day)}}</td>
+                        <td align="center">{{$item->type->getLabel()}}</td>
+                        <td>{{$item->remark}}</td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+    <div class="mt-10">
+        <div class="w-30 float-left">
+            <div class="table-section bill-tbl w-100">
+                <table class="table w-100">
+                    <thead>
                         <tr>
-                            <td>{{ $leaveType->name }}</td>
-                            <td align="center">{{ __('field.day') }}</td>
-                            <td align="center">{{ $allowance > 0 ? $allowance : 0 }}</td>
-                            <td align="center">{{ $allTaken > 0 ? $allTaken : 0 }}</td>
-                            <td align="center">{{ $takenThisMonth > 0 ? $takenThisMonth : 0 }}</td>
-                            <td align="center">{{ $allowance > 0 ? $remaining : 0 }}</td>
+                            <th align="center">@lang('field.activities')</th>
+                            <th align="center">@lang('field.no_of_days')</th>
                         </tr>
-                    @endforeach
-                    @php
-                        $carryForward = $user->carryForwards()->whereYear('created_at', $record->from_date->year)->latest()->first();
-                    @endphp
-                    @if ($carryForward)
-                    @php
-                        $cfTaken = (float) getCarryForwardTaken($carryForward, $carryForward->start_date, $record->to_date);
-                        $cfRemaining = (float) $carryForward->balance - $cfTaken;
-                    @endphp
-                    <tr>
-                        <td>@lang('model.carry_forward')</td>
-                        <td align="center">{{__('field.day')}}</td>
-                        <td align="center">{{floatval($carryForward->balance)}}</td>
-                        <td align="center" colspan=2>{{$cfTaken}}</td>
-                        <td align="center">{{$cfRemaining}}</td>                        
-                    </tr> 
-                    @endif                                                      
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        @foreach (TimesheetTypeEnum::cases() as $item)
+                            @if ($record->dates()->where('type', $item->value)->sum('day') > 0)
+                                <tr>
+                                    <td>{{$item->getLabel()}}</td>
+                                    <td align="center">{{floatval($record->dates()->where('type', $item->value)->sum('day'))}}
+                                    </td>
+                                </tr>
+                            @endif
+                        @endforeach
+                        <tr>
+                            <td align="right">@lang('field.total')</td>
+                            <td align="center">{{floatval($record->dates->sum('day'))}}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
-        @endif
-    </div>        
-    <div style="clear: both;"></div>
-</div> 
-<div class="table-section w-100 mt-10">
-    <table class="table w-100">
-        <thead>
-            <tr>
-                <th colspan="2" align="center" class="w-40">@lang('field.submitted_by')</th>
-                <th colspan="2" align="center" class="w-30">@lang('field.checked_verified_by')</th>
-                <th colspan="2" align="center" class="w-30">@lang('field.approved_by')</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td class="w-10 hg-30">@lang('field.signature')</td>    
-                <td class="w-30 hg-30"></td>
-                <td class="w-10 hg-30">@lang('field.signature')</td>    
-                <td class="w-20 hg-30"></td>
-                <td class="w-10 hg-30">@lang('field.signature')</td>    
-                <td class="w-30 hg-30"></td>                
-            </tr>                                                        
-            <tr>
-                <td class="w-10 hg-30">@lang('field.name')</td>    
-                <td class="w-30 hg-30">{{$user->full_name}}</td>
-                <td class="w-10 hg-30">@lang('field.name')</td>    
-                <td class="w-20 hg-30"></td>
-                <td class="w-10 hg-30">@lang('field.name')</td>    
-                <td class="w-20 hg-30"></td>                
-            </tr>                                                        
-            <tr>
-                <td class="w-10 hg-30">@lang('field.position')</td>    
-                <td class="w-30 hg-30">{{$user->contract->position}}</td>
-                <td class="w-10 hg-30">@lang('field.position')</td>    
-                <td class="w-20 hg-30"></td>
-                <td class="w-10 hg-30">@lang('field.position')</td>    
-                <td class="w-20 hg-30"></td>                
-            </tr>                                                        
-            <tr>
-                <td class="w-10 hg-30">@lang('field.date')</td>    
-                <td class="w-30 hg-30"></td>
-                <td class="w-10 hg-30">@lang('field.date')</td>    
-                <td class="w-20 hg-30"></td>
-                <td class="w-10 hg-30">@lang('field.date')</td>    
-                <td class="w-20 hg-30"></td>                
-            </tr>                                                        
-        </tbody>
-    </table>
-</div>
+        <div class="w-65 float-right">
+            @if ($leaveTypeIds)
+                <div class="table-section bill-tbl w-100">
+                    <table class="table w-100">
+                        <thead>
+                            <tr>
+                                <th rowspan="2">@lang('model.leave_entitlement')</th>
+                                <th rowspan="2">@lang('field.unit')</th>
+                                <th rowspan="2">@lang('field.allowance')</th>
+                                <th colspan="2">@lang('field.used')</th>
+                                <th rowspan="2">@lang('field.remaining')</th>
+                            </tr>
+                            <tr>
+                                <th>@lang('field.all')</th>
+                                <th>@lang('field.this_month')</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @php
+                                $leaveTypes = \App\Models\LeaveType::whereIn('id', $leaveTypeIds)
+                                    ->where($user->employee->gender->value, true)
+                                    ->where('balance', '>', 0)
+                                    ->orderBy('id', 'asc')
+                                    ->get();
+                            @endphp
+                            @php
+                                $carryForward = $user->carryForwards()->whereYear('created_at', $record->from_date->year)->latest()->first();
+
+                                // Calculate potential carry forward usage from Annual Leave that hasn't been linked yet
+                                $potentialCfTaken = 0;
+                                if ($carryForward && $carryForward->balance > 0) {
+                                    $leaveType = \App\Models\LeaveType::where('name', 'like', '%Annual%')->first(); // Assuming 'Annual Leave' is the type
+                                    if ($leaveType) {
+                                        // Get taken leave strictly within the carry forward intersection period
+                                        $cfStartDate = $carryForward->start_date;
+                                        $cfEndDate = $carryForward->end_date; // e.g. March 31st
+
+                                        // Intersection of Timesheet Period (record) and Carry Forward Validity Period
+                                        $overlapStart = $record->from_date->max($cfStartDate);
+                                        $overlapEnd = $record->to_date->min($cfEndDate);
+
+                                        if ($overlapStart <= $overlapEnd) {
+                                            $potentialCfTaken = (float) getTakenLeave($user, $leaveType->id, $overlapStart, $overlapEnd);
+                                        }
+                                    }
+                                }
+                            @endphp
+
+                            @foreach ($leaveTypes as $leaveType)
+                                @php
+                                    // Find the active entitlement for the timesheet's period.
+                                    $entitlement = $user->entitlements()
+                                        ->where('leave_type_id', $leaveType->id)
+                                        ->where('is_active', true)
+                                        ->where('start_date', '<=', $record->from_date)
+                                        ->where('end_date', '>=', $record->from_date)
+                                        ->first();
+
+                                    $allowance = 0;
+                                    $allTaken = 0;
+                                    $takenThisMonth = 0;
+                                    $remaining = 0;
+
+                                    if ($entitlement) {
+                                        $allowance = (float) $entitlement->balance;
+                                        $allTaken = (float) $entitlement->taken + (float) getTakenLeave($user, $leaveType->id, $entitlement->start_date, $entitlement->end_date);
+                                        $takenThisMonth = (float) getTakenLeave($user, $leaveType->id, $record->from_date, $record->to_date);
+
+                                        // VIRTUAL DEDUCTION: If this is Annual Leave, deduct the amount that SHOULD be covered by Carry Forward
+                                        if (stripos($leaveType->name, 'Annual') !== false && $carryForward && $carryForward->balance > 0) {
+                                            // Use min() to ensure we don't deduct more than available balance or more than actually taken
+                                            $deductible = min($potentialCfTaken, (float) $carryForward->balance);
+
+                                            // Adjust displayed values
+                                            $allTaken -= $deductible;
+                                            $takenThisMonth -= $deductible;
+
+                                            // Ensure we don't go below zero (sanity check)
+                                            $allTaken = max(0, $allTaken);
+                                            $takenThisMonth = max(0, $takenThisMonth);
+                                        }
+
+                                        $remaining = $allowance - $allTaken;
+                                    }
+                                @endphp
+                                <tr>
+                                    <td>{{ $leaveType->name }}</td>
+                                    <td align="center">{{ __('field.day') }}</td>
+                                    <td align="center">{{ $allowance > 0 ? $allowance : 0 }}</td>
+                                    <td align="center">{{ $allTaken > 0 ? $allTaken : 0 }}</td>
+                                    <td align="center">{{ $takenThisMonth > 0 ? $takenThisMonth : 0 }}</td>
+                                    <td align="center">{{ $allowance > 0 ? $remaining : 0 }}</td>
+                                </tr>
+                            @endforeach
+
+                            @if ($carryForward)
+                                @php
+                                    $cfTaken = (float) getCarryForwardTaken($carryForward, $carryForward->start_date, $record->to_date);
+
+                                    // VIRTUAL ADDITION: Add the unlinked potential usage to the displayed "Used" amount
+                                    if ($potentialCfTaken > 0) {
+                                        $addable = min($potentialCfTaken, (float) $carryForward->balance);
+                                        $cfTaken += $addable;
+                                    }
+
+                                    $cfRemaining = (float) $carryForward->balance - $cfTaken;
+                                    $cfRemaining = max(0, $cfRemaining); // Sanity check
+                                @endphp
+                                <tr>
+                                    <td>@lang('model.carry_forward')</td>
+                                    <td align="center">{{__('field.day')}}</td>
+                                    <td align="center">{{floatval($carryForward->balance)}}</td>
+                                    <td align="center" colspan=2>{{$cfTaken}}</td>
+                                    <td align="center">{{$cfRemaining}}</td>
+                                </tr>
+                            @endif
+                        </tbody>
+                    </table>
+                </div>
+            @endif
+        </div>
+        <div style="clear: both;"></div>
+    </div>
+    <div class="table-section w-100 mt-10">
+        <table class="table w-100">
+            <thead>
+                <tr>
+                    <th colspan="2" align="center" class="w-40">@lang('field.submitted_by')</th>
+                    <th colspan="2" align="center" class="w-30">@lang('field.checked_verified_by')</th>
+                    <th colspan="2" align="center" class="w-30">@lang('field.approved_by')</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="w-10 hg-30">@lang('field.signature')</td>
+                    <td class="w-30 hg-30"></td>
+                    <td class="w-10 hg-30">@lang('field.signature')</td>
+                    <td class="w-20 hg-30"></td>
+                    <td class="w-10 hg-30">@lang('field.signature')</td>
+                    <td class="w-30 hg-30"></td>
+                </tr>
+                <tr>
+                    <td class="w-10 hg-30">@lang('field.name')</td>
+                    <td class="w-30 hg-30">{{$user->full_name}}</td>
+                    <td class="w-10 hg-30">@lang('field.name')</td>
+                    <td class="w-20 hg-30"></td>
+                    <td class="w-10 hg-30">@lang('field.name')</td>
+                    <td class="w-20 hg-30"></td>
+                </tr>
+                <tr>
+                    <td class="w-10 hg-30">@lang('field.position')</td>
+                    <td class="w-30 hg-30">{{$user->contract->position}}</td>
+                    <td class="w-10 hg-30">@lang('field.position')</td>
+                    <td class="w-20 hg-30"></td>
+                    <td class="w-10 hg-30">@lang('field.position')</td>
+                    <td class="w-20 hg-30"></td>
+                </tr>
+                <tr>
+                    <td class="w-10 hg-30">@lang('field.date')</td>
+                    <td class="w-30 hg-30"></td>
+                    <td class="w-10 hg-30">@lang('field.date')</td>
+                    <td class="w-20 hg-30"></td>
+                    <td class="w-10 hg-30">@lang('field.date')</td>
+                    <td class="w-20 hg-30"></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
 </body>
+
 </html>

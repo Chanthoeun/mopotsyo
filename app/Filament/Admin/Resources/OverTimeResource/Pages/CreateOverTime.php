@@ -15,6 +15,41 @@ class CreateOverTime extends CreateRecord
 {
     protected static string $resource = OverTimeResource::class;
 
+    protected function beforeValidate(): void
+    {
+        $data = $this->form->getState();
+
+        if (!empty($data['requestDates'])) {
+            $userId = Auth::id();
+
+            foreach ($data['requestDates'] as $requestDate) {
+                if (empty($requestDate['date'])) {
+                    continue;
+                }
+
+                // Check if this date already exists in another overtime request
+                $existingRequest = \App\Models\RequestDate::where('date', $requestDate['date'])
+                    ->whereHasMorph('requestdateable', [OverTime::class], function ($query) use ($userId) {
+                        $query->where('user_id', $userId)
+                            ->whereIn('status', ['approved', 'pending', 'created']);
+                    })
+                    ->first();
+
+                if ($existingRequest) {
+                    Notification::make()
+                        ->danger()
+                        ->title(__('validation.duplicate_request_date'))
+                        ->body(__('validation.duplicate_request_date_body', [
+                            'date' => \Carbon\Carbon::parse($requestDate['date'])->format('Y-m-d')
+                        ]))
+                        ->send();
+
+                    $this->halt();
+                }
+            }
+        }
+    }
+
     protected function getRedirectUrl(): string
     {
         return $this->previousUrl ?? $this->getResource()::getUrl('index');
@@ -23,23 +58,16 @@ class CreateOverTime extends CreateRecord
     protected function mutateFormDataBeforeCreate(array $data): array
     {
         $data['expiry_date'] = now()->addDays(app(SettingOptions::class)->overtime_expiry);
-        $data['unused']      = true;   
-        $data['user_id']     = Auth::id();
-    
+        $data['unused'] = true;
+        $data['user_id'] = Auth::id();
+        $data['status'] = \App\Enums\Status::CREATED;
+
         return $data;
     }
 
     protected function afterCreate(): void
     {
-        $approvers = $this->record->user->approvers->where('model_type', OverTime::class)->pluck('role_id');        
-        
-        $steps = $this->record->approvalFlowSteps()->whereIn('role_id', $approvers->toArray())->map(function ($item) {                    
-            return $item->toApprovalStatusArray();
-        })->toArray();
-        
-        $this->record->approvalStatus()->update([
-            'steps' => array_values($steps)
-         ]);                
+        // $this->record->submitToApproval();
     }
 
     protected function getCreatedNotification(): ?Notification

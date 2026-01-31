@@ -18,7 +18,7 @@ use Filament\Forms\Form;
 
 class ListLeaveEntitlements extends ListRecords
 {
-    protected static string $resource = LeaveEntitlementResource::class;    
+    protected static string $resource = LeaveEntitlementResource::class;
 
     protected function getHeaderActions(): array
     {
@@ -33,9 +33,9 @@ class ListLeaveEntitlements extends ListRecords
                 ->icon('fas-rotate')
                 ->requiresConfirmation()
                 ->modalHeading(__('btn.label.generate', ['label' => __('model.entitlement')]))
-                ->modalDescription(__('btn.msg.generate', ['name' => __('field.all') .' '. __('model.employees')]))
+                ->modalDescription(__('btn.msg.generate', ['name' => __('field.all') . ' ' . __('model.employees')]))
                 ->modalIcon('fas-rotate')
-                ->visible(fn () => Auth::user()->can('create', LeaveEntitlement::class))
+                ->visible(fn() => Auth::user()->can('create', LeaveEntitlement::class))
                 ->form([
                     DatePicker::make('start_date')
                         ->label(__('field.start_date'))
@@ -43,56 +43,64 @@ class ListLeaveEntitlements extends ListRecords
                         ->native(false)
                         ->live()
                         ->suffixIcon('fas-calendar')
-                        ->default(date('Y').'-01-01'),
+                        ->default(date('Y') . '-01-01'),
                     DatePicker::make('end_date')
                         ->label(__('field.end_date'))
                         ->required()
                         ->native(false)
                         ->suffixIcon('fas-calendar')
-                        ->default(date('Y').'-12-31'),
+                        ->default(date('Y') . '-12-31'),
                 ])
-                ->action(function(array $data){
-                    $users = User::with(['employee.contracts.contractType', 'entitlements'])->whereHas('employee', function(Builder $q) {
+                ->action(function (array $data) {
+                    $users = User::with(['employee.contracts.contractType', 'entitlements'])->whereHas('employee', function (Builder $q) {
                         $q->whereNull('resign_date');
-                        $q->whereHas('contracts', function(Builder $query) {
+                        $q->whereHas('contracts', function (Builder $query) {
                             $query->where('is_active', true);
-                            $query->whereHas('contractType', function(Builder $query) {
+                            $query->whereHas('contractType', function (Builder $query) {
                                 $query->where('allow_leave_request', true);
                             });
                         });
-                    })->get();                    
+                    })->get();
 
-                    foreach($users as $user){
-                        if($user->isNotBanned()){
+                    foreach ($users as $user) {
+                        if ($user->isNotBanned()) {
                             $contract = $user->employee->contracts->where('is_active', true)->first();
-                            $startDate = Carbon::createFromDate(now()->year, $user->employee->join_date->month, $user->employee->join_date->day);
-                            $endDate = Carbon::parse($startDate)->addYear()->subDay();
+                            // $startDate = Carbon::createFromDate(now()->year, $user->employee->join_date->month, $user->employee->join_date->day);
+                            // $endDate = Carbon::parse($startDate)->addYear()->subDay();
+        
                             $leaveTypes = LeaveType::query();
                             $leaveTypes->whereIn('id', $contract->contractType->leave_types);
                             $leaveTypes->where('balance', '>', 0);
-                            $leaveTypes->where($user->employee->gender->value, true);                            
+                            $leaveTypes->where($user->employee->gender->value, true);
 
-                            foreach($leaveTypes->get() as $leaveType){
-                                if(!empty($leaveType->balance_increment_amount) && !empty($leaveType->balance_increment_period)){
+                            foreach ($leaveTypes->get() as $leaveType) {
+                                if (!empty($leaveType->balance_increment_amount) && !empty($leaveType->balance_increment_period)) {
                                     $balance = getEntitlementBalance($user->employee->join_date, $leaveType);
-                                }else{
+                                } else {
                                     $balance = $leaveType->balance;
-                                } 
+                                }
 
-                                $entitlement = $user->entitlements()->where('leave_type_id', $leaveType->id)->where('is_active', true)->whereDate('start_date', $startDate)->whereDate('end_date', $endDate)->first();
-                                if(empty($entitlement)){
+                                // Fix: Check using the selected dates from the form, not anniversary dates
+                                $entitlement = $user->entitlements()
+                                    ->where('leave_type_id', $leaveType->id)
+                                    ->where('is_active', true)
+                                    ->whereDate('start_date', $data['start_date'])
+                                    ->whereDate('end_date', $data['end_date'])
+                                    ->first();
+
+                                if (empty($entitlement)) {
                                     // disable all other entitlements
                                     $user->entitlements()->where('leave_type_id', $leaveType->id)->update(['is_active' => false]);
 
                                     // create new entitlement for this leave type
-                                    $user->entitlements()->create([   
-                                        'leave_type_id' => $leaveType->id,             
+                                    $user->entitlements()->create([
+                                        'leave_type_id' => $leaveType->id,
                                         'start_date' => $data['start_date'],
                                         'end_date' => $data['end_date'],
                                         'balance' => $balance,
                                         'taken' => 0,
-                                    ]); 
-                                }                                                
+                                    ]);
+                                }
                             }
                         }
                     }
@@ -103,21 +111,21 @@ class ListLeaveEntitlements extends ListRecords
                         ->body(__('msg.body.success', ['name' => __('model.entitlement'), 'action' => __('action.generated')]))
                         ->send();
                 }),
-                
+
         ];
     }
 
     public function getTabs(): array
-    {   
+    {
         $tabs = array();
-        $tabs['all']    = Tab::make(__('field.all'));
+        $tabs['all'] = Tab::make(__('field.all'));
 
-        foreach(LeaveType::wherehas('entitlements')->get() as $type){
+        foreach (LeaveType::wherehas('entitlements')->get() as $type) {
             $tabs[$type->name] = Tab::make($type->name)
-                                    ->modifyQueryUsing(fn (Builder $query) => $query->where('leave_type_id', $type->id));
+                ->modifyQueryUsing(fn(Builder $query) => $query->where('leave_type_id', $type->id));
         }
 
-        
+
 
         return $tabs;
     }

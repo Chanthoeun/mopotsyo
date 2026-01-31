@@ -1,8 +1,9 @@
 <?php
 
 return [
-    'importing'         => 'Importing',
-    'exporting'         => 'Exporting',
-    'generating'        => 'Generating',
-    'generated'         => 'Generated',
+    'importing' => 'Importing',
+    'exporting' => 'Exporting',
+    'generating' => 'Generating',
+    'generated' => 'Generated',
+    'linked' => 'Linked',
 ];
