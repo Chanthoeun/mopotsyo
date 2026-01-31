@@ -70,11 +70,11 @@ class LeaveRequestPolicy extends BasePolicy
      */
     public function update(User $user, LeaveRequest $leaveRequest): bool
     {
-        if ($leaveRequest->status === 'pending' && $user->id == $leaveRequest->user_id) {
-            return $user->can('update_leave::request');
+        if ($user->id == $leaveRequest->user_id) {
+            return $leaveRequest->status === \App\Enums\Status::CREATED;
         }
-        return false;
 
+        return false;
     }
 
     /**

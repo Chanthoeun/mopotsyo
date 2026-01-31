@@ -243,14 +243,16 @@ class LeaveRequestResource extends Resource
                                                 $user = Auth::user();
                                             }
                                             // add date to request dates list
-                                            foreach (getDateRangeBetweenTwoDates($state, $get('to_date')) as $key => $date) {
+                                            $index = 0;
+                                            foreach (getDateRangeBetweenTwoDates($state, $get('to_date')) as $date) {
                                                 $workDay = $user->workDays->where('day_name.value', $date->dayOfWeek())->first();
                                                 if ($workDay) {
                                                     if (dateIsNotDuplicated($user, $date) && !publicHoliday($date)) {
-                                                        $set("requestDates.{$key}.date", $date->toDateString());
-                                                        $set("requestDates.{$key}.start_time", $workDay->start_time);
-                                                        $set("requestDates.{$key}.end_time", $workDay->end_time);
-                                                        $set("requestDates.{$key}.hours", getHoursBetweenTwoTimes($workDay->start_time, $workDay->end_time, $workDay->break_time, $date));
+                                                        $set("requestDates.{$index}.date", $date->toDateString());
+                                                        $set("requestDates.{$index}.start_time", $workDay->start_time);
+                                                        $set("requestDates.{$index}.end_time", $workDay->end_time);
+                                                        $set("requestDates.{$index}.hours", getHoursBetweenTwoTimes($workDay->start_time, $workDay->end_time, $workDay->break_time, $date));
+                                                        $index++;
                                                     }
                                                 }
                                             }
@@ -275,14 +277,16 @@ class LeaveRequestResource extends Resource
                                             }
 
                                             // add date to request dates list
-                                            foreach (getDateRangeBetweenTwoDates($get('from_date'), $state) as $key => $date) {
+                                            $index = 0;
+                                            foreach (getDateRangeBetweenTwoDates($get('from_date'), $state) as $date) {
                                                 $workDay = $user->workDays->where('day_name.value', $date->dayOfWeek())->first();
                                                 if ($workDay) {
                                                     if (dateIsNotDuplicated($user, $date) && !publicHoliday($date)) {
-                                                        $set("requestDates.{$key}.date", $date->toDateString());
-                                                        $set("requestDates.{$key}.start_time", $workDay->start_time);
-                                                        $set("requestDates.{$key}.end_time", $workDay->end_time);
-                                                        $set("requestDates.{$key}.hours", getHoursBetweenTwoTimes($workDay->start_time, $workDay->end_time, $workDay->break_time, $date));
+                                                        $set("requestDates.{$index}.date", $date->toDateString());
+                                                        $set("requestDates.{$index}.start_time", $workDay->start_time);
+                                                        $set("requestDates.{$index}.end_time", $workDay->end_time);
+                                                        $set("requestDates.{$index}.hours", getHoursBetweenTwoTimes($workDay->start_time, $workDay->end_time, $workDay->break_time, $date));
+                                                        $index++;
                                                     }
                                                 }
                                             }
@@ -590,7 +594,15 @@ class LeaveRequestResource extends Resource
                     ->weight('bold'),
                 Tables\Columns\TextColumn::make('status')
                     ->label(__('field.status'))
-                    ->badge(),
+                    ->badge()
+                    ->action(
+                        Tables\Actions\Action::make('view_history')
+                            ->label('View History')
+                            ->modalHeading('Approval History')
+                            ->modalContent(fn(LeaveRequest $record) => view('filament.admin.partials.approval-history', ['record' => $record]))
+                            ->modalSubmitAction(false)
+                            ->modalCancelAction(fn($action) => $action->label('Close'))
+                    ),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label(__('field.created_at'))
                     ->dateTime()
@@ -620,33 +632,46 @@ class LeaveRequestResource extends Resource
                 Tables\Filters\TrashedFilter::make()->visible(fn() => Auth::user()->hasRole('super_admin'))
             ])
             ->filtersFormColumns(3)
-            ->actions(
-                array_merge(
-                    [
-                        Tables\Actions\Action::make('submit')
-                            ->label(__('btn.submit'))
-                            ->icon('heroicon-o-paper-airplane')
-                            ->color('primary')
-                            ->requiresConfirmation()
-                            ->action(function (LeaveRequest $record) {
-                                $record->submitToApproval();
-                                Notification::make()
-                                    ->title(__('msg.body.submitted', ['label' => __('model.leave_request')]))
-                                    ->success()
-                                    ->send();
-                            })
-                            ->visible(fn(LeaveRequest $record) => $record->status === \App\Enums\Status::CREATED),
-                    ],
-                    ApprovalActions::make(
-                        [
-                            Tables\Actions\ActionGroup::make([
-                                Tables\Actions\ViewAction::make(),
-                                Tables\Actions\EditAction::make(),
-                            ])
-                        ]
-                    )
-                )
-            );
+            ->actions([
+                Tables\Actions\Action::make('submit')
+                    ->label(__('btn.submit'))
+                    ->icon('heroicon-o-paper-airplane')
+                    ->color('primary')
+                    ->requiresConfirmation()
+                    ->action(function (LeaveRequest $record) {
+                        if ($record->submitToApproval()) {
+                            Notification::make()
+                                ->title(__('msg.body.submitted', ['label' => __('model.leave_request')]))
+                                ->success()
+                                ->send();
+                        }
+                    })
+                    ->visible(fn(LeaveRequest $record) => $record->status === \App\Enums\Status::CREATED),
+                ...ApprovalActions::approverActions(),
+                ApprovalActions::discard(),
+                Tables\Actions\ViewAction::make(),
+                Tables\Actions\EditAction::make()
+                    ->visible(fn(LeaveRequest $record) => $record->user_id == Auth::id() && $record->status === \App\Enums\Status::CREATED),
+                Tables\Actions\Action::make('force_approve')
+                    ->label('Force Approve')
+                    ->icon('heroicon-o-check-circle')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->modalDescription('Are you sure you want to FORCE approve this request? This will mark all steps as approved and send the completion email immediately.')
+                    ->action(function (LeaveRequest $record) {
+                        $record->update(['status' => \App\Enums\Status::APPROVED]);
+                        $record->approvalSteps()->update(['status' => \App\Enums\Status::APPROVED]);
+
+                        // Dispatch event to send email
+                        \App\Events\ApprovalProcessed::dispatch($record, 'approved', 'Force Approved by ' . Auth::user()->name, Auth::user());
+
+                        Notification::make()
+                            ->title('Request Force Approved')
+                            ->success()
+                            ->send();
+                    })
+                    ->visible(fn(LeaveRequest $record) => Auth::user()->hasRole(['acting_director']) && empty($record->currentApprovalStep()?->approver_id) && $record->status !== \App\Enums\Status::APPROVED),
+            ]);
     }
 
     public static function getRelations(): array

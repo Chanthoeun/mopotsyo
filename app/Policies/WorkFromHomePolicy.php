@@ -35,7 +35,7 @@ class WorkFromHomePolicy extends BasePolicy
             return true;
 
         if (app(SettingOptions::class)->allow_work_from_home == true) {
-            if ($user->id === $workFromHome->user_id) {
+            if ($user->id == $workFromHome->user_id) {
                 return $user->can('view_work::from::home');
             }
 
@@ -58,14 +58,12 @@ class WorkFromHomePolicy extends BasePolicy
         return false;
     }
 
-    /**
-     * Determine whether the user can update the model.
-     */
     public function update(User $user, WorkFromHome $workFromHome): bool
     {
-        if ($workFromHome->status === \App\Enums\Status::CREATED && $user->id == $workFromHome->user_id) {
-            return $user->can('update_work::from::home');
+        if ($user->id == $workFromHome->user_id) {
+            return $workFromHome->status === \App\Enums\Status::CREATED;
         }
+
         return false;
     }
 

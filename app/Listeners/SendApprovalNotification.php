@@ -26,16 +26,16 @@ class SendApprovalNotification implements ShouldQueue
                 break;
             case \App\Enums\Status::APPROVED->value:
                 if ($record->isApproved()) {
-                    $this->notifyOwner($record, \App\Enums\Status::APPROVED->value, $comment);
+                    $this->notifyRecipient($record->user, $record, \App\Enums\Status::APPROVED->value, $comment, $event->actor);
                 } else {
                     $this->notifyNextApprover($record);
                 }
                 break;
             case \App\Enums\Status::REJECTED->value:
-                $this->notifyOwner($record, \App\Enums\Status::REJECTED->value, $comment);
+                $this->notifyRecipient($record->user, $record, \App\Enums\Status::REJECTED->value, $comment, $event->actor);
                 break;
             case \App\Enums\Status::DISCARDED->value:
-                $this->notifyOwner($record, \App\Enums\Status::DISCARDED->value, $comment);
+                $this->notifyDiscard($record, $comment, $event->actor);
                 break;
         }
     }
@@ -78,17 +78,28 @@ class SendApprovalNotification implements ShouldQueue
         }
     }
 
-    protected function notifyOwner($record, string $status, ?string $comment): void
+    protected function notifyRecipient($user, $record, string $status, ?string $comment, ?\App\Models\User $actor = null): void
     {
-        if (!$record->user)
+        if (!$user)
             return;
+
+        $isRecipientOwner = $user->id === $record->user_id;
 
         $modelName = $this->getModelName($record);
         $title = __('msg.label.' . $status, ['label' => '']);
 
-        // Default generic body
-        $body = __('msg.body.generic_' . $status, ['model' => $modelName, 'name' => $record->pr_no ?? $record->id]);
-        $url = $record->getFilamentUrl();
+        // Handle special discard body for non-owners (approvers/supervisors)
+        if ($status === \App\Enums\Status::DISCARDED->value && !$isRecipientOwner) {
+            $body = __('msg.body.discarded_notice', [
+                'name' => $record->user?->full_name ?? 'The requester',
+                'model' => $modelName,
+            ]);
+            $url = $record->getFilamentUrl();
+        } else {
+            // Default generic body
+            $body = __('msg.body.generic_' . $status, ['model' => $modelName, 'name' => $record->pr_no ?? $record->id]);
+            $url = $record->getFilamentUrl();
+        }
 
         // Custom body for LeaveRequest to provide more context
         if ($record instanceof \App\Models\LeaveRequest) {
@@ -105,7 +116,7 @@ class SendApprovalNotification implements ShouldQueue
                 'days' => $record->days,
                 'leave_type' => $record->leaveType->name ?? '-',
                 'dates' => $dateString,
-                'name' => 'Approver', // Default fallback
+                'name' => $actor?->full_name ?? 'Approver',
             ];
 
             if ($status === \App\Enums\Status::APPROVED->value) {
@@ -131,7 +142,7 @@ class SendApprovalNotification implements ShouldQueue
             $params = [
                 'amount' => $record->hours . ' ' . __('field.hour'),
                 'date' => $dateString,
-                'name' => 'Approver',
+                'name' => $actor?->full_name ?? 'Approver',
             ];
 
             if ($status === \App\Enums\Status::APPROVED->value) {
@@ -154,7 +165,7 @@ class SendApprovalNotification implements ShouldQueue
                 'days' => $record->days,
                 'from' => $start,
                 'to' => $end,
-                'name' => 'Approver',
+                'name' => $actor?->full_name ?? 'Approver',
             ];
 
             if ($status === \App\Enums\Status::APPROVED->value) {
@@ -176,7 +187,7 @@ class SendApprovalNotification implements ShouldQueue
             $params = [
                 'from' => $start,
                 'to' => $end,
-                'name' => 'Approver',
+                'name' => $actor?->full_name ?? 'Approver',
             ];
 
             if ($status === \App\Enums\Status::APPROVED->value) {
@@ -194,7 +205,7 @@ class SendApprovalNotification implements ShouldQueue
         } elseif ($record instanceof \App\Models\PurchaseRequest) {
             $params = [
                 'number' => $record->pr_no,
-                'actionedBy' => 'Approver', // Default
+                'actionedBy' => $actor?->full_name ?? 'Approver', // Default
             ];
 
             if ($status === \App\Enums\Status::APPROVED->value) {
@@ -220,12 +231,12 @@ class SendApprovalNotification implements ShouldQueue
             ->body($body)
             ->icon($icon)
             ->color($color)
-            ->sendToDatabase($record->user);
+            ->sendToDatabase($user);
 
         // Email Notification
         $message = [
             'subject' => $title,
-            'greeting' => __('mail.greeting', ['name' => $record->user->full_name]),
+            'greeting' => __('mail.greeting', ['name' => $user->full_name]),
             'body' => $body,
             'details' => $this->getRecordDetails($record),
             'action' => [
@@ -243,7 +254,26 @@ class SendApprovalNotification implements ShouldQueue
             }
         }
 
-        $record->user->notify(new SendEmailNotification($message, $comment, $cc));
+        $user->notify(new SendEmailNotification($message, $comment, $cc));
+    }
+
+    protected function notifyDiscard($record, ?string $comment, $actor): void
+    {
+        if (!$record->user)
+            return;
+
+        $isOwner = $actor && $actor->id === $record->user_id;
+
+        if ($isOwner) {
+            // Requester discarded their own request -> notify CURRENT approver
+            $step = $record->currentApprovalStep();
+            if ($step && $step->approver) {
+                $this->notifyRecipient($step->approver, $record, \App\Enums\Status::DISCARDED->value, $comment, $actor);
+            }
+        } else {
+            // Someone else (approver/admin) discarded -> notify requester
+            $this->notifyRecipient($record->user, $record, \App\Enums\Status::DISCARDED->value, $comment, $actor);
+        }
     }
 
     protected function getModelName($record): string
@@ -273,7 +303,9 @@ class SendApprovalNotification implements ShouldQueue
             }
 
             $details[__('field.total')] = $record->days . ' ' . __('field.day');
-            $details[__('field.reason')] = $record->reason;
+            if (!empty($record->reason)) {
+                $details[__('field.reason')] = $record->reason;
+            }
         } elseif ($record instanceof \App\Models\OverTime) {
             $details[__('model.overtime')] = $record->hours . ' ' . __('field.hour');
 
@@ -283,7 +315,9 @@ class SendApprovalNotification implements ShouldQueue
                 $end = \Carbon\Carbon::parse($dates->last()->date)->format('M d, Y');
                 $details[__('field.date')] = $start === $end ? $start : "$start - $end";
             }
-            $details[__('field.reason')] = $record->reason;
+            if (!empty($record->reason)) {
+                $details[__('field.reason')] = $record->reason;
+            }
 
         } elseif ($record instanceof \App\Models\WorkFromHome) {
             $start = $record->from_date ? \Carbon\Carbon::parse($record->from_date)->format('M d, Y') : '-';
@@ -291,7 +325,9 @@ class SendApprovalNotification implements ShouldQueue
 
             $details[__('field.date')] = $start === $end ? $start : "$start - $end";
             $details[__('field.total')] = $record->days . ' ' . __('field.day');
-            $details[__('field.reason')] = $record->reason;
+            if (!empty($record->reason)) {
+                $details[__('field.reason')] = $record->reason;
+            }
 
         } elseif ($record instanceof \App\Models\SwitchWorkDay) {
             $start = $record->from_date ? \Carbon\Carbon::parse($record->from_date)->format('M d, Y') : '-';
@@ -299,7 +335,9 @@ class SendApprovalNotification implements ShouldQueue
 
             $details[__('field.from_date')] = $start;
             $details[__('field.to_date')] = $end;
-            $details[__('field.reason')] = $record->reason;
+            if (!empty($record->reason)) {
+                $details[__('field.reason')] = $record->reason;
+            }
 
         } elseif ($record instanceof \App\Models\PurchaseRequest) {
             $details[__('field.pr_number')] = $record->pr_no;

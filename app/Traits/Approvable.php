@@ -10,6 +10,7 @@ use App\Models\PurchaseRequest;
 use App\Models\SwitchWorkDay;
 use App\Models\WorkFromHome;
 use App\Settings\SettingOptions;
+use Filament\Notifications\Notification;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Support\Facades\Auth;
@@ -89,26 +90,31 @@ trait Approvable
         return $query->where('status', \App\Enums\Status::APPROVED);
     }
 
-    public function submitToApproval()
+    /**
+     * Submit the record for approval processing.
+     * 
+     * @return bool True if submitted successfully or auto-approved, false if blocked by missing configuration.
+     */
+    public function submitToApproval(): bool
     {
         $user = $this->user ?? Auth::user();
         if (!$user || !$user->contract) {
-            return;
+            return false;
         }
 
-        // Clear existing steps if any (optional, but good for re-submission)
-        $this->approvalSteps()->delete();
-
-        $roles = [];
         $modelClass = get_class($this);
+        $requiredRoleIds = [];
+        $isRuleBased = false;
 
+        // 1. Identify required roles/paths
         if ($this instanceof LeaveRequest) {
             $leaveType = $this->leaveType;
             if ($leaveType && !empty($leaveType->rules)) {
                 foreach ($leaveType->rules as $rule) {
                     if ($this->days >= $rule['from_amount'] && (empty($rule['to_amount']) || $this->days <= $rule['to_amount'])) {
-                        $roles = $rule['roles'];
-                        break; // Use the first matching rule
+                        $requiredRoleIds = $rule['roles'] ?? [];
+                        $isRuleBased = true;
+                        break;
                     }
                 }
             }
@@ -117,79 +123,182 @@ trait Approvable
             if (!empty($rules)) {
                 foreach ($rules as $rule) {
                     if ($this->days >= $rule['from_amount'] && (empty($rule['to_amount']) || $this->days <= $rule['to_amount'])) {
-                        $roles = $rule['roles'];
+                        $requiredRoleIds = $rule['roles'] ?? [];
+                        $isRuleBased = true;
                         break;
                     }
                 }
             }
         }
 
-
+        // 2. Clear existing steps and start creation
+        $this->approvalSteps()->delete();
         $stepsCreated = 0;
 
-        // If no specific rules found roles, fetch all default approvers for this model from the contract
-        if (empty($roles)) {
-            $contractApprovers = $user->contract->approvers()->where('model_type', $modelClass)->get();
+        // 3. Fetch Contract Approvers in Order (Source of Truth)
+        $contractApprovers = $user->contract->approvers()
+            ->where('model_type', $modelClass)
+            ->whereNotNull('approver_id')
+            ->orderBy('sort')
+            ->get();
 
-            // Fallback: If no approvers configured, assign to Supervisor
-            if ($contractApprovers->isEmpty() && $user->contract->supervisor_id) {
-                ApprovalStep::create([
-                    'approvable_type' => $modelClass,
-                    'approvable_id' => $this->id,
-                    'approver_id' => $user->contract->supervisor_id,
-                    'role_id' => null,
-                    'level' => 1,
-                    'status' => \App\Enums\Status::PENDING,
+        // 4. Workflow Construction
+        $finalSteps = collect();
+
+        // 4a. Handle Direct Supervisor Fallback (Virtual Step)
+        static $supervisorRoleIdCache = null;
+        if ($supervisorRoleIdCache === null) {
+            $supervisorRoleIdCache = \Spatie\Permission\Models\Role::where('name', 'supervisor')->first()?->id;
+        }
+        $supervisorRoleId = $supervisorRoleIdCache;
+        $directSupervisorId = $user->contract->supervisor_id;
+
+        $supervisorIsRequired = $isRuleBased
+            ? in_array($supervisorRoleId, $requiredRoleIds)
+            : ($contractApprovers->isEmpty() && $directSupervisorId);
+
+        $supervisorExplicitlyConfigured = $contractApprovers->contains('role_id', $supervisorRoleId);
+
+        if ($supervisorIsRequired && !$supervisorExplicitlyConfigured && $directSupervisorId) {
+            $finalSteps->push([
+                'approver_id' => $directSupervisorId,
+                'role_id' => $supervisorRoleId,
+                'is_virtual' => true
+            ]);
+        }
+
+        // 4b. Handle Department Head Fallback (Virtual Step)
+        static $hodRoleIdCache = null;
+        if ($hodRoleIdCache === null) {
+            $hodRoleIdCache = \Spatie\Permission\Models\Role::where('name', 'head_of_department')->first()?->id;
+        }
+        $hodRoleId = $hodRoleIdCache;
+        $directHodId = $user->contract->department_head_id;
+
+        $hodIsRequired = $isRuleBased && in_array($hodRoleId, $requiredRoleIds);
+        $hodExplicitlyConfigured = $contractApprovers->contains('role_id', $hodRoleId);
+
+        // Only add Virtual HoD if required, not configured, AND distinct from the Virtual Supervisor we just added (if any)
+        if ($hodIsRequired && !$hodExplicitlyConfigured && $directHodId) {
+            // Avoid adding if same as supervisor fallback to prevent immediate partial duplication
+            if (!($supervisorIsRequired && !$supervisorExplicitlyConfigured && $directSupervisorId === $directHodId)) {
+                $finalSteps->push([
+                    'approver_id' => $directHodId,
+                    'role_id' => $hodRoleId,
+                    'is_virtual' => true
                 ]);
-                $stepsCreated++;
-            }
-
-            foreach ($contractApprovers as $index => $contractApprover) {
-                // First step is PENDING, subsequent steps are WAITING
-                $status = ($index == 0 && $stepsCreated == 0) ? \App\Enums\Status::PENDING : \App\Enums\Status::WAITING;
-
-                ApprovalStep::create([
-                    'approvable_type' => $modelClass,
-                    'approvable_id' => $this->id,
-                    'approver_id' => $contractApprover->approver_id,
-                    'role_id' => $contractApprover->role_id,
-                    'level' => $index + 1 + ($user->contract->supervisor_id && $contractApprovers->isEmpty() ? 1 : 0),
-                    'status' => $status,
-                ]);
-                $stepsCreated++;
-            }
-        } else {
-            // Rules defined roles, find specific approvers for these roles in the contract
-            foreach ($roles as $index => $roleId) {
-                $contractApprover = $user->contract->approvers()
-                    ->where('model_type', $modelClass)
-                    ->where('role_id', $roleId)
-                    ->first();
-
-                // First step is PENDING, subsequent steps are WAITING
-                $status = ($index == 0) ? \App\Enums\Status::PENDING : \App\Enums\Status::WAITING;
-
-                ApprovalStep::create([
-                    'approvable_type' => $modelClass,
-                    'approvable_id' => $this->id,
-                    'approver_id' => $contractApprover?->approver_id, // Might be null if not configured
-                    'role_id' => $roleId,
-                    'level' => $index + 1,
-                    'status' => $status,
-                ]);
-                $stepsCreated++;
             }
         }
 
-        if ($stepsCreated === 0) {
+        // 4c. Add Configured Approvers
+        foreach ($contractApprovers as $approver) {
+            if ($isRuleBased && !in_array($approver->role_id, $requiredRoleIds)) {
+                continue;
+            }
+            $finalSteps->push([
+                'approver_id' => $approver->approver_id,
+                'role_id' => $approver->role_id,
+                'is_virtual' => false
+            ]);
+        }
+
+        // 5. Validation: Did we satisfy all *Required* Roles?
+        if ($isRuleBased) {
+            $coveredRoleIds = $finalSteps->pluck('role_id')->toArray();
+
+            // If Supervisor/HoD were handled by fallback (even if merged), consider them covered
+            if ($supervisorIsRequired && !$supervisorExplicitlyConfigured && $directSupervisorId)
+                $coveredRoleIds[] = $supervisorRoleId;
+            if ($hodIsRequired && !$hodExplicitlyConfigured && $directHodId)
+                $coveredRoleIds[] = $hodRoleId;
+
+            $missingRoles = array_diff($requiredRoleIds, $coveredRoleIds);
+
+            if (!empty($missingRoles)) {
+                $missingRoleNames = \Spatie\Permission\Models\Role::whereIn('id', $missingRoles)->pluck('name')->toArray();
+                Notification::make()
+                    ->title(__('msg.label.error'))
+                    ->body(__('msg.body.missing_approver_role', ['roles' => implode(', ', $missingRoleNames)]))
+                    ->danger()
+                    ->persistent()
+                    ->send();
+                return false;
+            }
+        }
+
+        // 6. Deduplicate Consecutive Approvers
+        // If the same user appears in consecutive steps, we merge them (effectively skipping the second approval).
+        // This handles cases where Supervisor == Department Head.
+        $deduplicatedSteps = collect();
+        $lastApproverId = null;
+
+        foreach ($finalSteps as $step) {
+            if ($step['approver_id'] !== $lastApproverId) {
+                $deduplicatedSteps->push($step);
+                $lastApproverId = $step['approver_id'];
+            }
+        }
+
+        // 7. Persist Steps
+        if ($deduplicatedSteps->isEmpty()) {
+            if ($isRuleBased && !empty($requiredRoleIds)) {
+                return false;
+            }
+
             $this->update(['status' => \App\Enums\Status::APPROVED]);
-            \App\Events\ApprovalProcessed::dispatch($this, 'approved', 'Auto-approved (No approvers configured)');
-        } else {
-            // Update status to PENDING
-            $this->update(['status' => \App\Enums\Status::PENDING]);
-            // Dispatch event for processing (notifies first approver)
-            \App\Events\ApprovalProcessed::dispatch($this, 'submitted');
+            \App\Events\ApprovalProcessed::dispatch($this, 'approved', 'Auto-approved (No approvers configured)', $user);
+            return true;
         }
+
+        foreach ($deduplicatedSteps as $index => $stepData) {
+            $status = ($index == 0) ? \App\Enums\Status::PENDING : \App\Enums\Status::WAITING;
+
+            ApprovalStep::create([
+                'approvable_type' => $modelClass,
+                'approvable_id' => $this->id,
+                'approver_id' => $stepData['approver_id'],
+                'role_id' => $stepData['role_id'],
+                'level' => $index + 1,
+                'status' => $status,
+            ]);
+            $stepsCreated++;
+        }
+
+        $this->update(['status' => \App\Enums\Status::PENDING]);
+        \App\Events\ApprovalProcessed::dispatch($this, 'submitted', null, $user);
+
+        return true;
+    }
+
+    public function validateContractConfiguration($user = null): bool
+    {
+        $user = $user ?? $this->user ?? Auth::user();
+        if (!$user || !$user->contract) {
+            Notification::make()
+                ->title(__('msg.label.error'))
+                ->body('User has no valid contract.')
+                ->danger()
+                ->send();
+            return false;
+        }
+
+        $hasSupervisor = (bool) $user->contract->supervisor_id;
+        $hasApprovers = $user->contract->approvers()
+            ->where('model_type', get_class($this))
+            ->whereNotNull('approver_id')
+            ->exists();
+
+        if (!$hasSupervisor && !$hasApprovers) {
+            Notification::make()
+                ->title(__('msg.label.error'))
+                ->body(__('msg.body.no_approver_configured'))
+                ->danger()
+                ->persistent()
+                ->send();
+            return false;
+        }
+
+        return true;
     }
 
     public function getFilamentUrl(): string

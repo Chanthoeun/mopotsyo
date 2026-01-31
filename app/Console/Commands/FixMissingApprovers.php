@@ -4,7 +4,6 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use App\Models\ApprovalStep;
-use App\Models\User;
 use App\Enums\Status;
 
 class FixMissingApprovers extends Command
@@ -14,110 +13,85 @@ class FixMissingApprovers extends Command
      *
      * @var string
      */
-    protected $signature = 'approvals:fix-missing-approvers';
+    protected $signature = 'approvals:fix-broken-requests {--force : Force repair without confirmation}';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Fix pending approval steps that have a missing approver_id';
+    protected $description = 'Detect and repair broken approval workflows (e.g. pending requests with no approver). Resets workflow for affected records.';
 
     /**
      * Execute the console command.
      */
     public function handle()
     {
-        $this->info("Identifying pending approval steps with missing approvers...");
+        $models = [
+            \App\Models\LeaveRequest::class,
+            \App\Models\OverTime::class,
+            \App\Models\WorkFromHome::class,
+            \App\Models\PurchaseRequest::class,
+            \App\Models\SwitchWorkDay::class,
+        ];
 
-        // Find all pending approval steps with NULL approver_id
-        $badSteps = ApprovalStep::where('status', Status::PENDING)
-            ->whereNull('approver_id')
-            ->get();
+        $totalFixed = 0;
 
-        $count = $badSteps->count();
-        $this->info("Found {$count} potential bad steps.");
+        foreach ($models as $modelClass) {
+            $this->info("Checking " . class_basename($modelClass) . "...");
 
-        if ($count === 0) {
-            $this->info("No steps to fix.");
-            return;
+            // Find Pending records
+            $pendingRecords = $modelClass::where('status', Status::PENDING)->get();
+            $brokenRecords = $pendingRecords->filter(function ($record) {
+                $step = $record->currentApprovalStep();
+
+                // Case 1: Record is PENDING but has no current PENDING step. (Stuck/Inconsistent)
+                if (!$step) {
+                    return true;
+                }
+
+                // Case 2: Current step has no approver assigned.
+                if (empty($step->approver_id)) {
+                    return true;
+                }
+
+                return false;
+            });
+
+            $count = $brokenRecords->count();
+            if ($count === 0) {
+                // $this->info("No broken records found."); // Verbose
+                continue;
+            }
+
+            $this->warn("Found {$count} broken records for " . class_basename($modelClass));
+
+            if (!$this->option('force') && !$this->confirm("Do you want to reset and regenerate approval steps for these {$count} records?")) {
+                continue;
+            }
+
+            $bar = $this->output->createProgressBar($count);
+            $bar->start();
+
+            foreach ($brokenRecords as $record) {
+                try {
+                    // submitToApproval() will clear existing steps and regenerate them using current rules.
+                    if ($record->submitToApproval()) {
+                        $totalFixed++;
+                    } else {
+                        // Could not submit (e.g. still no approver config).
+                        // Consider logging error?
+                    }
+                } catch (\Exception $e) {
+                    // $this->error("Failed to fix {$record->id}: " . $e->getMessage());
+                }
+                $bar->advance();
+            }
+
+            $bar->finish();
+            $this->newLine();
         }
 
-        if (!$this->option('no-interaction') && !$this->confirm("Do you want to attempt to fix these {$count} steps?")) {
-            return;
-        }
-
-        $fixedCount = 0;
-        $skippedCount = 0;
-
-        $bar = $this->output->createProgressBar($count);
-        $bar->start();
-
-        foreach ($badSteps as $step) {
-            // Get the request model
-            $modelClass = $step->approvable_type;
-            $modelId = $step->approvable_id;
-
-            // Check if model exists
-            if (!class_exists($modelClass)) {
-                $skippedCount++;
-                $bar->advance();
-                continue;
-            }
-
-            $request = $modelClass::find($modelId);
-
-            if (!$request) {
-                $skippedCount++;
-                $bar->advance();
-                continue;
-            }
-
-            // Get the requester (User)
-            $requester = $request->user;
-            if (!$requester || !$requester->employee) {
-                $skippedCount++;
-                $bar->advance();
-                continue;
-            }
-
-            // Get active contract
-            $contract = $requester->employee->contracts()->where('is_active', true)->first();
-
-            if (!$contract) {
-                $skippedCount++;
-                $bar->advance();
-                continue;
-            }
-
-            // Check roles and assign correct approver
-            $roleName = $step->role ? $step->role->name : 'unknown';
-            $approverId = null;
-
-            if ($roleName === 'supervisor') {
-                $approverId = $contract->supervisor_id;
-            } elseif ($roleName === 'head_of_department') {
-                $approverId = $contract->department_head_id;
-            } elseif ($roleName === 'acting_director') {
-                $approverId = 2; // Hardcoded ID 2 for acting director
-            }
-
-            if ($approverId) {
-                $step->approver_id = $approverId;
-                $step->save();
-                $fixedCount++;
-            } else {
-                $skippedCount++;
-            }
-
-            $bar->advance();
-        }
-
-        $bar->finish();
-        $this->newLine();
-
-        $this->info("Process completed.");
-        $this->info("Fixed: {$fixedCount}");
-        $this->info("Skipped: {$skippedCount}");
+        $this->info("Process completed. Total records repaired: {$totalFixed}");
     }
 }

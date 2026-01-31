@@ -234,11 +234,11 @@ class User extends Authenticatable implements FilamentUser, RenewPasswordContrac
     protected function fullName(): Attribute
     {
         return Attribute::make(
-            get: function ($value) {
+            get: function () {
                 if ($this->relationLoaded('employee')) {
-                    return $this->employee?->name ?? $value;
+                    return $this->employee?->name ?? $this->name;
                 }
-                return $value;
+                return $this->name;
             }
         );
     }

@@ -22,6 +22,7 @@ class Aprovers extends Model
         'role_id',
         'approver_id',
         'contract_id',
+        'sort',
     ];
 
     /**

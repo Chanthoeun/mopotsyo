@@ -18,7 +18,8 @@ class ViewWorkFromHome extends ViewRecord
     protected function getHeaderActions(): array
     {
         return \App\Actions\ApprovalActions::makePageActions([], [
-            Actions\EditAction::make(),
+            Actions\EditAction::make()
+                ->visible(fn(\App\Models\WorkFromHome $record) => $record->user_id == \Illuminate\Support\Facades\Auth::id() && $record->status === \App\Enums\Status::CREATED),
         ]);
     }
 }

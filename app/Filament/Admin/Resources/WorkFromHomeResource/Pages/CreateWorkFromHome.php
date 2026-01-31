@@ -7,6 +7,7 @@ use App\Models\WorkFromHome;
 use App\Settings\SettingOptions;
 use Filament\Actions;
 use Filament\Resources\Pages\CreateRecord;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 
 class CreateWorkFromHome extends CreateRecord
@@ -48,6 +49,17 @@ class CreateWorkFromHome extends CreateRecord
         }
     }
 
+    protected function beforeCreate(): void
+    {
+        $userId = $this->data['user_id'] ?? Auth::id();
+        $user = User::find($userId);
+
+        $model = new ($this->getModel());
+        if (!$model->validateContractConfiguration($user)) {
+            $this->halt();
+        }
+    }
+
     protected function mutateFormDataBeforeCreate(array $data): array
     {
         $data['user_id'] = Auth::id();
@@ -58,7 +70,7 @@ class CreateWorkFromHome extends CreateRecord
 
     protected function getRedirectUrl(): string
     {
-        return $this->previousUrl ?? $this->getResource()::getUrl('index');
+        return $this->getResource()::getUrl('index');
     }
 
     protected function afterCreate(): void

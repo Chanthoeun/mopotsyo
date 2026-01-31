@@ -44,17 +44,23 @@ class ListLeaveRequests extends ListRecords
         $myPendingCount = $pendingCounts->get($user->id, 0);
         $subordinatePendingCount = $pendingCounts->forget($user->id)->sum();
 
-        return [
-            'my_requests' => Tab::make()
+        $tabs = [];
+
+        if (LeaveRequest::where('user_id', $user->id)->exists()) {
+            $tabs['my_requests'] = Tab::make()
                 ->label(__('label.my', ['label' => __('model.leave_request')]))
                 ->modifyQueryUsing(fn(Builder $query) => $query->where('user_id', $user->id))
-                ->badge($myPendingCount),
-            'my_subordinates' => Tab::make()
-                ->label(__('field.subordinators'))
-                ->modifyQueryUsing(fn(Builder $query) => $query->whereIn('user_id', $subordinateIds))
-                ->badge($subordinatePendingCount),
-            'all' => Tab::make()
-                ->label(__('field.all')),
-        ];
+                ->badge($myPendingCount);
+        }
+
+        $tabs['my_subordinates'] = Tab::make()
+            ->label(__('field.subordinators'))
+            ->modifyQueryUsing(fn(Builder $query) => $query->whereIn('user_id', $subordinateIds))
+            ->badge($subordinatePendingCount);
+
+        $tabs['all'] = Tab::make()
+            ->label(__('field.all'));
+
+        return $tabs;
     }
 }

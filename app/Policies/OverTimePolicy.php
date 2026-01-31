@@ -30,7 +30,7 @@ class OverTimePolicy extends BasePolicy
         if ($user->hasRole(['super_admin', 'human_resource']))
             return true;
 
-        if ($user->id === $overTime->user_id) {
+        if ($user->id == $overTime->user_id) {
             return $user->can('view_over::time');
         }
 
@@ -53,14 +53,12 @@ class OverTimePolicy extends BasePolicy
         return $user->can('create_over::time');
     }
 
-    /**
-     * Determine whether the user can update the model.
-     */
     public function update(User $user, OverTime $overTime): bool
     {
-        if ($overTime->status === \App\Enums\Status::CREATED && $user->id == $overTime->user_id) {
-            return $user->can('update_over::time');
+        if ($user->id == $overTime->user_id) {
+            return $overTime->status === \App\Enums\Status::CREATED;
         }
+
         return false;
     }
 

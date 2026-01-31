@@ -31,7 +31,7 @@ class PurchaseRequestPolicy extends BasePolicy
         if ($user->hasRole(['super_admin', 'human_resource']))
             return true;
 
-        if ($user->id === $purchaseRequest->user_id) {
+        if ($user->id == $purchaseRequest->user_id) {
             return $user->can('view_purchase::request');
         }
 
@@ -51,14 +51,12 @@ class PurchaseRequestPolicy extends BasePolicy
         return $user->can('create_purchase::request');
     }
 
-    /**
-     * Determine whether the user can update the model.
-     */
     public function update(User $user, PurchaseRequest $purchaseRequest): bool
     {
-        if ($purchaseRequest->status === \App\Enums\Status::CREATED && $user->id == $purchaseRequest->user_id) {
-            return $user->can('update_purchase::request');
+        if ($user->id == $purchaseRequest->user_id) {
+            return $purchaseRequest->status === \App\Enums\Status::CREATED;
         }
+
         return false;
     }
 

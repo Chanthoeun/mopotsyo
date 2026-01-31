@@ -6,6 +6,7 @@ use App\Filament\Admin\Resources\SwitchWorkDayResource;
 use App\Models\SwitchWorkDay;
 use Filament\Actions;
 use Filament\Resources\Pages\CreateRecord;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 
 class CreateSwitchWorkDay extends CreateRecord
@@ -47,6 +48,17 @@ class CreateSwitchWorkDay extends CreateRecord
         }
     }
 
+    protected function beforeCreate(): void
+    {
+        $userId = $this->data['user_id'] ?? Auth::id();
+        $user = User::find($userId);
+
+        $model = new ($this->getModel());
+        if (!$model->validateContractConfiguration($user)) {
+            $this->halt();
+        }
+    }
+
     protected function mutateFormDataBeforeCreate(array $data): array
     {
         $data['user_id'] = Auth::id();
@@ -57,7 +69,7 @@ class CreateSwitchWorkDay extends CreateRecord
 
     protected function getRedirectUrl(): string
     {
-        return $this->previousUrl ?? $this->getResource()::getUrl('index');
+        return $this->getResource()::getUrl('index');
     }
 
     protected function afterCreate(): void

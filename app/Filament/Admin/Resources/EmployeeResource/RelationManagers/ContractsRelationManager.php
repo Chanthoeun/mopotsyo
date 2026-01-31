@@ -129,6 +129,7 @@ class ContractsRelationManager extends RelationManager
                                 ->label(__('model.approvers'))
                                 ->relationship()
                                 ->reorderable(true)
+                                ->orderColumn('sort')
                                 ->addActionLabel(__('btn.label.add', ['label' => __('model.approver')]))
                                 ->defaultItems(0)
                                 ->headers([
@@ -295,7 +296,7 @@ class ContractsRelationManager extends RelationManager
             ])
             ->modifyQueryUsing(fn(Builder $query) => $query->withoutGlobalScopes([
                 SoftDeletingScope::class,
-            ]));
+            ])->with(['contractType', 'department', 'shift', 'supervisor', 'departmentHead']));
     }
     protected function updateApprovers($supervisorId, $departmentHeadId, Set $set, Get $get)
     {

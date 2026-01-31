@@ -139,7 +139,15 @@ class PurchaseRequestResource extends Resource
                     ->weight('bold'),
                 Tables\Columns\TextColumn::make('status')
                     ->label(__('field.status'))
-                    ->badge(),
+                    ->badge()
+                    ->action(
+                        Tables\Actions\Action::make('view_history')
+                            ->label('View History')
+                            ->modalHeading('Approval History')
+                            ->modalContent(fn(PurchaseRequest $record) => view('filament.admin.partials.approval-history', ['record' => $record]))
+                            ->modalSubmitAction(false)
+                            ->modalCancelAction(fn($action) => $action->label('Close'))
+                    ),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label(__('field.created_at'))
                     ->dateTime()
@@ -163,33 +171,46 @@ class PurchaseRequestResource extends Resource
                     ->label(__('field.status'))
                     ->options(\App\Enums\Status::class),
             ])
-            ->actions(
-                array_merge(
-                    [
-                        Tables\Actions\Action::make('submit')
-                            ->label(__('btn.submit'))
-                            ->icon('heroicon-o-paper-airplane')
-                            ->color('primary')
-                            ->requiresConfirmation()
-                            ->action(function (PurchaseRequest $record) {
-                                $record->submitToApproval();
-                                Notification::make()
-                                    ->title(__('msg.body.submitted', ['label' => __('model.purchase_request')]))
-                                    ->success()
-                                    ->send();
-                            })
-                            ->visible(fn(PurchaseRequest $record) => $record->status === \App\Enums\Status::CREATED),
-                    ],
-                    ApprovalActions::make(
-                        [
-                            Tables\Actions\ActionGroup::make([
-                                Tables\Actions\ViewAction::make(),
-                                Tables\Actions\EditAction::make(),
-                            ])
-                        ]
-                    )
-                )
-            );
+            ->actions([
+                Tables\Actions\Action::make('submit')
+                    ->label(__('btn.submit'))
+                    ->icon('heroicon-o-paper-airplane')
+                    ->color('primary')
+                    ->requiresConfirmation()
+                    ->action(function (PurchaseRequest $record) {
+                        if ($record->submitToApproval()) {
+                            Notification::make()
+                                ->title(__('msg.body.submitted', ['label' => __('model.purchase_request')]))
+                                ->success()
+                                ->send();
+                        }
+                    })
+                    ->visible(fn(PurchaseRequest $record) => $record->status === \App\Enums\Status::CREATED),
+                ApprovalActions::discard(),
+                Tables\Actions\ViewAction::make(),
+                Tables\Actions\EditAction::make()
+                    ->visible(fn(PurchaseRequest $record) => $record->user_id == Auth::id() && $record->status === \App\Enums\Status::CREATED),
+                ...ApprovalActions::approverActions(),
+                Tables\Actions\Action::make('force_approve')
+                    ->label('Force Approve')
+                    ->icon('heroicon-o-check-circle')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    ->modalDescription('Are you sure you want to FORCE approve this request? This will mark all steps as approved and send the completion email immediately.')
+                    ->action(function (PurchaseRequest $record) {
+                        $record->update(['status' => \App\Enums\Status::APPROVED]);
+                        $record->approvalSteps()->update(['status' => \App\Enums\Status::APPROVED]);
+
+                        // Dispatch event to send email
+                        \App\Events\ApprovalProcessed::dispatch($record, 'approved', 'Force Approved by ' . Auth::user()->name, Auth::user());
+
+                        Notification::make()
+                            ->title('Request Force Approved')
+                            ->success()
+                            ->send();
+                    })
+                    ->visible(fn(PurchaseRequest $record) => Auth::user()->hasRole(['acting_director']) && empty($record->currentApprovalStep()?->approver_id) && $record->status !== \App\Enums\Status::APPROVED),
+            ]);
     }
 
     public static function getRelations(): array

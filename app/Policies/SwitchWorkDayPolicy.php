@@ -35,7 +35,7 @@ class SwitchWorkDayPolicy extends BasePolicy
             return true;
 
         if (app(SettingOptions::class)->allow_switch_day_work == true) {
-            if ($user->id === $switchWorkDay->user_id) {
+            if ($user->id == $switchWorkDay->user_id) {
                 return $user->can('view_switch::work::day');
             }
 
@@ -58,14 +58,12 @@ class SwitchWorkDayPolicy extends BasePolicy
         return false;
     }
 
-    /**
-     * Determine whether the user can update the model.
-     */
     public function update(User $user, SwitchWorkDay $switchWorkDay): bool
     {
-        if ($switchWorkDay->status === \App\Enums\Status::CREATED && $user->id == $switchWorkDay->user_id) {
-            return $user->can('update_switch::work::day');
+        if ($user->id == $switchWorkDay->user_id) {
+            return $switchWorkDay->status === \App\Enums\Status::CREATED;
         }
+
         return false;
     }
 

@@ -9,6 +9,7 @@ use App\Settings\SettingOptions;
 use Filament\Actions;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 
 class CreateOverTime extends CreateRecord
@@ -50,9 +51,20 @@ class CreateOverTime extends CreateRecord
         }
     }
 
+    protected function beforeCreate(): void
+    {
+        $userId = $this->data['user_id'] ?? Auth::id();
+        $user = User::find($userId);
+
+        $model = new ($this->getModel());
+        if (!$model->validateContractConfiguration($user)) {
+            $this->halt();
+        }
+    }
+
     protected function getRedirectUrl(): string
     {
-        return $this->previousUrl ?? $this->getResource()::getUrl('index');
+        return $this->getResource()::getUrl('index');
     }
 
     protected function mutateFormDataBeforeCreate(array $data): array
