@@ -24,6 +24,7 @@ class ListLeaveCarryForwards extends ListRecords
                 ->requiresConfirmation()
                 ->modalHeading(__('btn.generate_carry_forward'))
                 ->modalDescription(__('btn.msg.generate_carry_forward'))
+                ->visible(fn() => auth()->user()->hasRole(['super_admin', 'human_resource']))
                 ->action(function () {
                     $count = 0;
                     // Find expired entitlements that allow carry forward and have remaining balance
@@ -86,6 +87,7 @@ class ListLeaveCarryForwards extends ListRecords
                 ->requiresConfirmation()
                 ->modalHeading(__('btn.link_leave_request'))
                 ->modalDescription(__('btn.msg.link_leave_request'))
+                ->visible(fn() => auth()->user()->hasRole(['super_admin', 'human_resource']))
                 ->action(function () {
                     $totalLinked = 0;
                     $records = \App\Models\LeaveCarryForward::where('end_date', '>=', now())->get();

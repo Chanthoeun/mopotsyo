@@ -195,6 +195,7 @@ class LeaveCarryForwardResource extends Resource
                         ->icon('heroicon-o-link')
                         ->color('success')
                         ->modalWidth('lg')
+                        ->visible(fn() => auth()->user()->hasRole(['super_admin', 'human_resource']))
                         ->form(function (LeaveCarryForward $record) {
                             $leaveType = $record->leaveEntitlement->leaveType;
 
@@ -266,6 +267,7 @@ class LeaveCarryForwardResource extends Resource
                         ->requiresConfirmation()
                         ->modalHeading(__('btn.link_all_carry_forward'))
                         ->modalDescription(__('btn.msg.link_all_carry_forward'))
+                        ->visible(fn() => auth()->user()->hasRole(['super_admin', 'human_resource']))
                         ->action(function (\Illuminate\Database\Eloquent\Collection $records) {
                             $totalLinked = 0;
                             foreach ($records as $record) {
