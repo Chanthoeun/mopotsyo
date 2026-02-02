@@ -199,9 +199,9 @@ class LeaveEntitlementResource extends Resource
                     ->badge()
                     ->color('success')
                     ->sortable(),
-                Tables\Columns\IconColumn::make('is_active')
+                Tables\Columns\ToggleColumn::make('is_active')
                     ->label(__('field.is_active'))
-                    ->boolean(),
+                    ->disabled(fn() => !auth()->user()->hasRole(['super_admin', 'human_resource'])),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label(__('field.created_at'))
                     ->dateTime()
