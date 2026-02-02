@@ -19,6 +19,21 @@ class EditTimesheet extends EditRecord
         ];
     }
 
+    protected function mutateFormDataBeforeSave(array $data): array
+    {
+        // Auto-generate timesheet name: Employee name - Month Year
+        $user = $this->record->user;
+        $employeeName = $user->name;
+
+        // Get month and year from from_date
+        $fromDate = \Carbon\Carbon::parse($data['from_date']);
+        $monthYear = $fromDate->format('F Y'); // e.g., "February 2026"
+
+        $data['name'] = $employeeName . ' - ' . $monthYear;
+
+        return $data;
+    }
+
     protected function getRedirectUrl(): string
     {
         return $this->getResource()::getUrl('index');

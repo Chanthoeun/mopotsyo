@@ -55,10 +55,6 @@ class TimesheetResource extends Resource
                 Forms\Components\Section::make()
                     ->columns(2)
                     ->schema([
-                        Forms\Components\TextInput::make('name')
-                            ->label(__('field.name'))
-                            ->required()
-                            ->columnSpanFull(),
                         Forms\Components\DatePicker::make('from_date')
                             ->label(__('field.from_date'))
                             ->placeholder(__('field.select_date'))

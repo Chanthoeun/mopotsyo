@@ -245,7 +245,7 @@ class LeaveRequestResource extends Resource
                                             // add date to request dates list
                                             $index = 0;
                                             foreach (getDateRangeBetweenTwoDates($state, $get('to_date')) as $date) {
-                                                $workDay = $user->workDays->where('day_name.value', $date->dayOfWeek())->first();
+                                                $workDay = $user->employee?->workDays->where('is_active', true)->where('day_name.value', $date->dayOfWeek())->first();
                                                 if ($workDay) {
                                                     if (dateIsNotDuplicated($user, $date) && !publicHoliday($date)) {
                                                         $set("requestDates.{$index}.date", $date->toDateString());
@@ -279,7 +279,7 @@ class LeaveRequestResource extends Resource
                                             // add date to request dates list
                                             $index = 0;
                                             foreach (getDateRangeBetweenTwoDates($get('from_date'), $state) as $date) {
-                                                $workDay = $user->workDays->where('day_name.value', $date->dayOfWeek())->first();
+                                                $workDay = $user->employee?->workDays->where('is_active', true)->where('day_name.value', $date->dayOfWeek())->first();
                                                 if ($workDay) {
                                                     if (dateIsNotDuplicated($user, $date) && !publicHoliday($date)) {
                                                         $set("requestDates.{$index}.date", $date->toDateString());

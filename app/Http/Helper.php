@@ -140,7 +140,16 @@ if (!function_exists('isWorkHour')) {
         $requestTime = Carbon::parse($request_time);
         $dayOfWeek = Carbon::parse($date)->dayOfWeek();
 
-        foreach ($user->workDays as $workDay) {
+        // Access workDays through the employee relationship
+        if (!$user->employee) {
+            return false;
+        }
+
+        if (!$user->employee->relationLoaded('workDays')) {
+            $user->employee->load('workDays');
+        }
+
+        foreach ($user->employee->workDays->where('is_active', true) as $workDay) {
             if ($workDay->day_name->value != $dayOfWeek) {
                 continue;
             }
@@ -389,10 +398,16 @@ if (!function_exists('isWorkFromHome')) {
 if (!function_exists('isWorkDay')) {
     function isWorkDay($user, $date): bool|object
     {
-        if (!$user->relationLoaded('workDays')) {
-            $user->load('workDays');
+        // Access workDays through the employee relationship
+        if (!$user->employee) {
+            return false;
         }
-        return $user->workDays->where('day_name.value', getDayOfWeek($date))->first() ?? false;
+
+        if (!$user->employee->relationLoaded('workDays')) {
+            $user->employee->load('workDays');
+        }
+
+        return $user->employee->workDays->where('is_active', true)->where('day_name.value', getDayOfWeek($date))->first() ?? false;
     }
 }
 

@@ -78,7 +78,7 @@ class SwitchWorkDayResource extends Resource
                                         // }
                         
                                         // Not allow to select work day that is not  your work day                                         
-                                        if (empty(Auth::user()->workDays->where('day_name.value', Carbon::parse($value)->dayOfWeek())->first())) {
+                                        if (empty(Auth::user()->employee?->workDays->where('is_active', true)->where('day_name.value', Carbon::parse($value)->dayOfWeek())->first())) {
                                             $fail(__('msg.body.working_day'));
                                         }
 
@@ -110,7 +110,7 @@ class SwitchWorkDayResource extends Resource
                                         // }
                         
                                         // Not allow to select work day that is not  your work day                                         
-                                        if (Auth::user()->workDays->where('day_name.value', Carbon::parse($value)->dayOfWeek())->first()) {
+                                        if (Auth::user()->employee?->workDays->where('is_active', true)->where('day_name.value', Carbon::parse($value)->dayOfWeek())->first()) {
                                             $fail(__('msg.body.not_working_day'));
                                         }
 
