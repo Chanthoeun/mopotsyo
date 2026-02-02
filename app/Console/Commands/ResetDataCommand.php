@@ -29,9 +29,10 @@ class ResetDataCommand extends Command
         DB::statement('SET FOREIGN_KEY_CHECKS=0;');
         DB::table('request_dates')->truncate();
         DB::table('request_items')->truncate();
-        DB::table('process_approvers')->truncate();
-        DB::table('process_approvals')->truncate();
-        DB::table('process_approval_statuses')->truncate();
+        DB::table('process_approvers')->delete();
+        DB::table('process_approvals')->delete();
+        DB::table('process_approval_statuses')->delete();
+        DB::table('approval_steps')->truncate();
         DB::table('leave_requests')->truncate();
         DB::table('over_times')->truncate();
         DB::table('leave_request_over_time')->truncate();
