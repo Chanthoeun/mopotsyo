@@ -202,7 +202,7 @@ class LeaveCarryForwardResource extends Resource
                             // Find eligible LeaveRequest IDs
                             $leaveRequestIds = \App\Models\LeaveRequest::where('user_id', $record->user_id)
                                 ->where('leave_type_id', $leaveType->id)
-                                ->where('status', \App\Enums\Status::APPROVED->value)
+                                ->whereIn('status', [\App\Enums\Status::APPROVED, \App\Enums\Status::PENDING])
                                 ->pluck('id');
 
                             // Find eligible RequestDates
@@ -277,7 +277,7 @@ class LeaveCarryForwardResource extends Resource
                                 // Find eligible LeaveRequest IDs
                                 $leaveRequestIds = \App\Models\LeaveRequest::where('user_id', $record->user_id)
                                     ->where('leave_type_id', $leaveType->id)
-                                    ->where('status', \App\Enums\Status::APPROVED->value)
+                                    ->whereIn('status', [\App\Enums\Status::APPROVED, \App\Enums\Status::PENDING])
                                     ->pluck('id');
 
                                 // Find eligible RequestDates

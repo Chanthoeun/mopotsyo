@@ -626,6 +626,11 @@ class LeaveRequestResource extends Resource
                     ->relationship('leaveType', 'name')
                     ->preload()
                     ->searchable(),
+                Tables\Filters\SelectFilter::make('user_id')
+                    ->label(__('field.requested_by'))
+                    ->relationship('user', 'name')
+                    ->preload()
+                    ->searchable(),
                 Tables\Filters\SelectFilter::make('status')
                     ->label(__('field.status'))
                     ->options(\App\Enums\Status::class),

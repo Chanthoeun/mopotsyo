@@ -98,7 +98,7 @@ class ListLeaveCarryForwards extends ListRecords
                         // Find eligible LeaveRequest IDs
                         $leaveRequestIds = \App\Models\LeaveRequest::where('user_id', $record->user_id)
                             ->where('leave_type_id', $leaveType->id)
-                            ->where('status', \App\Enums\Status::APPROVED->value)
+                            ->whereIn('status', [\App\Enums\Status::APPROVED, \App\Enums\Status::PENDING])
                             ->pluck('id');
 
                         // Find eligible RequestDates
