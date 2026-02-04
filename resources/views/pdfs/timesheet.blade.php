@@ -379,98 +379,56 @@ $leaveTypeIds = $user->contract->contractType->leave_types;
                             @endphp
                             @php
                                 $carryForward = $user->carryForwards()->whereYear('created_at', $record->from_date->year)->latest()->first();
-
-                                // Calculate potential carry forward usage from Annual Leave that hasn't been linked yet
-                                $potentialCfTaken = 0;
-                                if ($carryForward && $carryForward->balance > 0) {
-                                    $leaveType = \App\Models\LeaveType::where('name', 'like', '%Annual%')->first(); // Assuming 'Annual Leave' is the type
-                                    if ($leaveType) {
-                                        // Get taken leave strictly within the carry forward intersection period
-                                        $cfStartDate = $carryForward->start_date;
-                                        $cfEndDate = $carryForward->end_date; // e.g. March 31st
-
-                                        // Intersection of Timesheet Period (record) and Carry Forward Validity Period
-                                        $overlapStart = $record->from_date->max($cfStartDate);
-                                        $overlapEnd = $record->to_date->min($cfEndDate);
-
-                                        if ($overlapStart <= $overlapEnd) {
-                                            $potentialCfTaken = (float) getTakenLeave($user, $leaveType->id, $overlapStart, $overlapEnd);
-                                        }
-                                    }
-                                }
                             @endphp
 
-                            @foreach ($leaveTypes as $leaveType)
-                                @php
-                                    // Find the active entitlement for the timesheet's period.
-                                    $entitlement = $user->entitlements()
-                                        ->where('leave_type_id', $leaveType->id)
-                                        ->where('is_active', true)
-                                        ->where('start_date', '<=', $record->from_date)
-                                        ->where('end_date', '>=', $record->from_date)
-                                        ->first();
+                                @foreach ($leaveTypes as $leaveType)
+                                    @php
+                                        // Find the active entitlement for the timesheet's period.
+                                        $entitlement = $user->entitlements()
+                                            ->where('leave_type_id', $leaveType->id)
+                                            ->where('is_active', true)
+                                            ->where('start_date', '<=', $record->from_date)
+                                            ->where('end_date', '>=', $record->from_date)
+                                            ->first();
 
-                                    $allowance = 0;
-                                    $allTaken = 0;
-                                    $takenThisMonth = 0;
-                                    $remaining = 0;
+                                        $allowance = 0;
+                                        $allTaken = 0;
+                                        $takenThisMonth = 0;
+                                        $remaining = 0;
 
-                                    if ($entitlement) {
-                                        $allowance = (float) $entitlement->balance;
-                                        $allTaken = (float) $entitlement->taken + (float) getTakenLeave($user, $leaveType->id, $entitlement->start_date, $entitlement->end_date);
-                                        $takenThisMonth = (float) getTakenLeave($user, $leaveType->id, $record->from_date, $record->to_date);
-
-                                        // VIRTUAL DEDUCTION: If this is Annual Leave, deduct the amount that SHOULD be covered by Carry Forward
-                                        if (stripos($leaveType->name, 'Annual') !== false && $carryForward && $carryForward->balance > 0) {
-                                            // Use min() to ensure we don't deduct more than available balance or more than actually taken
-                                            $deductible = min($potentialCfTaken, (float) $carryForward->balance);
-
-                                            // Adjust displayed values
-                                            $allTaken -= $deductible;
-                                            $takenThisMonth -= $deductible;
-
-                                            // Ensure we don't go below zero (sanity check)
-                                            $allTaken = max(0, $allTaken);
-                                            $takenThisMonth = max(0, $takenThisMonth);
+                                        if ($entitlement) {
+                                            $allowance = (float) $entitlement->balance;
+                                            $allTaken = (float) $entitlement->taken + (float) getTakenLeave($user, $leaveType->id, $entitlement->start_date, $entitlement->end_date);
+                                            $takenThisMonth = (float) getTakenLeave($user, $leaveType->id, $record->from_date, $record->to_date);
+                                            $remaining = $allowance - $allTaken;
                                         }
+                                    @endphp
+                                    <tr>
+                                        <td>{{ $leaveType->name }}</td>
+                                        <td align="center">{{ __('field.day') }}</td>
+                                        <td align="center">{{ $allowance > 0 ? $allowance : 0 }}</td>
+                                        <td align="center">{{ $allTaken > 0 ? $allTaken : 0 }}</td>
+                                        <td align="center">{{ $takenThisMonth > 0 ? $takenThisMonth : 0 }}</td>
+                                        <td align="center">{{ $allowance > 0 ? $remaining : 0 }}</td>
+                                    </tr>
+                                @endforeach
 
-                                        $remaining = $allowance - $allTaken;
-                                    }
-                                @endphp
-                                <tr>
-                                    <td>{{ $leaveType->name }}</td>
-                                    <td align="center">{{ __('field.day') }}</td>
-                                    <td align="center">{{ $allowance > 0 ? $allowance : 0 }}</td>
-                                    <td align="center">{{ $allTaken > 0 ? $allTaken : 0 }}</td>
-                                    <td align="center">{{ $takenThisMonth > 0 ? $takenThisMonth : 0 }}</td>
-                                    <td align="center">{{ $allowance > 0 ? $remaining : 0 }}</td>
-                                </tr>
-                            @endforeach
-
-                            @if ($carryForward)
-                                @php
-                                    $cfTaken = (float) getCarryForwardTaken($carryForward, $carryForward->start_date, $record->to_date);
-
-                                    // VIRTUAL ADDITION: Add the unlinked potential usage to the displayed "Used" amount
-                                    if ($potentialCfTaken > 0) {
-                                        $addable = min($potentialCfTaken, (float) $carryForward->balance);
-                                        $cfTaken += $addable;
-                                    }
-
-                                    $cfRemaining = (float) $carryForward->balance - $cfTaken;
-                                    $cfRemaining = max(0, $cfRemaining); // Sanity check
-                                @endphp
-                                <tr>
-                                    <td>@lang('model.carry_forward')</td>
-                                    <td align="center">{{__('field.day')}}</td>
-                                    <td align="center">{{floatval($carryForward->balance)}}</td>
-                                    <td align="center" colspan=2>{{$cfTaken}}</td>
-                                    <td align="center">{{$cfRemaining}}</td>
-                                </tr>
-                            @endif
-                        </tbody>
-                    </table>
-                </div>
+                                @if ($carryForward)
+                                    @php
+                                        $cfTaken = (float) getCarryForwardTaken($carryForward, $carryForward->start_date, $record->to_date);
+                                        $cfRemaining = max(0, (float) $carryForward->balance - $cfTaken);
+                                    @endphp
+                                    <tr>
+                                        <td>@lang('model.carry_forward')</td>
+                                        <td align="center">{{__('field.day')}}</td>
+                                        <td align="center">{{floatval($carryForward->balance)}}</td>
+                                        <td align="center" colspan=2>{{$cfTaken}}</td>
+                                        <td align="center">{{$cfRemaining}}</td>
+                                    </tr>
+                                @endif
+                            </tbody>
+                        </table>
+                    </div>
             @endif
         </div>
         <div style="clear: both;"></div>

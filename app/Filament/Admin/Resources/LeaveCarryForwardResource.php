@@ -236,6 +236,7 @@ class LeaveCarryForwardResource extends Resource
                             $dates = \App\Models\RequestDate::whereIn('id', $data['request_dates'])->get();
 
                             foreach ($dates as $date) {
+                                /** @var \App\Models\RequestDate $date */
                                 $date->leaveCarryForward()->associate($record)->save();
                                 $count += $date->hours;
                             }
@@ -286,10 +287,19 @@ class LeaveCarryForwardResource extends Resource
                                     ->whereNull('leave_carry_forward_id')
                                     ->get();
 
+                                $remaining = $record->remaining;
+
                                 foreach ($dates as $date) {
-                                    $date->leaveCarryForward()->associate($record)->save();
+                                    /** @var \App\Models\RequestDate $date */
+                                    $dayLength = app(\App\Settings\SettingWorkingHours::class)->day ?: 8;
+                                    $days = $date->hours / $dayLength;
+
+                                    if ($remaining >= $days) {
+                                        $date->leaveCarryForward()->associate($record)->save();
+                                        $remaining -= $days;
+                                        $totalLinked++;
+                                    }
                                 }
-                                $totalLinked += $dates->count();
                             }
 
                             \Filament\Notifications\Notification::make()

@@ -108,10 +108,20 @@ class ListLeaveCarryForwards extends ListRecords
                             ->whereNull('leave_carry_forward_id')
                             ->get();
 
+                        $remaining = $record->remaining;
+                        $linkedInThisRecord = 0;
+
                         foreach ($dates as $date) {
-                            $date->leaveCarryForward()->associate($record)->save();
+                            $dayLength = app(\App\Settings\SettingWorkingHours::class)->day ?: 8;
+                            $days = $date->hours / $dayLength;
+
+                            if ($remaining >= $days) {
+                                $date->leaveCarryForward()->associate($record)->save();
+                                $remaining -= $days;
+                                $linkedInThisRecord++;
+                            }
                         }
-                        $totalLinked += $dates->count();
+                        $totalLinked += $linkedInThisRecord;
                     }
 
                     \Filament\Notifications\Notification::make()

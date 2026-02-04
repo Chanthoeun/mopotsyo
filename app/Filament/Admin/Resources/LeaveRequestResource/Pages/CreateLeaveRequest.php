@@ -80,36 +80,6 @@ class CreateLeaveRequest extends CreateRecord
         return $data;
     }
 
-    protected function afterCreate(): void
-    {
-        // $this->record->submitToApproval();
-
-        // check Carry Forward add add leave to carry forward
-        foreach ($this->record->requestDates as $requestDate) {
-            if ($requestDate->leave_carry_forward_id) {
-                continue;
-            }
-
-            // check if leave request type is Annual Leave
-            $leaveRequest = $this->record;
-            $leaveType = LeaveType::where('name', 'like', '%Annual%')->first();
-
-            if (!$leaveType || $leaveRequest->leave_type_id != $leaveType->id) {
-                continue;
-            }
-
-            $carryForward = LeaveCarryForward::where('user_id', $this->record->user_id)
-                ->whereDate('start_date', '<=', $requestDate->date)
-                ->whereDate('end_date', '>=', $requestDate->date)
-                ->first();
-
-            if ($carryForward && $carryForward->remaining > 0) {
-                $requestDate->leave_carry_forward_id = $carryForward->id;
-                $requestDate->save();
-            }
-        }
-    }
-
     protected function getCreatedNotification(): ?Notification
     {
         return Notification::make()

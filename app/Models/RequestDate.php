@@ -16,6 +16,69 @@ class RequestDate extends Model
 
     public $with = ['requestdateable'];
 
+    protected static function booted()
+    {
+        static::saving(function (RequestDate $requestDate) {
+            if ($requestDate->requestdateable_type !== LeaveRequest::class) {
+                return;
+            }
+
+            $leaveRequest = $requestDate->requestdateable ?: LeaveRequest::find($requestDate->requestdateable_id);
+            if (!$leaveRequest) {
+                return;
+            }
+
+            $leaveType = $leaveRequest->leaveType;
+            if (!$leaveType) {
+                return;
+            }
+
+            $allowCarryForward = $leaveType->option['allow_carry_forward'] ?? false;
+
+            if (!$allowCarryForward) {
+                $name = $leaveType->getTranslation('name', 'en');
+                $allowCarryForward = (stripos($name, 'Annual') !== false);
+            }
+
+            if ($allowCarryForward) {
+                $carryForward = LeaveCarryForward::where('user_id', $leaveRequest->user_id)
+                    ->whereDate('start_date', '<=', $requestDate->date)
+                    ->whereDate('end_date', '>=', $requestDate->date)
+                    ->first();
+
+                if ($carryForward) {
+                    $dayLength = app(SettingWorkingHours::class)->day ?: 8;
+
+                    $query = $carryForward->requestDates()
+                        ->whereHasMorph('requestdateable', [LeaveRequest::class], function ($q) {
+                            $q->whereIn('status', [
+                                \App\Enums\Status::APPROVED,
+                                \App\Enums\Status::PENDING,
+                            ]);
+                        });
+
+                    if ($requestDate->id) {
+                        $query->where('id', '!=', $requestDate->id);
+                    }
+
+                    $takenHours = $query->sum('hours');
+                    $takenDays = $takenHours / $dayLength;
+                    $currentDays = $requestDate->hours / $dayLength;
+
+                    if (($carryForward->balance - $takenDays) >= $currentDays) {
+                        $requestDate->leave_carry_forward_id = $carryForward->id;
+                    } else {
+                        $requestDate->leave_carry_forward_id = null;
+                    }
+                } else {
+                    $requestDate->leave_carry_forward_id = null;
+                }
+            } else {
+                $requestDate->leave_carry_forward_id = null;
+            }
+        });
+    }
+
     /**
      * The attributes that are mass assignable.
      *

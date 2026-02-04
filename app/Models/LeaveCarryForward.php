@@ -78,7 +78,14 @@ class LeaveCarryForward extends Model
         return Attribute::make(
             get: function () {
                 $dayLength = app(\App\Settings\SettingWorkingHours::class)->day ?: 8;
-                $hours = $this->requestDates()->sum('hours');
+                $hours = $this->requestDates()
+                    ->whereHasMorph('requestdateable', [LeaveRequest::class], function ($query) {
+                        $query->whereIn('status', [
+                            \App\Enums\Status::APPROVED,
+                            \App\Enums\Status::PENDING,
+                        ]);
+                    })
+                    ->sum('hours');
                 return floatval($hours / $dayLength);
             }
         );
