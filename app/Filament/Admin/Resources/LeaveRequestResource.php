@@ -675,7 +675,40 @@ class LeaveRequestResource extends Resource
                             ->success()
                             ->send();
                     })
-                    ->visible(fn(LeaveRequest $record) => Auth::user()->hasRole(['acting_director']) && empty($record->currentApprovalStep()?->approver_id) && $record->status !== \App\Enums\Status::APPROVED),
+                    ->visible(
+                        fn(LeaveRequest $record) =>
+                        Auth::user()->hasRole(['acting_director']) &&
+                        in_array($record->status, [\App\Enums\Status::PENDING, \App\Enums\Status::WAITING]) &&
+                        $record->currentApprovalStep()?->approver_id !== Auth::id()
+                    ),
+            ])
+            ->bulkActions([
+                Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\ForceDeleteBulkAction::make(),
+                    Tables\Actions\RestoreBulkAction::make(),
+                    Tables\Actions\BulkAction::make('force_approve')
+                        ->label('Force Approve')
+                        ->icon('heroicon-o-check-circle')
+                        ->color('success')
+                        ->requiresConfirmation()
+                        ->modalDescription('Are you sure you want to FORCE approve these selected requests?')
+                        ->action(function (\Illuminate\Database\Eloquent\Collection $records) {
+                            $records->each(function (LeaveRequest $record) {
+                                $record->update(['status' => \App\Enums\Status::APPROVED]);
+                                $record->approvalSteps()->update(['status' => \App\Enums\Status::APPROVED]);
+
+                                // Dispatch event to send email
+                                \App\Events\ApprovalProcessed::dispatch($record, 'approved', 'Force Approved by ' . Auth::user()->name, Auth::user());
+                            });
+
+                            Notification::make()
+                                ->title('Selected Requests Force Approved')
+                                ->success()
+                                ->send();
+                        })
+                        ->visible(fn() => Auth::user()->hasRole(['acting_director'])),
+                ]),
             ]);
     }
 

@@ -140,7 +140,13 @@ class ApprovalActions
                     ->send();
             })
             ->visible(function (Model $record) {
-                $isRequester = $record->user_id == Auth::id();
+                $user = Auth::user();
+                $isHR = $user->hasRole('human_resource');
+                $isRequester = $record->user_id == $user->id;
+
+                if ($isHR && $record->status === \App\Enums\Status::PENDING) {
+                    return true;
+                }
 
                 if (!($isRequester && !in_array($record->status, [\App\Enums\Status::DISCARDED, \App\Enums\Status::REJECTED]))) {
                     return false;
@@ -288,7 +294,13 @@ class ApprovalActions
                         ->send();
                 })
                 ->visible(function (Model $record) {
-                    $isRequester = $record->user_id == Auth::id();
+                    $user = Auth::user();
+                    $isHR = $user->hasRole('human_resource');
+                    $isRequester = $record->user_id == $user->id;
+
+                    if ($isHR && $record->status === \App\Enums\Status::PENDING) {
+                        return true;
+                    }
 
                     if (!($isRequester && !in_array($record->status, [\App\Enums\Status::DISCARDED, \App\Enums\Status::REJECTED]))) {
                         return false;
