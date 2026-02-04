@@ -83,13 +83,7 @@ class CalendarWidget extends FullCalendarWidget
                     });
             });
 
-        // Apply strict scoping if not Admin/HR
-        if (!auth()->user()->hasRole(['super_admin', 'human_resource'])) {
-            $query->where(function ($q) {
-                $q->where('user_id', auth()->id())
-                    ->orWhereHas('approvalSteps', fn($sub) => $sub->where('approver_id', auth()->id()));
-            });
-        }
+        // Leave request are visible to everyone on dashboard
 
         $leaveRequests = $query->get();
 
