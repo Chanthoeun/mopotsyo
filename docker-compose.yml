@@ -48,6 +48,20 @@ services:
     networks:
       - mopotsyo-network
 
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: mopotsyo-phpmyadmin
+    restart: unless-stopped
+    environment:
+      PMA_HOST: db
+      UPLOAD_LIMIT: 64M
+    ports:
+      - "8081:80"
+    networks:
+      - mopotsyo-network
+    depends_on:
+      - db
+
 networks:
   mopotsyo-network:
     driver: bridge

@@ -45,6 +45,8 @@
 7.  **Access the Application**
     -   **App**: [http://localhost:8005](http://localhost:8005)
     -   **Mailpit**: [http://localhost:8026](http://localhost:8026)
+    -   **PHPMyAdmin**: [http://localhost:8081](http://localhost:8081)
+
 
 ## Approval System Migration & Deployment Guide
 
