@@ -14,38 +14,59 @@
     ```
 
 2.  **Environment Setup**
-    Copy the example environment file and configure it:
+    Copy the Docker-ready environment file and configure it:
     ```bash
-    cp .env.example .env
+    cp .env.docker .env
     ```
-    *Note: The default configuration is set up for Docker.*
+    *Note: The default configuration in `.env.docker` is pre-configured for Docker networking.*
 
 3.  **Start Docker Containers**
     ```bash
-    docker-compose up -d
+    docker compose up -d
     ```
 
 4.  **Install Dependencies**
     ```bash
-    docker-compose execute app composer install
-    docker-compose execute app npm install
-    docker-compose execute app npm run build
+    # Fix permissions if needed (see Troubleshooting)
+    docker compose exec app composer install
+    docker compose exec app npm install
+    docker compose exec app npm run build
     ```
 
 5.  **Generate App Key**
     ```bash
-    docker-compose execute app php artisan key:generate
+    docker compose exec app php artisan key:generate
     ```
 
 6.  **Run Migrations**
     ```bash
-    docker-compose execute app php artisan migrate --seed
+    docker compose exec app php artisan migrate --seed
     ```
 
 7.  **Access the Application**
     -   **App**: [http://localhost:8005](http://localhost:8005)
     -   **Mailpit**: [http://localhost:8026](http://localhost:8026)
     -   **PHPMyAdmin**: [http://localhost:8081](http://localhost:8081)
+
+### Troubleshooting
+
+If you encounter permission errors during installation (e.g., Composer cache, logs, or npm), run:
+
+```bash
+# Fix Composer and Vendor permissions
+mkdir -p vendor
+chmod -R 777 .composer vendor
+
+# Fix Storage, Cache, and Public permissions
+chmod -R 777 storage bootstrap/cache public
+
+# Fix NPM permissions
+mkdir -p .npm node_modules
+chmod -R 777 .npm node_modules
+
+# Fix Git Safe Directory (if error: fatal: detected dubious ownership)
+docker compose exec app git config --global --add safe.directory /var/www
+```
 
 
 ## Approval System Migration & Deployment Guide
