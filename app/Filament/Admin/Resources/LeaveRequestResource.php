@@ -582,7 +582,7 @@ class LeaveRequestResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('days')
                     ->label(__('field.requested_days'))
-                    ->formatStateUsing(fn($state) => trans_choice('field.days_with_count', $state, ['count' => $state]))
+                    ->formatStateUsing(fn($state) => trans_choice('field.days_with_count', $state, ['count' => round($state, 1)]))
                     ->alignCenter(),
                 Tables\Columns\IconColumn::make('back_date')
                     ->label(__('field.is_back_date'))
