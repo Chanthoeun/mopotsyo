@@ -1,14 +1,50 @@
-## Features
+## Installation
 
-Starter Kit is a powerful Laravel and Filament-based application featuring:
+### Prerequisites
 
-- **Users & Roles Management**: Granular control via Laravel Shield.
-- **Advanced Approval System**:
-    - **Approval History**: Full audit trail accessible via status badges.
-    - **Force Approve**: Admin bypass for stuck or urgent requests.
-    - **Automated Workflow Reconciliation**: Real-time status sync across steps.
-- **Media & File Manager**: Integrated file handling.
-- **Utility Tools**: Filament Importer/Exporter, Authentication Log, Activity Audit, and more.
+-   [Docker](https://www.docker.com/)
+-   [Docker Compose](https://docs.docker.com/compose/)
+
+### Getting Started
+
+1.  **Clone the repository**
+    ```bash
+    git clone git@github.com:Chanthoeun/mopotsyo.git
+    cd mopotsyo
+    ```
+
+2.  **Environment Setup**
+    Copy the example environment file and configure it:
+    ```bash
+    cp .env.example .env
+    ```
+    *Note: The default configuration is set up for Docker.*
+
+3.  **Start Docker Containers**
+    ```bash
+    docker-compose up -d
+    ```
+
+4.  **Install Dependencies**
+    ```bash
+    docker-compose execute app composer install
+    docker-compose execute app npm install
+    docker-compose execute app npm run build
+    ```
+
+5.  **Generate App Key**
+    ```bash
+    docker-compose execute app php artisan key:generate
+    ```
+
+6.  **Run Migrations**
+    ```bash
+    docker-compose execute app php artisan migrate --seed
+    ```
+
+7.  **Access the Application**
+    -   **App**: [http://localhost:8005](http://localhost:8005)
+    -   **Mailpit**: [http://localhost:8026](http://localhost:8026)
 
 ## Approval System Migration & Deployment Guide
 
