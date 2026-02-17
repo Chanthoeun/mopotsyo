@@ -104,4 +104,44 @@ class LeaveEntitlement extends Model
             },
         );
     }
+
+    protected function cfBalance(): Attribute
+    {
+        return Attribute::make(
+            get: function () {
+                return floatval(LeaveCarryForward::where('user_id', $this->user_id)
+                    ->where('start_date', $this->start_date)
+                    ->sum('balance'));
+            }
+        );
+    }
+
+    protected function cfTaken(): Attribute
+    {
+        return Attribute::make(
+            get: function () {
+                $dayLength = app(SettingWorkingHours::class)->day ?: 8;
+                $hours = RequestDate::whereHasMorph('requestdateable', [LeaveRequest::class], function ($query) {
+                        $query->whereIn('status', [
+                            \App\Enums\Status::APPROVED,
+                            \App\Enums\Status::PENDING,
+                            \App\Enums\Status::WAITING,
+                        ]);
+                    })
+                    ->whereHas('leaveCarryForward', function ($query) {
+                        $query->where('user_id', $this->user_id)
+                            ->where('start_date', $this->start_date);
+                    })
+                    ->sum('hours');
+                return floatval($hours / $dayLength);
+            }
+        );
+    }
+
+    protected function totalRemaining(): Attribute
+    {
+        return Attribute::make(
+            get: fn() => floatval(($this->balance + $this->cfBalance) - ($this->allTaken + $this->cfTaken)),
+        );
+    }
 }

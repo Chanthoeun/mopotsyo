@@ -83,6 +83,7 @@ class LeaveCarryForward extends Model
                         $query->whereIn('status', [
                             \App\Enums\Status::APPROVED,
                             \App\Enums\Status::PENDING,
+                            \App\Enums\Status::WAITING,
                         ]);
                     })
                     ->sum('hours');

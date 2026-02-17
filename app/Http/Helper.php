@@ -351,7 +351,7 @@ if (!function_exists('isOnLeave')) {
                 ->where('requestdateable_type', 'App\Models\LeaveRequest')
                 ->whereHas('requestdateable', function (Builder $query) use ($userId) {
                     $query->where('user_id', $userId);
-                    $query->whereIn('status', ['approved', 'pending']);
+                    $query->whereIn('status', ['approved', 'pending', 'waiting']);
                 })->get()->keyBy(fn($rd) => Carbon::parse($rd->date)->toDateString());
         }
         $dateStr = ($date instanceof Carbon) ? $date->toDateString() : Carbon::parse($date)->toDateString();
@@ -369,7 +369,7 @@ if (!function_exists('isOvertime')) {
                 ->where('requestdateable_type', 'App\Models\OverTime')
                 ->whereHas('requestdateable', function (Builder $query) use ($userId) {
                     $query->where('user_id', $userId);
-                    $query->whereIn('status', ['pending', 'approved']);
+                    $query->whereIn('status', ['pending', 'approved', 'waiting']);
                 })->get()->keyBy(fn($rd) => Carbon::parse($rd->date)->toDateString());
         }
         $dateStr = ($date instanceof Carbon) ? $date->toDateString() : Carbon::parse($date)->toDateString();
@@ -387,7 +387,7 @@ if (!function_exists('isWorkFromHome')) {
                 ->where('requestdateable_type', 'App\Models\WorkFromHome')
                 ->whereHas('requestdateable', function (Builder $query) use ($userId) {
                     $query->where('user_id', $userId);
-                    $query->whereIn('status', ['pending', 'approved']);
+                    $query->whereIn('status', ['pending', 'approved', 'waiting']);
                 })->get()->keyBy(fn($rd) => Carbon::parse($rd->date)->toDateString());
         }
         $dateStr = ($date instanceof Carbon) ? $date->toDateString() : Carbon::parse($date)->toDateString();
@@ -417,7 +417,10 @@ if (!function_exists('isSwitchWorkDay')) {
         static $results = [];
         $userId = $user->id;
         if (!isset($results[$userId])) {
-            $results[$userId] = $user->switchWorkDays->keyBy(fn($swd) => Carbon::parse($swd->from_date)->toDateString());
+            $results[$userId] = $user->switchWorkDays()
+                ->whereIn('status', ['approved', 'pending', 'waiting'])
+                ->get()
+                ->keyBy(fn($swd) => Carbon::parse($swd->from_date)->toDateString());
         }
         $dateStr = ($date instanceof Carbon) ? $date->toDateString() : Carbon::parse($date)->toDateString();
         return $results[$userId]->get($dateStr) ?? false;
@@ -430,7 +433,10 @@ if (!function_exists('isSwitchWorkDayToDate')) {
         static $results = [];
         $userId = $user->id;
         if (!isset($results[$userId])) {
-            $results[$userId] = $user->switchWorkDays->keyBy(fn($swd) => Carbon::parse($swd->to_date)->toDateString());
+            $results[$userId] = $user->switchWorkDays()
+                ->whereIn('status', ['approved', 'pending', 'waiting'])
+                ->get()
+                ->keyBy(fn($swd) => Carbon::parse($swd->to_date)->toDateString());
         }
         $dateStr = ($date instanceof Carbon) ? $date->toDateString() : Carbon::parse($date)->toDateString();
         return $results[$userId]->get($dateStr) ?? false;
@@ -438,7 +444,7 @@ if (!function_exists('isSwitchWorkDayToDate')) {
 }
 
 if (!function_exists('getTakenLeave')) {
-    function getTakenLeave($user, $leaveType, $from_date = null, $to_date = null): float
+    function getTakenLeave($user, $leaveType, $from_date = null, $to_date = null, $includeCF = false): float
     {
         if (!$from_date || !$to_date) {
             $entitlement = $user->entitlements()
@@ -460,10 +466,12 @@ if (!function_exists('getTakenLeave')) {
             ->whereHasMorph('requestdateable', [LeaveRequest::class], function ($query) use ($user, $leaveType) {
                 $query->where('user_id', $user->id)
                     ->where('leave_type_id', $leaveType)
-                    ->whereIn('status', ['approved', 'pending']);
+                    ->whereIn('status', ['approved', 'pending', 'waiting']);
             })
             ->whereBetween('date', [$from_date, $to_date])
-            ->whereNull('leave_carry_forward_id')
+            ->when(!$includeCF, function ($query) {
+                $query->whereNull('leave_carry_forward_id');
+            })
             ->sum('hours');
 
         $dayLength = app(SettingWorkingHours::class)->day ?: 8;
@@ -476,6 +484,13 @@ if (!function_exists('getCarryForwardTaken')) {
     function getCarryForwardTaken($carryForward, $from_date, $to_date)
     {
         $carryForwardHours = $carryForward->requestDates()
+            ->whereHasMorph('requestdateable', [LeaveRequest::class], function ($query) {
+                $query->whereIn('status', [
+                    \App\Enums\Status::APPROVED,
+                    \App\Enums\Status::PENDING,
+                    \App\Enums\Status::WAITING,
+                ]);
+            })
             ->whereBetween('date', [$from_date, $to_date])
             ->sum('hours');
 

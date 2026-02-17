@@ -154,8 +154,8 @@ trait Approvable
         $directSupervisorId = $user->contract->supervisor_id;
 
         $supervisorIsRequired = $isRuleBased
-            ? in_array($supervisorRoleId, $requiredRoleIds)
-            : ($contractApprovers->isEmpty() && $directSupervisorId);
+            ? in_array((string) $supervisorRoleId, $requiredRoleIds)
+            : ($directSupervisorId !== null);
 
         $supervisorExplicitlyConfigured = $contractApprovers->contains('role_id', $supervisorRoleId);
 
@@ -175,7 +175,7 @@ trait Approvable
         $hodRoleId = $hodRoleIdCache;
         $directHodId = $user->contract->department_head_id;
 
-        $hodIsRequired = $isRuleBased && in_array($hodRoleId, $requiredRoleIds);
+        $hodIsRequired = $isRuleBased && in_array((string) $hodRoleId, $requiredRoleIds);
         $hodExplicitlyConfigured = $contractApprovers->contains('role_id', $hodRoleId);
 
         // Only add Virtual HoD if required, not configured, AND distinct from the Virtual Supervisor we just added (if any)
@@ -192,7 +192,7 @@ trait Approvable
 
         // 4c. Add Configured Approvers
         foreach ($contractApprovers as $approver) {
-            if ($isRuleBased && !in_array($approver->role_id, $requiredRoleIds)) {
+            if ($isRuleBased && !in_array((string) $approver->role_id, $requiredRoleIds)) {
                 continue;
             }
             $finalSteps->push([

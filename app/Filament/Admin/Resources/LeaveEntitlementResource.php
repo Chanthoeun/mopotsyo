@@ -185,12 +185,26 @@ class LeaveEntitlementResource extends Resource
                     ->badge()
                     ->color('info')
                     ->sortable(),
+                Tables\Columns\TextColumn::make('cf_balance')
+                    ->label(__('model.carry_forward'))
+                    ->numeric()
+                    ->alignCenter()
+                    ->badge()
+                    ->color('warning')
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('all_taken_calculated')
                     ->label(__('field.taken'))
                     ->numeric()
                     ->alignCenter()
                     ->badge()
                     ->color('danger')
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('cf_taken')
+                    ->label(__('model.carry_forward') . ' ' . __('field.taken'))
+                    ->numeric()
+                    ->alignCenter()
+                    ->badge()
+                    ->color('orange')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('remaining_calculated')
                     ->label(__('field.remaining'))
@@ -268,11 +282,19 @@ class LeaveEntitlementResource extends Resource
                         \Filament\Infolists\Components\TextEntry::make('balance')
                             ->label(__('field.balance'))
                             ->numeric(),
+                        \Filament\Infolists\Components\TextEntry::make('cf_balance')
+                            ->label(__('model.carry_forward'))
+                            ->numeric()
+                            ->color('warning'),
                         \Filament\Infolists\Components\TextEntry::make('all_taken')
                             ->label(__('field.taken'))
                             ->numeric()
                             ->color('danger'),
-                        \Filament\Infolists\Components\TextEntry::make('remaining')
+                        \Filament\Infolists\Components\TextEntry::make('cf_taken')
+                            ->label(__('model.carry_forward') . ' ' . __('field.taken'))
+                            ->numeric()
+                            ->color('orange'),
+                        \Filament\Infolists\Components\TextEntry::make('total_remaining')
                             ->label(__('field.remaining'))
                             ->numeric()
                             ->color('success'),
@@ -304,6 +326,7 @@ class LeaveEntitlementResource extends Resource
         $leaveRequestClass = str_replace('\\', '\\\\', \App\Models\LeaveRequest::class);
         $approvedStatus = \App\Enums\Status::APPROVED->value;
         $pendingStatus = \App\Enums\Status::PENDING->value;
+        $waitingStatus = \App\Enums\Status::WAITING->value;
 
         // Define subquery raw SQL (interpolating safe values to avoid binding issues with addSelect)
         $systemTakenHours = "(
@@ -311,20 +334,36 @@ class LeaveEntitlementResource extends Resource
             FROM request_dates rd
             JOIN leave_requests lr ON rd.requestdateable_id = lr.id AND rd.requestdateable_type = '$leaveRequestClass'
             WHERE lr.deleted_at IS NULL
-            AND lr.status IN ('$approvedStatus', '$pendingStatus')
+            AND lr.status IN ('$approvedStatus', '$pendingStatus', '$waitingStatus')
             AND lr.user_id = leave_entitlements.user_id
             AND lr.leave_type_id = leave_entitlements.leave_type_id
             AND rd.date >= leave_entitlements.start_date
             AND rd.date <= leave_entitlements.end_date
-            AND rd.leave_carry_forward_id IS NULL
+        )";
+
+        $systemCfTakenHours = "(
+            SELECT COALESCE(SUM(rd.hours), 0)
+            FROM request_dates rd
+            JOIN leave_carry_forwards lcf ON rd.leave_carry_forward_id = lcf.id
+            WHERE lcf.user_id = leave_entitlements.user_id
+            AND lcf.start_date = leave_entitlements.start_date
+        )";
+
+        $cfBalanceRaw = "(
+            SELECT COALESCE(SUM(lcf.balance), 0)
+            FROM leave_carry_forwards lcf
+            WHERE lcf.user_id = leave_entitlements.user_id
+            AND lcf.start_date = leave_entitlements.start_date
         )";
 
         $query = parent::getEloquentQuery()
             ->addSelect([
                 '*', // Select all columns from leave_entitlements
                 \Illuminate\Support\Facades\DB::raw("($systemTakenHours) / $dayLength as system_taken_days"),
+                \Illuminate\Support\Facades\DB::raw("($systemCfTakenHours) / $dayLength as cf_taken"),
+                \Illuminate\Support\Facades\DB::raw("($cfBalanceRaw) as cf_balance"),
                 \Illuminate\Support\Facades\DB::raw("COALESCE(taken, 0) + (($systemTakenHours) / $dayLength) as all_taken_calculated"),
-                \Illuminate\Support\Facades\DB::raw("balance - (COALESCE(taken, 0) + (($systemTakenHours) / $dayLength)) as remaining_calculated"),
+                \Illuminate\Support\Facades\DB::raw("(balance + ($cfBalanceRaw)) - (COALESCE(taken, 0) + (($systemTakenHours) / $dayLength)) as remaining_calculated"),
             ]);
 
         return $query->with(['user', 'leaveType'])

@@ -16,6 +16,7 @@ return [
     'approved' => 'Approved',
     'rejected' => 'Rejected',
     'discarded' => 'Discarded',
+    'partially_approved' => 'Partially Approved',
     'requested' => 'Requested',
     'submitted' => 'Submitted',
     'completed' => 'Completed',
@@ -35,6 +36,7 @@ return [
         'approved' => ':label Approved',
         'rejected' => ':label Rejected',
         'discarded' => ':label Discarded',
+        'partially_approved' => ':label Partially Approved',
         'submitted' => ':label Submitted',
         'completed' => ':label Completed',
         'sent' => ':label Sent',
@@ -46,6 +48,8 @@ return [
     // message
     'body' => [
         'submitted' => ':label has been submitted successfully.',
+        'partially_approved' => 'Your :model request (:name) was approved by :actor and is now waiting for the next approval step.',
+        'minimum_request_days' => 'The minimum request days for this leave type is :days day(s).',
         'already_exist' => ':name is already exist.',
         'added' => ':name was added',
         'created' => ':name was created.',

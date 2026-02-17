@@ -415,14 +415,16 @@ $leaveTypeIds = $user->contract->contractType->leave_types;
 
                                 @if ($carryForward)
                                     @php
-                                        $cfTaken = (float) getCarryForwardTaken($carryForward, $carryForward->start_date, $record->to_date);
-                                        $cfRemaining = max(0, (float) $carryForward->balance - $cfTaken);
+                                        $cfTakenAll = (float) getCarryForwardTaken($carryForward, $carryForward->start_date, $carryForward->end_date);
+                                        $cfTakenThisMonth = (float) getCarryForwardTaken($carryForward, $record->from_date, $record->to_date);
+                                        $cfRemaining = max(0, (float) $carryForward->balance - $cfTakenAll);
                                     @endphp
                                     <tr>
                                         <td>@lang('model.carry_forward')</td>
                                         <td align="center">{{__('field.day')}}</td>
                                         <td align="center">{{floatval($carryForward->balance)}}</td>
-                                        <td align="center" colspan=2>{{$cfTaken}}</td>
+                                        <td align="center">{{$cfTakenAll}}</td>
+                                        <td align="center">{{$cfTakenThisMonth}}</td>
                                         <td align="center">{{$cfRemaining}}</td>
                                     </tr>
                                 @endif

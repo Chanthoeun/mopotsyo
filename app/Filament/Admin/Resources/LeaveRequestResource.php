@@ -5,6 +5,7 @@ namespace App\Filament\Admin\Resources;
 use App\Actions\ApprovalActions;
 use App\Filament\Admin\Resources\LeaveRequestResource\Pages;
 use App\Filament\Admin\Resources\LeaveRequestResource\RelationManagers;
+use App\Models\LeaveEntitlement;
 use App\Models\LeaveCarryForward;
 use App\Models\LeaveRequest;
 use App\Models\LeaveType;
@@ -35,6 +36,24 @@ use Illuminate\Support\HtmlString;
 class LeaveRequestResource extends Resource
 {
     protected static ?string $model = LeaveRequest::class;
+
+    private static function getActiveEntitlement(Get $get, string $operation, ?Model $record)
+    {
+        if ($operation == 'view') {
+            $user = $record->user;
+        } else {
+            $user = Auth::user();
+        }
+        if (!empty($get('leave_type_id'))) {
+            return $user->entitlements()
+                ->where('is_active', true)
+                ->where('leave_type_id', $get('leave_type_id'))
+                ->whereDate('end_date', '>=', now())
+                ->orderBy('created_at', 'desc')
+                ->first();
+        }
+        return null;
+    }
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
@@ -141,6 +160,12 @@ class LeaveRequestResource extends Resource
                                                     }
                                                 } else if ($requestDays) {
                                                     if ($leaveType) {
+                                                        // Check minimum request days restriction
+                                                        $minRequestDays = $leaveType->option['minimum_request_days'] ?? null;
+                                                        if ($minRequestDays && $requestDays < $minRequestDays) {
+                                                            $fail(__('msg.body.minimum_request_days', ['days' => $minRequestDays]));
+                                                        }
+
                                                         // check rule
                                                         if ($leaveType->rules) {
                                                             $applicableRule = null;
@@ -428,74 +453,58 @@ class LeaveRequestResource extends Resource
                                 return empty($entitlement) ? false : true;
                             })
                             ->schema([
-                                Forms\Components\Placeholder::make('balance')
-                                    ->label(__('field.balance'))
-                                    ->content(function (Get $get, string $operation, ?Model $record) {
-                                        if ($operation == 'view') {
-                                            $user = $record->user;
-                                        } else {
-                                            $user = Auth::user();
-                                        }
-                                        if (!empty($get('leave_type_id'))) {
-                                            return $user->entitlements->where('is_active', true)->where('leave_type_id', $get('leave_type_id'))->first()->balance ?? 0;
-                                        }
-                                    }),
-                                Forms\Components\Placeholder::make('taken')
-                                    ->label(__('field.taken'))
-                                    ->content(function (Get $get, string $operation, ?Model $record) {
-                                        if ($operation == 'view') {
-                                            $user = $record->user;
-                                        } else {
-                                            $user = Auth::user();
-                                        }
-                                        if (!empty($get('leave_type_id'))) {
-                                            return $user->entitlements->where('is_active', true)->where('leave_type_id', $get('leave_type_id'))->first()->all_taken ?? 0;
-                                        }
-                                    }),
-                                Forms\Components\Placeholder::make('remaining')
-                                    ->label(__('field.remaining'))
-                                    ->content(function (Get $get, string $operation, ?Model $record) {
-                                        if ($operation == 'view') {
-                                            $user = $record->user;
-                                        } else {
-                                            $user = Auth::user();
-                                        }
-
-                                        $remaining = 0;
-                                        if (!empty($get('leave_type_id'))) {
-                                            // Get entitlement
-                                            $entitlement = $user->entitlements()
-                                                ->where('is_active', true)
-                                                ->where('leave_type_id', $get('leave_type_id'))
-                                                ->whereDate('end_date', '>=', now())
-                                                ->orderBy('created_at', 'desc')
-                                                ->first();
-
-                                            if ($entitlement) {
-                                                // Simple calculation: balance - taken (don't use the accessor which subtracts CF)
-                                                $remaining = $entitlement->balance - $entitlement->all_taken;
-                                            }
-                                        }
-                                        return $remaining;
-                                    }),
+                                Forms\Components\Grid::make(3)
+                                    ->schema([
+                                        Forms\Components\Group::make([
+                                            Forms\Components\Placeholder::make('balance')
+                                                ->label(__('field.balance'))
+                                                ->content(function (Get $get, string $operation, ?Model $record) {
+                                                    $e = static::getActiveEntitlement($get, $operation, $record);
+                                                    return $e->balance ?? 0;
+                                                }),
+                                            Forms\Components\Placeholder::make('taken')
+                                                ->label(__('field.taken'))
+                                                ->content(function (Get $get, string $operation, ?Model $record) {
+                                                    $e = static::getActiveEntitlement($get, $operation, $record);
+                                                    return $e?->all_taken ?? 0;
+                                                }),
+                                        ]),
+                                        Forms\Components\Group::make([
+                                            Forms\Components\Placeholder::make('cf_balance')
+                                                ->label(__('model.carry_forward'))
+                                                ->content(function (Get $get, string $operation, ?Model $record) {
+                                                    $e = static::getActiveEntitlement($get, $operation, $record);
+                                                    return $e?->cf_balance ?? 0;
+                                                }),
+                                            Forms\Components\Placeholder::make('cf_taken')
+                                                ->label(__('model.carry_forward') . ' ' . __('field.taken'))
+                                                ->content(function (Get $get, string $operation, ?Model $record) {
+                                                    $e = static::getActiveEntitlement($get, $operation, $record);
+                                                    return $e?->cf_taken ?? 0;
+                                                }),
+                                        ]),
+                                        Forms\Components\Group::make([
+                                            Forms\Components\Placeholder::make('remaining')
+                                                ->label(__('field.remaining'))
+                                                ->content(function (Get $get, string $operation, ?Model $record) {
+                                                    $e = static::getActiveEntitlement($get, $operation, $record);
+                                                    return $e?->total_remaining ?? 0;
+                                                })
+                                                ->extraAttributes(['class' => 'text-success-600 font-bold text-2xl']),
+                                        ]),
+                                    ]),
                                 Forms\Components\Placeholder::make('accrued')
                                     ->label(__('field.accrued'))
                                     ->visible(function (Get $get) {
                                         if (!empty($get('leave_type_id'))) {
                                             $leaveType = LeaveType::find($get('leave_type_id'));
-                                            return $leaveType->allow_accrual;
+                                            return $leaveType->option->allow_accrual ?? false;
                                         }
                                         return false;
                                     })
                                     ->content(function (Get $get, string $operation, ?Model $record) {
-                                        if ($operation == 'view') {
-                                            $user = $record->user;
-                                        } else {
-                                            $user = Auth::user();
-                                        }
-                                        if (!empty($get('leave_type_id'))) {
-                                            return $user->entitlements()->where('is_active', true)->where('leave_type_id', $get('leave_type_id'))->whereDate('end_date', '>=', now())->first()->accrued ?? 0;
-                                        }
+                                        $e = static::getActiveEntitlement($get, $operation, $record);
+                                        return $e?->accrued ?? 0;
                                     }),
                             ]),
                         Forms\Components\Section::make(__('model.public_holidays'))

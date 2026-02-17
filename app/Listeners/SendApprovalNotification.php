@@ -29,6 +29,7 @@ class SendApprovalNotification implements ShouldQueue
                     $this->notifyRecipient($record->user, $record, \App\Enums\Status::APPROVED->value, $comment, $event->actor);
                 } else {
                     $this->notifyNextApprover($record);
+                    $this->notifyRecipient($record->user, $record, 'partially_approved', $comment, $event->actor);
                 }
                 break;
             case \App\Enums\Status::REJECTED->value:
@@ -97,7 +98,15 @@ class SendApprovalNotification implements ShouldQueue
             $url = $record->getFilamentUrl();
         } else {
             // Default generic body
-            $body = __('msg.body.generic_' . $status, ['model' => $modelName, 'name' => $record->pr_no ?? $record->id]);
+            if ($status === 'partially_approved') {
+                $body = __('msg.body.partially_approved', [
+                    'model' => $modelName,
+                    'name' => $record->pr_no ?? $record->id,
+                    'actor' => $actor?->full_name ?? 'Approver',
+                ]);
+            } else {
+                $body = __('msg.body.generic_' . $status, ['model' => $modelName, 'name' => $record->pr_no ?? $record->id]);
+            }
             $url = $record->getFilamentUrl();
         }
 
@@ -127,6 +136,12 @@ class SendApprovalNotification implements ShouldQueue
                     $params['name'] = $rejector->full_name;
                 }
                 $body = __('msg.body.rejected', $params);
+            } elseif ($status === 'partially_approved') {
+                $body = __('msg.body.partially_approved', [
+                    'model' => $modelName,
+                    'name' => $record->id,
+                    'actor' => $actor?->full_name ?? 'Approver',
+                ]);
             } elseif ($status === \App\Enums\Status::DISCARDED->value) {
                 $body = __('msg.body.discarded', $params);
             }
