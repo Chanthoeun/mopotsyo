@@ -96,7 +96,8 @@ class AdminPanelProvider extends PanelProvider
                     ->timezone(config('app.timezone')),
                 FilamentEmail::make(),
                 \ShuvroRoy\FilamentSpatieLaravelBackup\FilamentSpatieLaravelBackupPlugin::make()
-                    ->usingPage(\App\Filament\Admin\Pages\CustomBackups::class),
+                    ->usingPage(\App\Filament\Admin\Pages\CustomBackups::class)
+                    ->authorize(fn () => auth()->user()->hasRole('super_admin')),
             ])
             ->unsavedChangesAlerts()
             ->navigationGroups([
