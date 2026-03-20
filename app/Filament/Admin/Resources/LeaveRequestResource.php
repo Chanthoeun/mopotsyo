@@ -94,13 +94,35 @@ class LeaveRequestResource extends Resource
                                             $user = Auth::user();
                                         }
 
-                                        return LeaveType::whereIn('id', $user->contract->contractType->leave_types)
+                                        $leaveTypes = $user->contract->contractType->leave_types ?? [];
+                                        
+                                        $overtimeLinkId = app(\App\Settings\SettingOptions::class)->overtime_link;
+                                        $hasActiveOvertime = false;
+                                        
+                                        if (app(\App\Settings\SettingOptions::class)->allow_overtime && $overtimeLinkId) {
+                                            $hasActiveOvertime = \App\Models\OverTime::where('user_id', $user->id)
+                                                ->where('unused', true)
+                                                ->whereDate('expiry_date', '>=', now())
+                                                ->exists();
+                                                
+                                            if ($hasActiveOvertime && !in_array($overtimeLinkId, $leaveTypes)) {
+                                                $leaveTypes[] = $overtimeLinkId;
+                                            }
+                                        }
+
+                                        return LeaveType::whereIn('id', $leaveTypes)
                                             ->where($user->employee->gender->value, true)
-                                            ->whereHas('entitlements', function ($query) use ($user) {
-                                                $query->where('user_id', $user->id)
-                                                    ->where('is_active', true)
-                                                    ->whereDate('end_date', '>=', now())
-                                                    ->orderBy('created_at', 'desc');
+                                            ->where(function ($query) use ($user, $hasActiveOvertime, $overtimeLinkId) {
+                                                $query->whereHas('entitlements', function ($q) use ($user) {
+                                                    $q->where('user_id', $user->id)
+                                                        ->where('is_active', true)
+                                                        ->whereDate('end_date', '>=', now())
+                                                        ->orderBy('created_at', 'desc');
+                                                });
+                                                
+                                                if ($hasActiveOvertime && $overtimeLinkId) {
+                                                    $query->orWhere('id', $overtimeLinkId);
+                                                }
                                             })
                                             ->orderBy('id', 'asc')
                                             ->pluck('abbr', 'id');
