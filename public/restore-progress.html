@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Restoring Database...</title>
+    <style>
+        body { font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; background: #f9fafb; color: #111827; flex-direction: column; text-align: center;}
+        .loader { border: 4px solid #e5e7eb; border-top: 4px solid #f59e0b; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 20px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div class="loader"></div>
+    <h2 style="margin-bottom: 10px;">Reconstructing Active Database...</h2>
+    <p style="color: #4b5563;">This might take a few minutes depending on the size of the backup.</p>
+    <p style="color: #4b5563; margin-top: 5px;"><strong>Please do not close this window.</strong> You will be automatically securely redirected back into your dashboard as soon as the restoration completes successfully and the system is back online.</p>
+    
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const redirectUrl = params.get('redirect') || '/admin';
+
+        // Start polling the admin endpoint to dynamically detect when artisan is back up online.
+        setInterval(() => {
+            fetch('/admin/login', { method: 'HEAD' })
+                .then(response => {
+                    // When php artisan up executes, the system resolves as 200 OK again.
+                    if (response.status === 200) {
+                        window.location.href = redirectUrl;
+                    }
+                })
+                .catch(error => { /* Suppress errors while nginx or php might be completely cold */ });
+        }, 5000);
+    </script>
+</body>
+</html>

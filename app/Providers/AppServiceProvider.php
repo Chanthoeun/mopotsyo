@@ -31,6 +31,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        ini_set('memory_limit', '512M');
+
         Gate::policy(User::class, UserPolicy::class);
         Gate::policy(Role::class, RolePolicy::class);
         Gate::policy(Activity::class, ActivityPolicy::class);
@@ -42,7 +44,6 @@ class AppServiceProvider extends ServiceProvider
             // Your authorization logic
             return $user !== null && $user->hasRole('super_admin');
         });
-
 
         // Events
         // Event::listen(

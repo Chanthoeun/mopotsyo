@@ -94,7 +94,9 @@ class AdminPanelProvider extends PanelProvider
                 FilamentFullCalendarPlugin::make()
                     ->selectable()
                     ->timezone(config('app.timezone')),
-                FilamentEmail::make()
+                FilamentEmail::make(),
+                \ShuvroRoy\FilamentSpatieLaravelBackup\FilamentSpatieLaravelBackupPlugin::make()
+                    ->usingPage(\App\Filament\Admin\Pages\CustomBackups::class),
             ])
             ->unsavedChangesAlerts()
             ->navigationGroups([
