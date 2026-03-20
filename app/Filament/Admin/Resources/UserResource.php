@@ -24,6 +24,7 @@ use Tapp\FilamentAuthenticationLog\RelationManagers\AuthenticationLogsRelationMa
 use Illuminate\Support\Str;
 use Livewire\Component;
 use Spatie\Permission\Contracts\Role;
+use STS\FilamentImpersonate\Tables\Actions\Impersonate;
 
 class UserResource extends Resource implements HasShieldPermissions
 {
@@ -158,27 +159,34 @@ class UserResource extends Resource implements HasShieldPermissions
                 Tables\Filters\TrashedFilter::make()
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\Action::make('ban')
-                    ->visible(fn() => auth()->user()->can('ban_user'))
-                    ->label(fn(User $record) => $record->isNotBanned() ? __('btn.ban') : __('btn.unban'))
-                    ->icon(fn(User $record) => $record->isNotBanned() ? 'fas-user-lock' : 'fas-user-check')
-                    ->color(fn(User $record) => $record->isNotBanned() ? 'danger' : 'success')
-                    ->requiresConfirmation()
-                    ->modalHeading(fn(User $record) => $record->isNotBanned() ? __('btn.label.ban', ['label' => $record->name]) : __('btn.label.unban', ['label' => $record->name]))
-                    ->modalDescription(fn(User $record) => $record->isNotBanned() ? __('btn.msg.ban', ['name' => $record->name]) : __('btn.msg.unban', ['name' => $record->name]))
-                    ->modalIcon(fn(User $record) => $record->isNotBanned() ? 'fas-user-lock' : 'fas-user-check')
-                    ->modalIconColor(fn(User $record) => $record->isNotBanned() ? 'danger' : 'info')
-                    ->action(function (User $record) {
-                        if ($record->isNotBanned()) {
-                            $record->ban();
-                        } else {
-                            $record->unban();
-                        }
-                    }),
-                Tables\Actions\DeleteAction::make(),
-                Tables\Actions\RestoreAction::make(),
-                Tables\Actions\ForceDeleteAction::make(),
+                Tables\Actions\ActionGroup::make([
+                    Impersonate::make()
+                        ->label('Impersonate')
+                        ->icon('fas-user-secret')
+                        ->color('info')
+                        ->grouped(),
+                    Tables\Actions\EditAction::make(),
+                    Tables\Actions\Action::make('ban')
+                        ->visible(fn() => auth()->user()->can('ban_user'))
+                        ->label(fn(User $record) => $record->isNotBanned() ? __('btn.ban') : __('btn.unban'))
+                        ->icon(fn(User $record) => $record->isNotBanned() ? 'fas-user-lock' : 'fas-user-check')
+                        ->color(fn(User $record) => $record->isNotBanned() ? 'danger' : 'success')
+                        ->requiresConfirmation()
+                        ->modalHeading(fn(User $record) => $record->isNotBanned() ? __('btn.label.ban', ['label' => $record->name]) : __('btn.label.unban', ['label' => $record->name]))
+                        ->modalDescription(fn(User $record) => $record->isNotBanned() ? __('btn.msg.ban', ['name' => $record->name]) : __('btn.msg.unban', ['name' => $record->name]))
+                        ->modalIcon(fn(User $record) => $record->isNotBanned() ? 'fas-user-lock' : 'fas-user-check')
+                        ->modalIconColor(fn(User $record) => $record->isNotBanned() ? 'danger' : 'info')
+                        ->action(function (User $record) {
+                            if ($record->isNotBanned()) {
+                                $record->ban();
+                            } else {
+                                $record->unban();
+                            }
+                        }),
+                    Tables\Actions\DeleteAction::make(),
+                    Tables\Actions\RestoreAction::make(),
+                    Tables\Actions\ForceDeleteAction::make(),
+                ]),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -221,7 +229,8 @@ class UserResource extends Resource implements HasShieldPermissions
             'delete_any',
             'force_delete',
             'force_delete_any',
-            'ban'
+            'ban',
+            'impersonate'
         ];
     }
 

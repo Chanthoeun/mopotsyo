@@ -56,7 +56,7 @@ services:
       PMA_HOST: db
       UPLOAD_LIMIT: 64M
     ports:
-      - "8081:80"
+      - "8082:80"
     networks:
       - mopotsyo-network
     depends_on:

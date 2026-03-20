@@ -83,6 +83,16 @@ class User extends Authenticatable implements FilamentUser, RenewPasswordContrac
         return "{$this->name}";
     }
 
+    public function canImpersonate(): bool
+    {
+        return $this->hasRole(['super_admin']);
+    }
+
+    public function canBeImpersonated(): bool
+    {
+        return !$this->hasRole('super_admin');
+    }
+
     // renew password
     public function needRenewPassword(): bool
     {

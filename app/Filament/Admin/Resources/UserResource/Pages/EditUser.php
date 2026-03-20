@@ -5,6 +5,7 @@ namespace App\Filament\Admin\Resources\UserResource\Pages;
 use App\Filament\Admin\Resources\UserResource;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
+use STS\FilamentImpersonate\Pages\Actions\Impersonate;
 
 class EditUser extends EditRecord
 {
@@ -16,6 +17,11 @@ class EditUser extends EditRecord
     {
         
         return [
+            Impersonate::make()->record($this->getRecord())
+                ->label('Impersonate')
+                ->icon('fas-user-secret')
+                ->color('info')
+                ->button(),
             Actions\DeleteAction::make(),
             Actions\LocaleSwitcher::make(),
         ];
