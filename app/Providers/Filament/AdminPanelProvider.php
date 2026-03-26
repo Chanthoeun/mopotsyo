@@ -82,7 +82,7 @@ class AdminPanelProvider extends PanelProvider
             ->maxContentWidth(MaxWidth::Full)
             ->sidebarCollapsibleOnDesktop()
             ->databaseNotifications()
-            ->databaseNotificationsPolling('30s')
+            ->databaseNotificationsPolling('60s')
             ->viteTheme('resources/css/filament/admin/theme.css')
             ->plugins([
                 FilamentProgressbarPlugin::make()->color('#29b'),
