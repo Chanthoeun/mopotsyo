@@ -398,7 +398,7 @@ $leaveTypeIds = $user->contract->contractType->leave_types;
 
                                         if ($entitlement) {
                                             $allowance = (float) $entitlement->balance;
-                                            $allTaken = (float) $entitlement->taken + (float) getTakenLeave($user, $leaveType->id, $entitlement->start_date, $entitlement->end_date);
+                                            $allTaken = (float) $entitlement->taken + (float) getTakenLeave($user, $leaveType->id, $entitlement->start_date, $record->to_date);
                                             $takenThisMonth = (float) getTakenLeave($user, $leaveType->id, $record->from_date, $record->to_date);
                                             $remaining = $allowance - $allTaken;
                                         }
@@ -415,7 +415,7 @@ $leaveTypeIds = $user->contract->contractType->leave_types;
 
                                 @if ($carryForward)
                                     @php
-                                        $cfTakenAll = (float) getCarryForwardTaken($carryForward, $carryForward->start_date, $carryForward->end_date);
+                                        $cfTakenAll = (float) getCarryForwardTaken($carryForward, $carryForward->start_date, $record->to_date);
                                         $cfTakenThisMonth = (float) getCarryForwardTaken($carryForward, $record->from_date, $record->to_date);
                                         $cfRemaining = max(0, (float) $carryForward->balance - $cfTakenAll);
                                     @endphp
