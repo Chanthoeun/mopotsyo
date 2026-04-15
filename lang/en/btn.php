@@ -33,6 +33,7 @@ return [
     'link_all_carry_forward' => 'Link to Leave Request',
     'generate_carry_forward' => 'Generate Carry Forward',
     'link_leave_request' => 'Link Leave Request',
+    'unlink' => 'Unlink',
 
 
 
@@ -68,6 +69,7 @@ return [
         'link_all_carry_forward' => 'Link to Leave Request',
         'generate_carry_forward' => 'Generate Carry Forward',
         'link_leave_request' => 'Link Leave Request',
+        'unlink' => 'Unlink :label',
     ],
 
     // Button message
@@ -101,5 +103,6 @@ return [
         'link_all_carry_forward' => 'Would you like to auto-link all carry forward records?',
         'generate_carry_forward' => 'Would you like to generate carry forward records for expired entitlements?',
         'link_leave_request' => 'Would you like to link all approved leave requests to their carry forward records?',
+        'unlink' => 'Would you like to unlink :name?',
     ],
 ];

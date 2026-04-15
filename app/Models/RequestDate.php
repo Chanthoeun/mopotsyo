@@ -16,6 +16,8 @@ class RequestDate extends Model
 
     public $with = ['requestdateable'];
 
+    protected static array $cfTakenHoursCache = [];
+
     protected static function booted()
     {
         static::saving(function (RequestDate $requestDate) {
@@ -49,24 +51,30 @@ class RequestDate extends Model
                 if ($carryForward) {
                     $dayLength = app(SettingWorkingHours::class)->day ?: 8;
 
-                    $query = $carryForward->requestDates()
-                        ->whereHasMorph('requestdateable', [LeaveRequest::class], function ($q) {
-                            $q->whereIn('status', [
-                                \App\Enums\Status::APPROVED,
-                                \App\Enums\Status::PENDING,
-                            ]);
-                        });
+                    $cfId = $carryForward->id;
+                    if (!isset(static::$cfTakenHoursCache[$cfId])) {
+                        $query = $carryForward->requestDates()
+                            ->whereHasMorph('requestdateable', [LeaveRequest::class], function ($q) {
+                                $q->whereIn('status', [
+                                    \App\Enums\Status::APPROVED,
+                                    \App\Enums\Status::PENDING,
+                                    \App\Enums\Status::WAITING,
+                                ]);
+                            });
 
-                    if ($requestDate->id) {
-                        $query->where('id', '!=', $requestDate->id);
+                        static::$cfTakenHoursCache[$cfId] = $query->sum('hours');
+                        
+                        if ($requestDate->exists && $requestDate->getOriginal('leave_carry_forward_id') == $cfId) {
+                            static::$cfTakenHoursCache[$cfId] -= $requestDate->getOriginal('hours');
+                        }
                     }
 
-                    $takenHours = $query->sum('hours');
-                    $takenDays = $takenHours / $dayLength;
+                    $takenDays = static::$cfTakenHoursCache[$cfId] / $dayLength;
                     $currentDays = $requestDate->hours / $dayLength;
 
-                    if (($carryForward->balance - $takenDays) >= $currentDays) {
-                        $requestDate->leave_carry_forward_id = $carryForward->id;
+                    if (round($carryForward->balance - $takenDays, 4) >= round($currentDays, 4)) {
+                        $requestDate->leave_carry_forward_id = $cfId;
+                        static::$cfTakenHoursCache[$cfId] += $requestDate->hours;
                     } else {
                         $requestDate->leave_carry_forward_id = null;
                     }

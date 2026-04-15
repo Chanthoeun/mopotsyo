@@ -234,6 +234,18 @@ class LeaveCarryForwardResource extends Resource
                         ->action(function (array $data, LeaveCarryForward $record) {
                             $count = 0;
                             $dates = \App\Models\RequestDate::whereIn('id', $data['request_dates'])->get();
+                            
+                            $dayLength = app(\App\Settings\SettingWorkingHours::class)->day ?: 8;
+                            $totalDaysRequested = $dates->sum('hours') / $dayLength;
+
+                            if ($totalDaysRequested > $record->remaining) {
+                                \Filament\Notifications\Notification::make()
+                                    ->danger()
+                                    ->title(__('msg.error'))
+                                    ->body(__('msg.balance_is_not_enough'))
+                                    ->send();
+                                return;
+                            }
 
                             foreach ($dates as $date) {
                                 /** @var \App\Models\RequestDate $date */
@@ -242,7 +254,6 @@ class LeaveCarryForwardResource extends Resource
                             }
 
                             // Calculate days for notification purposes only
-                            $dayLength = app(\App\Settings\SettingWorkingHours::class)->day ?: 8;
                             $days = $count / $dayLength;
                             $label = trans_choice('field.days_with_count', $days, ['count' => (float) $days]);
 
@@ -381,7 +392,10 @@ class LeaveCarryForwardResource extends Resource
         $systemTakenHours = "(
             SELECT COALESCE(SUM(rd.hours), 0)
             FROM request_dates rd
+            JOIN leave_requests lr ON (rd.requestdateable_id = lr.id AND rd.requestdateable_type = 'App\\\\Models\\\\LeaveRequest')
             WHERE rd.leave_carry_forward_id = leave_carry_forwards.id
+            AND lr.status IN ('approved', 'pending', 'waiting')
+            AND lr.deleted_at IS NULL
         )";
 
         $query->addSelect([

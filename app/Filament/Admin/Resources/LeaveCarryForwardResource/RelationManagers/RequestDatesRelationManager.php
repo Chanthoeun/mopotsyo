@@ -62,6 +62,7 @@ class RequestDatesRelationManager extends RelationManager
                     ->requiresConfirmation()
                     ->icon('fas-trash')
                     ->modalIcon('fas-trash')
+                    ->visible(fn() => auth()->user()->hasRole(['super_admin', 'human_resource']))
                     ->action(function () {
                         $from_date = $this->ownerRecord->start_date;
                         $to_date = $this->ownerRecord->end_date;
@@ -84,6 +85,7 @@ class RequestDatesRelationManager extends RelationManager
                     ->requiresConfirmation()
                     ->icon('fas-plus')
                     ->modalIcon('fas-plus')
+                    ->visible(fn() => auth()->user()->hasRole(['super_admin', 'human_resource']))
                     ->action(function () {
                         $from_date = $this->ownerRecord->start_date;
                         $to_date = $this->ownerRecord->end_date;
@@ -110,13 +112,34 @@ class RequestDatesRelationManager extends RelationManager
 
             ])
             ->actions([
-                // Tables\Actions\EditAction::make(),
-                // Tables\Actions\DeleteAction::make(),
+                Tables\Actions\Action::make('unlink')
+                    ->label(__('btn.unlink'))
+                    ->icon('fas-link-slash')
+                    ->color('danger')
+                    ->requiresConfirmation()
+                    ->modalHeading(__('btn.unlink'))
+                    ->visible(fn() => auth()->user()->hasRole(['super_admin', 'human_resource']))
+                    ->action(function (\App\Models\RequestDate $record) {
+                        $record->leave_carry_forward_id = null;
+                        $record->save();
+                    }),
             ])
             ->bulkActions([
-                // Tables\Actions\BulkActionGroup::make([
-                //     Tables\Actions\DeleteBulkAction::make(),
-                // ]),
+                Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\BulkAction::make('unlink')
+                        ->label(__('btn.unlink'))
+                        ->icon('fas-link-slash')
+                        ->color('danger')
+                        ->requiresConfirmation()
+                        ->modalHeading(__('btn.unlink'))
+                        ->visible(fn() => auth()->user()->hasRole(['super_admin', 'human_resource']))
+                        ->action(function (\Illuminate\Database\Eloquent\Collection $records) {
+                            $records->each(function ($record) {
+                                $record->leave_carry_forward_id = null;
+                                $record->save();
+                            });
+                        }),
+                ]),
             ]);
     }
 }
