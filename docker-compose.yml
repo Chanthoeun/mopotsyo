@@ -28,6 +28,8 @@ services:
     image: mysql:8.0
     container_name: mopotsyo-db
     restart: unless-stopped
+    env_file:
+      - .env
     environment:
       MYSQL_DATABASE: ${DB_DATABASE}
       MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
@@ -49,14 +51,14 @@ services:
       - mopotsyo-network
 
   phpmyadmin:
-    image: phpmyadmin/phpmyadmin
+    image: arm64v8/phpmyadmin
     container_name: mopotsyo-phpmyadmin
     restart: unless-stopped
     environment:
       PMA_HOST: db
       UPLOAD_LIMIT: 64M
     ports:
-      - "8082:80"
+      - "8083:80"
     networks:
       - mopotsyo-network
     depends_on:
